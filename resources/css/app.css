@@ -8,4 +8,116 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* ─── Base TeyvatHub ─────────────────────────────────────── */
+    --color-hub-primary:        #3B4BFF;  /* Bleu-violet signature – boutons, liens, logo */
+    --color-hub-accent:         #00D4FF;  /* Teal cyan vif – hover, tags, accents dynamiques */
+    --color-hub-gold:           #E8C547;  /* Doré chaud – 5★, étoiles, CTA, primogems */
+    --color-hub-gold-dark:      #BFA03A;
+
+    --color-hub-bg:             #0D1425;  /* Fond principal dark immersif */
+    --color-hub-surface:        #16203A;  /* Cartes, sections, modals */
+    --color-hub-surface-hover:  #1E2A4A;
+    --color-hub-border:         #2A3859;
+    --color-hub-text:           #E8F0FF;  /* Texte principal */
+    --color-hub-text-sec:       #A3BFFA;  /* Descriptions / secondary */
+    --color-hub-muted:          #64748B;
+
+    /* ─── Éléments ───────────────────────────────────────────── */
+    --color-pyro:    #F87171;
+    --color-hydro:   #60A5FA;
+    --color-anemo:   #22D3EE;
+    --color-electro: #C084FC;
+    --color-cryo:    #67E8F9;
+    --color-dendro:  #86EFAC;
+    --color-geo:     #FBBF24;
+
+    /* ─── Raretés ────────────────────────────────────────────── */
+    --color-rarity-1: #A1A1AA;  /* Gris basique */
+    --color-rarity-2: #84CC16;  /* Vert clair */
+    --color-rarity-3: #4A90E2;  /* Bleu standard 3★ */
+    --color-rarity-4: #9D4EDD;  /* Violet 4★ */
+    --color-rarity-5: #E8C547;  /* Doré 5★ */
+
+    /* ─── UI Système ─────────────────────────────────────────── */
+    --color-success: #10B981;   /* Import réussi, sauvegarde OK */
+    --color-warning: #F59E0B;   /* Attention, données partielles */
+    --color-error:   #EF4444;   /* Erreur, validation fail, delete */
+    --color-info:    #3B82F6;   /* Messages neutres, tooltips */
+
+    /* ─── Mondstadt (Anemo – liberté, vert/bleu ciel) ─────────── */
+    --color-mondstadt:                #6EE7B7;  /* Vert menthe doux */
+    --color-mondstadt-starfell:       #A7F3D0;  /* Starfell Valley / Whispering Woods */
+    --color-mondstadt-windrise:       #BFDBFE;  /* Stormterror's Lair / Windrise */
+    --color-mondstadt-dragonspine:    #67E8F9;  /* ★ Dragonspine (zone séparée) – cyan glacial */
+    --color-mondstadt-dragonspine-2:  #CBD5E1;  /* ★ Dragonspine – gris neige/glace */
+
+    /* ─── Liyue (Geo – contrats, or/rouge/marron) ─────────────── */
+    --color-liyue:             #F59E0B;  /* Geo doré-orange */
+    --color-liyue-bishui:      #FBBF24;  /* Bishui Plain / Guyun Stone Forest */
+    --color-liyue-chenyu:      #FDE68A;  /* Chenyu Vale – jaune brume */
+    --color-liyue-chenyu-2:    #A78BFA;  /* Chenyu Vale – violet mystique */
+    --color-liyue-chasm:       #7C2D12;  /* ★ Le Gouffre (zone séparée) – marron profond minier */
+    --color-liyue-chasm-2:     #D97706;  /* ★ Le Gouffre – orange souterrain/cristaux */
+
+    /* ─── Inazuma (Electro – éternité, violet/rose mystique) ──── */
+    --color-inazuma:             #A855F7;  /* Violet electro profond */
+    --color-inazuma-watatsumi:   #60A5FA;  /* Watatsumi Island – bleu océan */
+    --color-inazuma-tsurumi:     #E0F2FE;  /* Tsurumi Island – brume froide */
+    --color-inazuma-tsurumi-2:   #C084FC;  /* Tsurumi Island – violet fantôme */
+    --color-inazuma-enkanomiya:  #6B21A8;  /* ★ Enkanomiya (zone séparée) – violet abyssal ancien */
+    --color-inazuma-enkanomiya-2:#F5D0FE;  /* ★ Enkanomiya – lueur blanche/solaire Byakuyakoku */
+    --color-inazuma-seirai:      #818CF8;  /* Seirai Island – bleu-violet orage */
+    --color-inazuma-yashiori:    #7C3AED;  /* Yashiori Island – pourpre serpent */
+
+    /* ─── Sumeru (Dendro – sagesse, vert/désert) ──────────────── */
+    --color-sumeru:              #84CC16;  /* Vert dendro vif */
+    --color-sumeru-avidya:       #86EFAC;  /* Avidya Forest / Lokapala Jungle */
+    --color-sumeru-girdle:       #FBBF24;  /* Girdle of the Sands – jaune savane */
+    --color-sumeru-redsand:      #F59E0B;  /* Great Red Sand / Desert of Hadramaveth */
+    --color-sumeru-redsand-2:    #D97706;  /* Désert – rouge sable profond */
+    --color-sumeru-gavireh:      #A3E635;  /* Gavireh Lajavard – vert émeraude */
+    --color-sumeru-chinvat:      #FCD34D;  /* Chinvat Ravine – jaune roche */
+    --color-sumeru-underground:  #4C1D95;  /* ★ Ruines souterraines du désert (zone séparée) – violet bioluminescent */
+    --color-sumeru-underground-2:#7C3AED;  /* ★ Souterrain – lueur violette artefacts Vanarana */
+
+    /* ─── Fontaine (Hydro – justice, bleu steampunk) ──────────── */
+    --color-fontaine:                #06B6D4;  /* Cyan hydro élégant */
+    --color-fontaine-court:          #3B82F6;  /* Court of Fontaine – bleu profond */
+    --color-fontaine-erinnyes:       #67E8F9;  /* Erinnyes Forest / Morte – cyan glacial */
+    --color-fontaine-underwater:     #A5F3FC;  /* ★ Mer d'Antan (zone séparée) – turquoise eau ancienne */
+    --color-fontaine-underwater-2:   #0C4A6E;  /* ★ Mer d'Antan – profondeurs abyssales */
+    --color-fontaine-beryl:          #0EA5E9;  /* Beryl Region – bleu vif */
+    --color-fontaine-merusea:        #BAE6FD;  /* Merusea Village – bleu limpide */
+
+    /* ─── Natlan (Pyro – guerre, rouge/orange volcanique) ─────── */
+    --color-natlan:                  #F97316;  /* Orange feu volcan vif */
+    --color-natlan-basin:            #EF4444;  /* Basin of Unnumbered Flames / Stadium */
+    --color-natlan-coatepec:         #C2410C;  /* Coatepec Mountain / Huitztlan Tribe */
+    --color-natlan-tequemecan:       #FDE047;  /* Tequemecan Valley / Children of Echoes */
+    --color-natlan-toyac:            #FCA5A5;  /* Toyac Springs / People of the Springs */
+    --color-natlan-ochkanatlan:      #991B1B;  /* Ochkanatlan / Forbidden Ancient – rouge rituel */
+    --color-natlan-ochkanatlan-2:    #7C2D12;  /* Ochkanatlan – marron ancien */
+    --color-natlan-ancient-sacred:   #450A0A;  /* ★ Montagne Sacrée Ancienne (zone séparée) – rouge abyssal */
+    --color-natlan-ancient-sacred-2: #F97316;  /* ★ Montagne Sacrée Ancienne – lave volcanique intérieure */
+    --color-natlan-mirrorwall:       #F59E0B;  /* Mirror Wall Mountain – orange roche */
+    --color-natlan-qiaozhi:          #DC2626;  /* Qiaozhi Cliff – rouge lave */
+    --color-natlan-scions:           #FB923C;  /* Scions of the Canopy – orange forêt */
+
+    /* ─── Nod-Krai (Cryo intermédiaire – sortie 6.0) ──────────── */
+    --color-nodkrai:             #67E8F9;  /* Cyan cryo glacial – couleur principale */
+    --color-nodkrai-fatui:       #991B1B;  /* Zones urbaines Fatui – rouge impérial */
+    --color-nodkrai-metal:       #64748B;  /* Métal argenté – structures Fatui */
+    --color-nodkrai-snow:        #E2E8F0;  /* Zones neige / polaire */
+    --color-nodkrai-tundra:      #1E293B;  /* Toundra / nuit polaire */
+
+    /* ─── Snezhnaya (placeholder – non jouable, teasée) ───────── */
+    --color-snezhnaya-red:       #7F1D1D;  /* Rouge impérial Fatui */
+    --color-snezhnaya-ice:       #F0F9FF;  /* Blanc glacial / neige */
+    --color-snezhnaya-blue:      #1E3A5F;  /* Bleu impérial nuit polaire */
+
+    /* ─── Khaenri'ah (lore-only – Abyss, Dainsleif, artefacts) ── */
+    --color-khaenriah-abyss:   #0F0F0F;  /* Noir abyssal pur */
+    --color-khaenriah-corrupt: #C0A030;  /* Or corrompu / cursed gold */
+    --color-khaenriah-blood:   #7F1D1D;  /* Rouge sombre / abyssal blood */
 }
