@@ -7,6 +7,7 @@ use App\Http\Controllers\MateriauxController;
 use App\Http\Controllers\ArmeController;
 use App\Http\Controllers\PlatController;
 use App\Http\Controllers\AnimalController;
+use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,8 +26,8 @@ Route::get('/cuisine', [PlatController::class, 'index'])->name('cuisine.index');
 Route::get('/cuisine/{plat:slug}', [PlatController::class, 'show'])->name('cuisine.show');
 Route::get('/materiaux', [MateriauxController::class, 'index'])->name('materiaux.index');
 Route::get('/materiaux/{materiaux:slug}', [MateriauxController::class, 'show'])->name('materiaux.show');
-Route::get('/ingredients', fn() => abort(404))->name('ingredients.index');
-Route::get('/ingredients/{slug}', fn() => abort(404))->name('ingredients.show');
+Route::get('/ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
+Route::get('/ingredients/{ingredient:slug}', [IngredientController::class, 'show'])->name('ingredients.show');
 Route::get('/histoire', fn() => abort(404))->name('histoire.index');
 Route::get('/histoire/regions', fn() => abort(404))->name('regions.index');
 Route::get('/histoire/regions/{slug}', fn() => abort(404))->name('regions.show');
