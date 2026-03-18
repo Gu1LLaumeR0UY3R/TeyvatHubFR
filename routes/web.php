@@ -4,6 +4,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PersonnageController;
 use App\Http\Controllers\EnnemiController;
 use App\Http\Controllers\MateriauxController;
+use App\Http\Controllers\ArmeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,8 +13,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Routes publiques encyclopédie
 Route::get('/personnages', [PersonnageController::class, 'index'])->name('personnages.index');
 Route::get('/personnages/{personnage:slug}', [PersonnageController::class, 'show'])->name('personnages.show');
-Route::get('/armes', fn() => abort(404))->name('armes.index');
-Route::get('/armes/{slug}', fn() => abort(404))->name('armes.show');
+Route::get('/armes', [ArmeController::class, 'index'])->name('armes.index');
+Route::get('/armes/{arme:slug}', [ArmeController::class, 'show'])->name('armes.show');
 Route::get('/ennemis', [EnnemiController::class, 'index'])->name('ennemis.index');
 Route::get('/ennemis/{ennemi:slug}', [EnnemiController::class, 'show'])->name('ennemis.show');
 Route::get('/animaux', fn() => abort(404))->name('animaux.index');
