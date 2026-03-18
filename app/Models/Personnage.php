@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
@@ -52,6 +55,31 @@ class Personnage extends Model
     public function typeArme(): BelongsTo
     {
         return $this->belongsTo(TypeArme::class, 'fid_TArmes', 'id_TArmes');
+    }
+
+    public function bio(): HasOne
+    {
+        return $this->hasOne(Bio::class, 'fid_perso', 'id_perso');
+    }
+
+    public function aptitudes(): HasMany
+    {
+        return $this->hasMany(Aptitude::class, 'fid_perso', 'id_perso');
+    }
+
+    public function constellations(): HasMany
+    {
+        return $this->hasMany(Constellation::class, 'fid_perso', 'id_perso')->orderBy('id_const');
+    }
+
+    public function specialite(): HasOne
+    {
+        return $this->hasOne(Specialite::class, 'fid_perso', 'id_perso');
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'personnage_role', 'fid_perso', 'fid_role');
     }
 
     public function photos(): MorphMany

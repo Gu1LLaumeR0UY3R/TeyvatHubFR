@@ -1,14 +1,15 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PersonnageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Routes publiques encyclopédie (stubs — seront implémentées dans les issues suivantes)
-Route::get('/personnages', fn() => abort(404))->name('personnages.index');
-Route::get('/personnages/{slug}', fn() => abort(404))->name('personnages.show');
+// Routes publiques encyclopédie
+Route::get('/personnages', [PersonnageController::class, 'index'])->name('personnages.index');
+Route::get('/personnages/{personnage:slug}', [PersonnageController::class, 'show'])->name('personnages.show');
 Route::get('/armes', fn() => abort(404))->name('armes.index');
 Route::get('/armes/{slug}', fn() => abort(404))->name('armes.show');
 Route::get('/ennemis', fn() => abort(404))->name('ennemis.index');
