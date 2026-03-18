@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Personnage;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 class PersonnageFactory extends Factory
 {
@@ -15,7 +14,6 @@ class PersonnageFactory extends Factory
         $nom = $this->faker->unique()->firstName() . ' ' . $this->faker->lastName();
         return [
             'nom_perso'      => $nom,
-            'slug'           => Str::slug($nom),
             'affinite_perso' => null,
             'fid_TP'         => \App\Models\TypePerso::firstOrCreate(['libelle_TP'      => 'Personnage jouable'])->id_TP,
             'fid_etoile'     => \App\Models\Etoile::firstOrCreate(['libelle'            => '4★'])->id_etoile,

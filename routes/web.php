@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PersonnageController;
+use App\Http\Controllers\EnnemiController;
+use App\Http\Controllers\MateriauxController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,14 +14,14 @@ Route::get('/personnages', [PersonnageController::class, 'index'])->name('person
 Route::get('/personnages/{personnage:slug}', [PersonnageController::class, 'show'])->name('personnages.show');
 Route::get('/armes', fn() => abort(404))->name('armes.index');
 Route::get('/armes/{slug}', fn() => abort(404))->name('armes.show');
-Route::get('/ennemis', fn() => abort(404))->name('ennemis.index');
-Route::get('/ennemis/{slug}', fn() => abort(404))->name('ennemis.show');
+Route::get('/ennemis', [EnnemiController::class, 'index'])->name('ennemis.index');
+Route::get('/ennemis/{ennemi:slug}', [EnnemiController::class, 'show'])->name('ennemis.show');
 Route::get('/animaux', fn() => abort(404))->name('animaux.index');
 Route::get('/animaux/{slug}', fn() => abort(404))->name('animaux.show');
 Route::get('/cuisine', fn() => abort(404))->name('cuisine.index');
 Route::get('/cuisine/{slug}', fn() => abort(404))->name('cuisine.show');
-Route::get('/materiaux', fn() => abort(404))->name('materiaux.index');
-Route::get('/materiaux/{slug}', fn() => abort(404))->name('materiaux.show');
+Route::get('/materiaux', [MateriauxController::class, 'index'])->name('materiaux.index');
+Route::get('/materiaux/{materiaux:slug}', [MateriauxController::class, 'show'])->name('materiaux.show');
 Route::get('/ingredients', fn() => abort(404))->name('ingredients.index');
 Route::get('/ingredients/{slug}', fn() => abort(404))->name('ingredients.show');
 Route::get('/histoire', fn() => abort(404))->name('histoire.index');

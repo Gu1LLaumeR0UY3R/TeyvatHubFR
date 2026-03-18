@@ -28,7 +28,9 @@ class Personnage extends Model
     protected static function booted(): void
     {
         static::creating(function ($model) {
-            $model->slug = Str::slug($model->nom_perso);
+            if (empty($model->slug)) {
+                $model->slug = Str::slug($model->nom_perso);
+            }
         });
     }
 
