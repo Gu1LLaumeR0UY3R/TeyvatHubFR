@@ -5,6 +5,7 @@ use App\Http\Controllers\PersonnageController;
 use App\Http\Controllers\EnnemiController;
 use App\Http\Controllers\MateriauxController;
 use App\Http\Controllers\ArmeController;
+use App\Http\Controllers\PlatController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,8 +20,8 @@ Route::get('/ennemis', [EnnemiController::class, 'index'])->name('ennemis.index'
 Route::get('/ennemis/{ennemi:slug}', [EnnemiController::class, 'show'])->name('ennemis.show');
 Route::get('/animaux', fn() => abort(404))->name('animaux.index');
 Route::get('/animaux/{slug}', fn() => abort(404))->name('animaux.show');
-Route::get('/cuisine', fn() => abort(404))->name('cuisine.index');
-Route::get('/cuisine/{slug}', fn() => abort(404))->name('cuisine.show');
+Route::get('/cuisine', [PlatController::class, 'index'])->name('cuisine.index');
+Route::get('/cuisine/{plat:slug}', [PlatController::class, 'show'])->name('cuisine.show');
 Route::get('/materiaux', [MateriauxController::class, 'index'])->name('materiaux.index');
 Route::get('/materiaux/{materiaux:slug}', [MateriauxController::class, 'show'])->name('materiaux.show');
 Route::get('/ingredients', fn() => abort(404))->name('ingredients.index');

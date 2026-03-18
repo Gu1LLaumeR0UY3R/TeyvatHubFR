@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
@@ -42,5 +43,11 @@ class Plat extends Model
     public function specialite(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Specialite::class, 'fid_plat', 'id_plat');
+    }
+
+    public function ingredients(): BelongsToMany
+    {
+        return $this->belongsToMany(Ingredient::class, 'plat_ingredient', 'fid_plat', 'fid_ingredient')
+                    ->withPivot('quantite');
     }
 }
