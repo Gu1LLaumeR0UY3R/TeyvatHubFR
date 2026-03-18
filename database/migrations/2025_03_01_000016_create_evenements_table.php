@@ -8,19 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('evenements', function (Blueprint $table) {
-            $table->id();
+        Schema::create('evenement', function (Blueprint $table) {
+            $table->increments('id_evenement');
             $table->string('titre', 100);
             $table->string('descri_courte', 150)->nullable();
             $table->text('description')->nullable();
             $table->date('date_debut');
             $table->date('date_fin');
-            $table->timestamps();
+            $table->dateTime('created_at')->useCurrent();
+            $table->dateTime('updated_at')->nullable();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('evenements');
+        Schema::dropIfExists('evenement');
     }
 };

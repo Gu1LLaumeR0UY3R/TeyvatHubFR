@@ -17,7 +17,7 @@ class Issue5EvenementTest extends TestCase
     public function test_migration_evenements_execute_sans_erreur(): void
     {
         // Si RefreshDatabase passe, la migration s'est exécutée
-        $this->assertTrue(\Schema::hasTable('evenements'));
+        $this->assertTrue(\Schema::hasTable('evenement'));
     }
 
     public function test_modele_evenement_existe(): void
@@ -32,7 +32,7 @@ class Issue5EvenementTest extends TestCase
             'date_debut' => '2026-03-01',
             'date_fin'   => '2026-03-31',
         ]);
-        $this->assertDatabaseHas('evenements', ['titre' => 'Test Event']);
+        $this->assertDatabaseHas('evenement', ['titre' => 'Test Event']);
     }
 
     public function test_dates_castees_en_carbon(): void
@@ -75,10 +75,10 @@ class Issue5EvenementTest extends TestCase
 
     public function test_table_a_colonnes_requises(): void
     {
-        $this->assertTrue(\Schema::hasColumn('evenements', 'titre'));
-        $this->assertTrue(\Schema::hasColumn('evenements', 'descri_courte'));
-        $this->assertTrue(\Schema::hasColumn('evenements', 'description'));
-        $this->assertTrue(\Schema::hasColumn('evenements', 'date_debut'));
-        $this->assertTrue(\Schema::hasColumn('evenements', 'date_fin'));
+        $this->assertTrue(\Schema::hasColumn('evenement', 'titre'));
+        $this->assertTrue(\Schema::hasColumn('evenement', 'descri_courte'));
+        $this->assertTrue(\Schema::hasColumn('evenement', 'description'));
+        $this->assertTrue(\Schema::hasColumn('evenement', 'date_debut'));
+        $this->assertTrue(\Schema::hasColumn('evenement', 'date_fin'));
     }
 }

@@ -10,6 +10,9 @@ class Evenement extends Model
 {
     use HasFactory;
 
+    protected $table = 'evenement';
+    protected $primaryKey = 'id_evenement';
+
     protected $fillable = ['titre', 'descri_courte', 'description', 'date_debut', 'date_fin'];
 
     protected $casts = [

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class TypeArme extends Model
 {
+    public $timestamps = false;
+
     protected $table = 'type_armes';
     protected $primaryKey = 'id_TArmes';
     protected $fillable = ['libelle_TArme'];

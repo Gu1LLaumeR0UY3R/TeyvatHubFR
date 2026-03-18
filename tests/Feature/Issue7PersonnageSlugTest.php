@@ -16,17 +16,17 @@ class Issue7PersonnageSlugTest extends TestCase
 
     public function test_migration_personnages_execute_sans_erreur(): void
     {
-        $this->assertTrue(\Schema::hasTable('personnages'));
+        $this->assertTrue(\Schema::hasTable('personnage'));
     }
 
     public function test_table_a_colonne_slug(): void
     {
-        $this->assertTrue(\Schema::hasColumn('personnages', 'slug'));
+        $this->assertTrue(\Schema::hasColumn('personnage', 'slug'));
     }
 
     public function test_table_a_colonne_fid_tarmes(): void
     {
-        $this->assertTrue(\Schema::hasColumn('personnages', 'fid_TArmes'));
+        $this->assertTrue(\Schema::hasColumn('personnage', 'fid_TArmes'));
     }
 
     public function test_slug_genere_automatiquement_a_la_creation(): void

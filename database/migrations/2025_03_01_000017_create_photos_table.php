@@ -8,17 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('photos', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('photoable');
-            $table->string('chemin_photo', 500)->nullable();
+        Schema::create('photo', function (Blueprint $table) {
+            $table->increments('id_photo');
+            $table->string('chemin_photo', 255);
+            $table->string('photoable_type', 100);
+            $table->unsignedInteger('photoable_id');
+            $table->timestamp('created_at')->useCurrent();
             $table->string('source_url', 500)->nullable();
-            $table->timestamps();
+
+            $table->index(['photoable_type', 'photoable_id'], 'idx_photoable');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('photos');
+        Schema::dropIfExists('photo');
     }
 };

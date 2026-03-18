@@ -12,7 +12,9 @@ class Personnage extends Model
 {
     use HasFactory;
 
-    protected $table = 'personnages';
+    public $timestamps = false;
+
+    protected $table = 'personnage';
     protected $primaryKey = 'id_perso';
 
     protected $fillable = [

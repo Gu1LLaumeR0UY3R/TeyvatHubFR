@@ -9,9 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('etoile', function (Blueprint $table) {
-            $table->id('id_etoile');
-            $table->string('libelle', 10);
-            $table->timestamps();
+            $table->increments('id_etoile');
+            $table->string('libelle', 20);
         });
     }
 

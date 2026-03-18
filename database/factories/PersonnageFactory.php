@@ -14,13 +14,13 @@ class PersonnageFactory extends Factory
     {
         $nom = $this->faker->unique()->firstName() . ' ' . $this->faker->lastName();
         return [
-            'nom_perso'     => $nom,
-            'slug'          => Str::slug($nom),
-            'affinite_perso'=> 0,
-            'fid_TP'        => null,
-            'fid_etoile'    => null,
-            'fid_element'   => null,
-            'fid_TArmes'    => null,
+            'nom_perso'      => $nom,
+            'slug'           => Str::slug($nom),
+            'affinite_perso' => null,
+            'fid_TP'         => \App\Models\TypePerso::firstOrCreate(['libelle_TP'      => 'Personnage jouable'])->id_TP,
+            'fid_etoile'     => \App\Models\Etoile::firstOrCreate(['libelle'            => '4★'])->id_etoile,
+            'fid_element'    => \App\Models\Elements::firstOrCreate(['libelle_element'  => 'Pyro'])->id_element,
+            'fid_TArmes'     => \App\Models\TypeArme::firstOrCreate(['libelle_TArme'    => 'Épée'])->id_TArmes,
         ];
     }
 }

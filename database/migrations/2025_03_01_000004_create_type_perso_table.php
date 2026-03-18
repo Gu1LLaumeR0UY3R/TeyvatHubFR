@@ -9,9 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('type_perso', function (Blueprint $table) {
-            $table->id('id_TP');
+            $table->increments('id_TP');
             $table->string('libelle_TP', 50);
-            $table->timestamps();
         });
     }
 

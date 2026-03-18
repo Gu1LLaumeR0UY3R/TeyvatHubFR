@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Etoile extends Model
 {
+    public $timestamps = false;
+
     protected $table = 'etoile';
     protected $primaryKey = 'id_etoile';
     protected $fillable = ['libelle'];
