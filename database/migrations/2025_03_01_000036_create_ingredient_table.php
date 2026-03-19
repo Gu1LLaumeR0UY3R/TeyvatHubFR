@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('ingrédient', function (Blueprint $table) {
             $table->increments('id_ingredient');
-            $table->string('nom_ingre', 100);
+            $table->string('nom_ingre', 150);
             $table->string('slug', 100)->unique();
         });
     }

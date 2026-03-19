@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('région', function (Blueprint $table) {
             $table->increments('id_region');
-            $table->string('nom_region', 50);
+            $table->string('nom_region', 100);
             $table->string('slug', 100)->unique();
             $table->text('descri_region')->nullable();
         });

@@ -9,11 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('joueur_arme', function (Blueprint $table) {
-            $table->unsignedInteger('fid_joueur');
+            $table->unsignedBigInteger('fid_joueur');
             $table->unsignedInteger('fid_arme');
-            $table->unsignedTinyInteger('niveau')->default(1);
-            $table->unsignedTinyInteger('rang')->default(1);
+            $table->tinyInteger('niveau')->default(1);
+            $table->tinyInteger('rang')->default(1);
+
             $table->primary(['fid_joueur', 'fid_arme']);
+            $table->foreign('fid_joueur', 'fk_ja_joueur')
+                ->references('id')->on('users')
+                ->onDelete('cascade');
+            $table->foreign('fid_arme', 'fk_ja_arme')
+                ->references('id_arme')->on('armes')
+                ->onDelete('cascade');
         });
     }
 

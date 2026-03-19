@@ -10,13 +10,16 @@ return new class extends Migration
     {
         Schema::create('chronologie', function (Blueprint $table) {
             $table->increments('id_chrono');
-            $table->string('titre', 150);
-            $table->text('resume');
+            $table->string('titre', 200);
+            $table->text('resume')->nullable();
             $table->string('periode', 100)->nullable();
-            $table->unsignedInteger('ordre')->default(0);
+            $table->integer('ordre')->default(0);
             $table->unsignedInteger('fid_region')->nullable();
-            $table->dateTime('created_at')->useCurrent();
-            $table->dateTime('updated_at')->nullable()->useCurrentOnUpdate();
+            $table->timestamps();
+
+            $table->foreign('fid_region', 'fk_chrono_region')
+                ->references('id_region')->on('région')
+                ->nullOnDelete();
         });
     }
 

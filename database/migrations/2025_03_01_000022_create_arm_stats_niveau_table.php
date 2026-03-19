@@ -10,11 +10,15 @@ return new class extends Migration
     {
         Schema::create('arm_stats_niveau', function (Blueprint $table) {
             $table->increments('id_ASN');
-            $table->unsignedTinyInteger('lvl_ASN');
-            $table->float('main_stat');
-            $table->float('subs_stats');
+            $table->tinyInteger('lvl_ASN');
+            $table->float('main_stat')->nullable();
+            $table->float('subs_stats')->nullable();
             $table->unsignedInteger('fid_arme');
-            $table->unique(['fid_arme', 'lvl_ASN'], 'uq_arme_niveau');
+
+            $table->unique(['lvl_ASN', 'fid_arme'], 'uk_asn_arme');
+            $table->foreign('fid_arme', 'fk_asn_arme')
+                ->references('id_arme')->on('armes')
+                ->onDelete('cascade');
         });
     }
 

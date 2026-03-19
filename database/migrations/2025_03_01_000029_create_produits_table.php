@@ -10,9 +10,13 @@ return new class extends Migration
     {
         Schema::create('produits', function (Blueprint $table) {
             $table->increments('id_produit');
-            $table->string('libelle_produit', 100);
+            $table->string('libelle_produit', 150);
             $table->text('descri_produit')->nullable();
             $table->unsignedInteger('fid_region');
+
+            $table->foreign('fid_region', 'fk_prod_region')
+                ->references('id_region')->on('région')
+                ->onDelete('cascade');
         });
     }
 

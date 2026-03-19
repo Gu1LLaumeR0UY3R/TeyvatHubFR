@@ -19,9 +19,7 @@ class Arme extends Model
     protected static function booted(): void
     {
         static::creating(function ($model) {
-            if (empty($model->slug)) {
-                $model->slug = Str::slug($model->nom_arme);
-            }
+            $model->slug = Str::slug($model->nom_arme);
         });
     }
 

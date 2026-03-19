@@ -9,11 +9,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('joueur_constellation', function (Blueprint $table) {
-            $table->unsignedInteger('fid_joueur');
+            $table->unsignedBigInteger('fid_joueur');
             $table->unsignedInteger('fid_perso');
             $table->unsignedInteger('fid_constellation');
             $table->boolean('debloquee')->default(false);
+
             $table->primary(['fid_joueur', 'fid_perso', 'fid_constellation']);
+            $table->foreign('fid_joueur', 'fk_jc_joueur')
+                ->references('id')->on('users')
+                ->onDelete('cascade');
+            $table->foreign('fid_perso', 'fk_jc_perso')
+                ->references('id_perso')->on('personnage')
+                ->onDelete('cascade');
+            $table->foreign('fid_constellation', 'fk_jc_const')
+                ->references('id_const')->on('constellation')
+                ->onDelete('cascade');
         });
     }
 

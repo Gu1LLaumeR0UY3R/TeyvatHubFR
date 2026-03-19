@@ -10,10 +10,15 @@ return new class extends Migration
     {
         Schema::create('sous_region', function (Blueprint $table) {
             $table->increments('id_sous_region');
-            $table->string('nom_sous_region', 100);
+            $table->string('nom_sous_region', 150);
             $table->string('slug', 100)->unique();
             $table->text('description')->nullable();
             $table->unsignedInteger('fid_region');
+            $table->timestamps();
+
+            $table->foreign('fid_region', 'fk_sr_region')
+                ->references('id_region')->on('région')
+                ->onDelete('cascade');
         });
     }
 

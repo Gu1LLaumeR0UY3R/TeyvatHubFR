@@ -19,9 +19,7 @@ class Ennemi extends Model
     protected static function booted(): void
     {
         static::creating(function ($model) {
-            if (empty($model->slug)) {
-                $model->slug = Str::slug($model->nom_ennemi);
-            }
+            $model->slug = Str::slug($model->nom_ennemi);
         });
     }
 

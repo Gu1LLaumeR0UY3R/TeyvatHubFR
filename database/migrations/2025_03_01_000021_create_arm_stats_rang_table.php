@@ -10,10 +10,14 @@ return new class extends Migration
     {
         Schema::create('arm_stats_rang', function (Blueprint $table) {
             $table->increments('id_ASR');
-            $table->unsignedTinyInteger('rang_ASR');
-            $table->text('descri_ASR');
+            $table->tinyInteger('rang_ASR');
+            $table->text('descri_ASR')->nullable();
             $table->unsignedInteger('fid_arme');
-            $table->unique(['fid_arme', 'rang_ASR'], 'uq_arme_rang');
+
+            $table->unique(['rang_ASR', 'fid_arme'], 'uk_asr_arme');
+            $table->foreign('fid_arme', 'fk_asr_arme')
+                ->references('id_arme')->on('armes')
+                ->onDelete('cascade');
         });
     }
 

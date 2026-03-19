@@ -10,10 +10,13 @@ return new class extends Migration
     {
         Schema::create('plat', function (Blueprint $table) {
             $table->increments('id_plat');
-            $table->string('nom_plat', 100);
+            $table->string('nom_plat', 150);
             $table->string('slug', 100)->unique();
             $table->text('descri_plat')->nullable();
             $table->unsignedInteger('fid_rareté');
+
+            $table->foreign('fid_rareté', 'fk_plat_rarete')
+                ->references('id_rareté')->on('rareté');
         });
     }
 

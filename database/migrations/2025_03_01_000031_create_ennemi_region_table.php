@@ -11,7 +11,14 @@ return new class extends Migration
         Schema::create('ennemi_region', function (Blueprint $table) {
             $table->unsignedInteger('fid_ennemi');
             $table->unsignedInteger('fid_region');
+
             $table->primary(['fid_ennemi', 'fid_region']);
+            $table->foreign('fid_ennemi', 'fk_er_ennemi')
+                ->references('id_ennemi')->on('ennemi')
+                ->onDelete('cascade');
+            $table->foreign('fid_region', 'fk_er_region')
+                ->references('id_region')->on('région')
+                ->onDelete('cascade');
         });
     }
 

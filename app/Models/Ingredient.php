@@ -18,15 +18,18 @@ class Ingredient extends Model
     protected static function booted(): void
     {
         static::creating(function ($model) {
-            if (empty($model->slug)) {
-                $model->slug = Str::slug($model->nom_ingre);
-            }
+            $model->slug = Str::slug($model->nom_ingre);
         });
     }
 
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    public function animaux(): BelongsToMany
+    {
+        return $this->belongsToMany(Animal::class, 'animal_ingredient', 'fid_ingredient', 'fid_animal');
     }
 
     public function plats(): BelongsToMany

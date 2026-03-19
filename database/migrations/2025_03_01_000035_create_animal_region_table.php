@@ -11,7 +11,14 @@ return new class extends Migration
         Schema::create('animal_region', function (Blueprint $table) {
             $table->unsignedInteger('fid_animal');
             $table->unsignedInteger('fid_region');
+
             $table->primary(['fid_animal', 'fid_region']);
+            $table->foreign('fid_animal', 'fk_ar_animal')
+                ->references('id_animal')->on('animaux')
+                ->onDelete('cascade');
+            $table->foreign('fid_region', 'fk_ar_region')
+                ->references('id_region')->on('région')
+                ->onDelete('cascade');
         });
     }
 

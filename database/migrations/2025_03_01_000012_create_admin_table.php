@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('admin', function (Blueprint $table) {
             $table->increments('id_admin');
-            $table->string('pseudo_admin', 50)->unique();
-            $table->string('email_admin', 100)->unique();
+            $table->string('pseudo_admin', 100)->unique();
+            $table->string('email_admin', 255)->unique();
             $table->string('mot_de_passe_admin', 255);
-            $table->string('role', 20)->default('moderateur');
+            $table->string('role', 20)->default('moderateur'); // super_admin | moderateur
         });
     }
 

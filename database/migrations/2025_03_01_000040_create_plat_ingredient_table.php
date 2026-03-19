@@ -11,8 +11,15 @@ return new class extends Migration
         Schema::create('plat_ingredient', function (Blueprint $table) {
             $table->unsignedInteger('fid_plat');
             $table->unsignedInteger('fid_ingredient');
-            $table->unsignedTinyInteger('quantite')->default(1);
+            $table->tinyInteger('quantite')->default(1);
+
             $table->primary(['fid_plat', 'fid_ingredient']);
+            $table->foreign('fid_plat', 'fk_pi_plat')
+                ->references('id_plat')->on('plat')
+                ->onDelete('cascade');
+            $table->foreign('fid_ingredient', 'fk_pi_ingre')
+                ->references('id_ingredient')->on('ingrédient')
+                ->onDelete('cascade');
         });
     }
 

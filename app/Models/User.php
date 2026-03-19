@@ -22,6 +22,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'pseudo',
+        'avatar',
+        'banniere',
+        'bio_joueur',
+        'uid_genshin',
+        'date_inscription',
+        'derniere_connexion',
+        'banni_le',
+        'motif_ban',
     ];
 
     /**

@@ -10,11 +10,17 @@ return new class extends Migration
     {
         Schema::create('amitie', function (Blueprint $table) {
             $table->increments('id_amitie');
-            $table->unsignedInteger('fid_demandeur');
-            $table->unsignedInteger('fid_receveur');
-            $table->string('statut', 20)->default('en_attente');
+            $table->unsignedBigInteger('fid_demandeur');
+            $table->unsignedBigInteger('fid_receveur');
+            $table->string('statut', 20)->default('en_attente'); // en_attente | accepte | refuse
             $table->dateTime('created_at')->useCurrent();
-            $table->unique(['fid_demandeur', 'fid_receveur'], 'uq_amitie');
+
+            $table->foreign('fid_demandeur', 'fk_ami_demandeur')
+                ->references('id')->on('users')
+                ->onDelete('cascade');
+            $table->foreign('fid_receveur', 'fk_ami_receveur')
+                ->references('id')->on('users')
+                ->onDelete('cascade');
         });
     }
 

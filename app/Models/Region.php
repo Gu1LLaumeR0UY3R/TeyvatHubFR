@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -20,9 +19,7 @@ class Region extends Model
     protected static function booted(): void
     {
         static::creating(function ($model) {
-            if (empty($model->slug)) {
-                $model->slug = Str::slug($model->nom_region);
-            }
+            $model->slug = Str::slug($model->nom_region);
         });
     }
 
@@ -34,6 +31,16 @@ class Region extends Model
     public function sousRegions(): HasMany
     {
         return $this->hasMany(SousRegion::class, 'fid_region', 'id_region');
+    }
+
+    public function produits(): HasMany
+    {
+        return $this->hasMany(Produits::class, 'fid_region', 'id_region');
+    }
+
+    public function chronologie(): HasMany
+    {
+        return $this->hasMany(Chronologie::class, 'fid_region', 'id_region')->orderBy('ordre');
     }
 
     public function ennemis(): BelongsToMany

@@ -10,9 +10,13 @@ return new class extends Migration
     {
         Schema::create('constellation', function (Blueprint $table) {
             $table->increments('id_const');
-            $table->string('titre_const', 100);
-            $table->text('descri_const');
+            $table->string('titre_const', 200);
+            $table->text('descri_const')->nullable();
             $table->unsignedInteger('fid_perso');
+
+            $table->foreign('fid_perso', 'fk_const_perso')
+                ->references('id_perso')->on('personnage')
+                ->onDelete('cascade');
         });
     }
 

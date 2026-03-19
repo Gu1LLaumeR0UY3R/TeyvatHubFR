@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Animal;
 use App\Models\TypeAnimal;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class AnimalController extends Controller
 {
@@ -13,22 +13,27 @@ class AnimalController extends Controller
     {
         $query = Animal::with(['typeAnimal', 'photos']);
 
-        if ($request->filled('search')) {
+        if ($request->search) {
             $query->where('nom_animal', 'LIKE', '%' . $request->search . '%');
         }
 
-        if ($request->filled('type')) {
+        if ($request->type) {
             $query->where('fid_TAnimal', $request->type);
         }
 
-        match ($request->sort) {
-            'nom_desc'  => $query->orderBy('nom_animal', 'desc'),
-            'type_asc'  => $query->orderBy('fid_TAnimal', 'asc'),
-            default     => $query->orderBy('nom_animal', 'asc'),
-        };
+        switch ($request->sort) {
+            case 'nom_desc':
+                $query->orderBy('nom_animal', 'desc');
+                break;
+            case 'type':
+                $query->orderBy('fid_TAnimal');
+                break;
+            default:
+                $query->orderBy('nom_animal');
+        }
 
         $animaux = $query->paginate(20)->withQueryString();
-        $types   = TypeAnimal::orderBy('libelle_TAnimal')->get();
+        $types = TypeAnimal::orderBy('libelle_TAnimal')->get();
 
         return view('animaux.index', compact('animaux', 'types'));
     }
@@ -39,7 +44,7 @@ class AnimalController extends Controller
             'typeAnimal',
             'photos',
             'regions.photos',
-            'ingredients',
+            'ingredients.photos',
         ]);
 
         return view('animaux.show', compact('animal'));
