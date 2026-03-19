@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Materiaux;
 use App\Models\TypeMateriaux;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class MateriauxController extends Controller
 {
@@ -13,23 +13,28 @@ class MateriauxController extends Controller
     {
         $query = Materiaux::with(['typeMateriaux', 'rarete', 'photos']);
 
-        if ($request->filled('search')) {
+        if ($request->search) {
             $query->where('nom_mat', 'LIKE', '%' . $request->search . '%');
         }
 
-        if ($request->filled('type')) {
+        if ($request->type) {
             $query->where('fid_typeM', $request->type);
         }
 
         $materiaux = $query->orderBy('nom_mat')->paginate(20)->withQueryString();
-        $types     = TypeMateriaux::orderBy('libelle_TypeM')->get();
+        $types = TypeMateriaux::orderBy('libelle_TypeM')->get();
 
         return view('materiaux.index', compact('materiaux', 'types'));
     }
 
     public function show(Materiaux $materiaux): View
     {
-        $materiaux->load(['typeMateriaux', 'rarete', 'photos', 'ennemis.photos']);
+        $materiaux->load([
+            'typeMateriaux',
+            'rarete',
+            'photos',
+            'ennemis.photos',
+        ]);
 
         return view('materiaux.show', compact('materiaux'));
     }
