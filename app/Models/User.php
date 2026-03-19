@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -54,5 +56,30 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function personnages(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Personnage::class,
+            'joueur_personnage',
+            'fid_joueur',
+            'fid_perso'
+        )->withPivot(['niveau', 'affinite', 'perso_amelioration']);
+    }
+
+    public function armes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Arme::class,
+            'joueur_arme',
+            'fid_joueur',
+            'fid_arme'
+        )->withPivot(['niveau', 'rang']);
+    }
+
+    public function amis(): HasMany
+    {
+        return $this->hasMany(\App\Models\Amitie::class, 'fid_demandeur');
     }
 }
