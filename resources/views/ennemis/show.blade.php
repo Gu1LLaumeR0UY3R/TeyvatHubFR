@@ -40,18 +40,18 @@
         </div>
     @endif
 
-    {{-- Bloc 3 : Régions --}}
-    @if($ennemi->regions->count())
+    {{-- Bloc 3 : Nations --}}
+    @if($ennemi->nations->count())
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
-            <h2 class="text-xl font-bold text-hub-text mb-4">Régions</h2>
+            <h2 class="text-xl font-bold text-hub-text mb-4">Nations</h2>
             <div class="flex flex-wrap gap-3">
-                @foreach($ennemi->regions as $region)
-                    <a href="{{ route('regions.show', $region->slug) }}"
+                @foreach($ennemi->nations as $nation)
+                    <a href="{{ route('nations.show', $nation->slug) }}"
                        class="flex items-center gap-2 px-4 py-2 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $region->photos->first()?->source_url ?? $region->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
-                             alt="{{ $region->nom_region }}"
+                        <img src="{{ $nation->photos->first()?->source_url ?? $nation->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                             alt="{{ $nation->nom_region }}"
                              class="w-8 h-8 rounded object-cover">
-                        <span class="text-hub-text text-sm font-medium">{{ $region->nom_region }}</span>
+                        <span class="text-hub-text text-sm font-medium">{{ $nation->nom_region }}</span>
                     </a>
                 @endforeach
             </div>

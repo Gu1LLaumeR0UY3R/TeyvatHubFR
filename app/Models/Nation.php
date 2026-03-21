@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
-class Region extends Model
+class Nation extends Model
 {
     public $timestamps = false;
     protected $table = 'région';

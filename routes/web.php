@@ -10,7 +10,7 @@ use App\Http\Controllers\PlatController;
 use App\Http\Controllers\AnimalController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\HistoireController;
-use App\Http\Controllers\RegionController;
+use App\Http\Controllers\NationController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OutilsController;
@@ -37,8 +37,8 @@ Route::get('/materiaux/{materiaux}', [MateriauxController::class, 'show'])->name
 Route::get('/ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
 Route::get('/ingredients/{ingredient}', [IngredientController::class, 'show'])->name('ingredients.show');
 Route::get('/histoire', [HistoireController::class, 'index'])->name('histoire.index');
-Route::get('/histoire/regions', [RegionController::class, 'index'])->name('regions.index');
-Route::get('/histoire/regions/{region}', [RegionController::class, 'show'])->name('regions.show');
+Route::get('/histoire/nations', [NationController::class, 'index'])->name('nations.index');
+Route::get('/histoire/nations/{nation}', [NationController::class, 'show'])->name('nations.show');
 
 // Outils publics
 Route::get('/outils/personnage-du-jour', [OutilsController::class, 'personnageDuJour'])->name('outils.personnage-du-jour');
@@ -131,14 +131,14 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.cuisine.update',
             'destroy' => 'admin.cuisine.destroy',
         ]);
-        Route::resource('/regions', \App\Http\Controllers\Admin\RegionController::class)->names([
-            'index'   => 'admin.regions.index',
-            'create'  => 'admin.regions.create',
-            'store'   => 'admin.regions.store',
-            'show'    => 'admin.regions.show',
-            'edit'    => 'admin.regions.edit',
-            'update'  => 'admin.regions.update',
-            'destroy' => 'admin.regions.destroy',
+        Route::resource('/nations', \App\Http\Controllers\Admin\NationController::class)->names([
+            'index'   => 'admin.nations.index',
+            'create'  => 'admin.nations.create',
+            'store'   => 'admin.nations.store',
+            'show'    => 'admin.nations.show',
+            'edit'    => 'admin.nations.edit',
+            'update'  => 'admin.nations.update',
+            'destroy' => 'admin.nations.destroy',
         ]);
         Route::resource('/evenements', \App\Http\Controllers\Admin\EvenementController::class)->names([
             'index'   => 'admin.evenements.index',

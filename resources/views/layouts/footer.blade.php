@@ -29,7 +29,7 @@
                     <li><a href="{{ route('ennemis.index') }}" class="text-sm text-hub-muted hover:text-hub-text transition-colors">Ennemis</a></li>
                     <li><a href="{{ route('animaux.index') }}" class="text-sm text-hub-muted hover:text-hub-text transition-colors">Animaux</a></li>
                     <li><a href="{{ route('histoire.index') }}" class="text-sm text-hub-muted hover:text-hub-text transition-colors">Histoire</a></li>
-                    <li><a href="{{ route('regions.index') }}" class="text-sm text-hub-muted hover:text-hub-text transition-colors">Régions</a></li>
+                    <li><a href="{{ route('nations.index') }}" class="text-sm text-hub-muted hover:text-hub-text transition-colors">Nations</a></li>
                 </ul>
             </div>
 

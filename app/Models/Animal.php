@@ -33,9 +33,9 @@ class Animal extends Model
         return $this->belongsTo(TypeAnimal::class, 'fid_TAnimal', 'id_TAnimal');
     }
 
-    public function regions(): BelongsToMany
+    public function nations(): BelongsToMany
     {
-        return $this->belongsToMany(Region::class, 'animal_region', 'fid_animal', 'fid_region');
+        return $this->belongsToMany(Nation::class, 'animal_region', 'fid_animal', 'fid_region');
     }
 
     public function ingredients(): BelongsToMany

@@ -38,9 +38,9 @@ class Ennemi extends Model
         return $this->belongsTo(Elements::class, 'fid_element', 'id_element');
     }
 
-    public function regions(): BelongsToMany
+    public function nations(): BelongsToMany
     {
-        return $this->belongsToMany(Region::class, 'ennemi_region', 'fid_ennemi', 'fid_region');
+        return $this->belongsToMany(Nation::class, 'ennemi_region', 'fid_ennemi', 'fid_region');
     }
 
     public function materiaux(): BelongsToMany

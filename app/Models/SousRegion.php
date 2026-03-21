@@ -13,9 +13,9 @@ class SousRegion extends Model
 
     protected $fillable = ['nom_sous_region', 'slug', 'description', 'fid_region'];
 
-    public function region(): BelongsTo
+    public function nation(): BelongsTo
     {
-        return $this->belongsTo(Region::class, 'fid_region', 'id_region');
+        return $this->belongsTo(Nation::class, 'fid_region', 'id_region');
     }
 
     public function photos(): MorphMany

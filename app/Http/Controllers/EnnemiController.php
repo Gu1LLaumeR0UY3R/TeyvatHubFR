@@ -50,7 +50,7 @@ class EnnemiController extends Controller
             'typeEnnemi',
             'element',
             'photos',
-            'regions.photos',
+            'nations.photos',
             'materiaux.rarete',
             'materiaux.typeMateriaux',
             'materiaux.photos',

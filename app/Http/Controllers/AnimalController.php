@@ -43,7 +43,7 @@ class AnimalController extends Controller
         $animal->load([
             'typeAnimal',
             'photos',
-            'regions.photos',
+            'nations.photos',
             'ingredients.photos',
         ]);
 

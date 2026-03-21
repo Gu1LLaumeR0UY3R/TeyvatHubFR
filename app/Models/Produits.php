@@ -13,8 +13,8 @@ class Produits extends Model
 
     protected $fillable = ['libelle_produit', 'descri_produit', 'fid_region'];
 
-    public function region(): BelongsTo
+    public function nation(): BelongsTo
     {
-        return $this->belongsTo(Region::class, 'fid_region', 'id_region');
+        return $this->belongsTo(Nation::class, 'fid_region', 'id_region');
     }
 }

@@ -115,7 +115,7 @@
                                 'natlan'    => 'Natlan',
                                 'nod-krai'  => 'Nod-Krai',
                             ] as $slug => $nom)
-                                <a href="{{ route('regions.show', $slug) }}"
+                                <a href="{{ route('nations.show', $slug) }}"
                                    class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
                                     {{ $nom }}
                                 </a>
@@ -187,7 +187,7 @@
                 <a href="{{ route('ingredients.index') }}" class="block py-2 text-sm text-hub-muted hover:text-hub-text pl-4">↳ Ingrédients</a>
                 <a href="{{ route('cuisine.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Cuisine</a>
                 <a href="{{ route('histoire.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Histoire</a>
-                <a href="{{ route('regions.index') }}" class="block py-2 text-sm text-hub-muted hover:text-hub-text pl-4">↳ Régions</a>
+                <a href="{{ route('nations.index') }}" class="block py-2 text-sm text-hub-muted hover:text-hub-text pl-4">↳ Nations</a>
             </nav>
             <div class="px-4 py-3 border-t border-hub-border">
                 @guest

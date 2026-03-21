@@ -26,7 +26,7 @@
         ['label' => 'Animaux', 'count' => $stats['animaux'], 'route' => 'admin.animaux.index'],
         ['label' => 'Plats', 'count' => $stats['plats'], 'route' => 'admin.cuisine.index'],
         ['label' => 'Ingrédients', 'count' => $stats['ingredients'], 'route' => 'admin.cuisine.index'],
-        ['label' => 'Régions', 'count' => $stats['regions'], 'route' => 'admin.regions.index'],
+        ['label' => 'Nations', 'count' => $stats['nations'], 'route' => 'admin.nations.index'],
         ['label' => 'Utilisateurs', 'count' => $stats['utilisateurs'], 'route' => 'admin.utilisateurs.index'],
     ] as $stat)
         <a href="{{ route($stat['route']) }}"
