@@ -11,7 +11,7 @@ class HomeController extends Controller
     public function index(): View
     {
         $derniers_personnages = Personnage::with(['element', 'etoile', 'photos'])
-            ->latest()
+            ->latest('id_perso')
             ->take(6)
             ->get();
 
