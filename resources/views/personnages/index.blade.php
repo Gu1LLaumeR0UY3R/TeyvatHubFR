@@ -23,36 +23,36 @@
 
     {{-- Filtres éléments --}}
     <div class="mb-3 flex flex-wrap gap-2">
-        <button @click="elementFilter = ''"
-                :class="elementFilter === '' ? 'bg-hub-primary text-white' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
+        <button type="button" @click.prevent="elementFilter = ''"
+            :class="elementFilter === '' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
                 class="px-3 py-1 rounded-full text-sm transition-colors">Tous</button>
         @foreach($elements as $el)
-        <button @click="elementFilter = (elementFilter === '{{ $el->libelle_element }}' ? '' : '{{ $el->libelle_element }}')"
-                :class="elementFilter === '{{ $el->libelle_element }}' ? 'bg-hub-primary text-white' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
+        <button type="button" @click.prevent="elementFilter = (elementFilter === '{{ $el->libelle_element }}' ? '' : '{{ $el->libelle_element }}')"
+            :class="elementFilter === '{{ $el->libelle_element }}' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
                 class="px-3 py-1 rounded-full text-sm transition-colors">{{ $el->libelle_element }}</button>
         @endforeach
     </div>
 
     {{-- Filtres rareté --}}
     <div class="mb-3 flex flex-wrap gap-2">
-        <button @click="rareteFilter = ''"
-                :class="rareteFilter === '' ? 'bg-hub-primary text-white' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
+        <button type="button" @click.prevent="rareteFilter = ''"
+            :class="rareteFilter === '' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
                 class="px-3 py-1 rounded-full text-sm transition-colors">Toutes raretés</button>
         @foreach($etoiles as $e)
-        <button @click="rareteFilter = (rareteFilter === '{{ $e->libelle }}' ? '' : '{{ $e->libelle }}')"
-                :class="rareteFilter === '{{ $e->libelle }}' ? 'bg-hub-primary text-white' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
+        <button type="button" @click.prevent="rareteFilter = (rareteFilter === '{{ $e->libelle }}' ? '' : '{{ $e->libelle }}')"
+            :class="rareteFilter === '{{ $e->libelle }}' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
                 class="px-3 py-1 rounded-full text-sm transition-colors">{{ $e->libelle }}</button>
         @endforeach
     </div>
 
     {{-- Filtres type d'arme --}}
     <div class="mb-6 flex flex-wrap gap-2">
-        <button @click="armeFilter = ''"
-                :class="armeFilter === '' ? 'bg-hub-primary text-white' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
+        <button type="button" @click.prevent="armeFilter = ''"
+            :class="armeFilter === '' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
                 class="px-3 py-1 rounded-full text-sm transition-colors">Tous types</button>
         @foreach($typeArmes as $ta)
-        <button @click="armeFilter = (armeFilter === '{{ $ta->libelle_TArme }}' ? '' : '{{ $ta->libelle_TArme }}')"
-                :class="armeFilter === '{{ $ta->libelle_TArme }}' ? 'bg-hub-primary text-white' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
+        <button type="button" @click.prevent="armeFilter = (armeFilter === '{{ $ta->libelle_TArme }}' ? '' : '{{ $ta->libelle_TArme }}')"
+            :class="armeFilter === '{{ $ta->libelle_TArme }}' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
                 class="px-3 py-1 rounded-full text-sm transition-colors">{{ $ta->libelle_TArme }}</button>
         @endforeach
     </div>

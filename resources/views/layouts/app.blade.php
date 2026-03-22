@@ -15,7 +15,7 @@
 <body class="font-sans antialiased bg-hub-bg text-hub-text h-full flex flex-col">
 
     {{-- HEADER --}}
-    <header class="bg-hub-surface border-b border-hub-border sticky top-0 z-50" x-data="{ mobileOpen: false }">
+    <header class="bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm sticky top-0 z-50" x-data="{ mobileOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
 
@@ -32,32 +32,32 @@
 
                     {{-- Personnages --}}
                     <a href="{{ route('personnages.index') }}"
-                       class="px-3 py-2 text-sm font-medium text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover rounded-lg transition-colors duration-150">
+                       class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
                         Personnages
                     </a>
 
                     {{-- Armes --}}
                     <a href="{{ route('armes.index') }}"
-                       class="px-3 py-2 text-sm font-medium text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover rounded-lg transition-colors duration-150">
+                       class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
                         Armes
                     </a>
 
                     {{-- Ennemis + sous-menu --}}
                     <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover rounded-lg transition-colors duration-150">
+                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
                             Ennemis
                             <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
                         <div x-show="open" x-transition
-                             class="absolute top-full left-0 mt-1 w-44 bg-hub-surface border border-hub-border rounded-xl shadow-xl py-1 z-50">
+                             class="absolute top-full left-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50">
                             <a href="{{ route('ennemis.index') }}"
-                               class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
+                               class="block px-4 py-2 text-sm text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors">
                                 Tous les ennemis
                             </a>
                             <a href="{{ route('materiaux.index') }}"
-                               class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
+                               class="block px-4 py-2 text-sm text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors">
                                 Matériaux
                             </a>
                         </div>
@@ -65,20 +65,20 @@
 
                     {{-- Animaux + sous-menu --}}
                     <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover rounded-lg transition-colors duration-150">
+                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
                             Animaux
                             <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
                         <div x-show="open" x-transition
-                             class="absolute top-full left-0 mt-1 w-44 bg-hub-surface border border-hub-border rounded-xl shadow-xl py-1 z-50">
+                             class="absolute top-full left-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50">
                             <a href="{{ route('animaux.index') }}"
-                               class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
+                               class="block px-4 py-2 text-sm text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors">
                                 Tous les animaux
                             </a>
                             <a href="{{ route('ingredients.index') }}"
-                               class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
+                               class="block px-4 py-2 text-sm text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors">
                                 Ingrédients
                             </a>
                         </div>
@@ -86,26 +86,26 @@
 
                     {{-- Cuisine --}}
                     <a href="{{ route('cuisine.index') }}"
-                       class="px-3 py-2 text-sm font-medium text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover rounded-lg transition-colors duration-150">
+                       class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
                         Cuisine
                     </a>
 
                     {{-- Histoire + sous-menu régions --}}
                     <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
-                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover rounded-lg transition-colors duration-150">
+                        <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
                             Histoire
                             <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
                         <div x-show="open" x-transition
-                             class="absolute top-full left-0 mt-1 w-52 bg-hub-surface border border-hub-border rounded-xl shadow-xl py-1 z-50">
+                             class="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50">
                             <a href="{{ route('histoire.index') }}"
-                               class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
+                               class="block px-4 py-2 text-sm text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors">
                                 Histoire de Teyvat
                             </a>
-                            <div class="border-t border-hub-border my-1"></div>
-                            <p class="px-4 py-1 text-xs text-hub-muted uppercase tracking-wider">Régions</p>
+                            <div class="border-t border-slate-200 my-1"></div>
+                            <p class="px-4 py-1 text-xs text-slate-500 uppercase tracking-wider">Régions</p>
                             @foreach([
                                 'mondstadt' => 'Mondstadt',
                                 'liyue'     => 'Liyue',
@@ -116,7 +116,7 @@
                                 'nod-krai'  => 'Nod-Krai',
                             ] as $slug => $nom)
                                 <a href="{{ route('nations.show', $slug) }}"
-                                   class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
+                                   class="block px-4 py-2 text-sm text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors">
                                     {{ $nom }}
                                 </a>
                             @endforeach
@@ -128,7 +128,7 @@
                 <div class="hidden lg:flex items-center gap-3">
                     @guest
                         <a href="{{ route('login') }}"
-                           class="text-sm text-hub-text-sec hover:text-hub-text transition-colors px-3 py-2 rounded-lg hover:bg-hub-surface-hover">
+                           class="text-sm text-slate-700 hover:text-slate-950 transition-colors px-3 py-2 rounded-lg hover:bg-slate-100">
                             Connexion
                         </a>
                         <a href="{{ route('register') }}"
@@ -142,19 +142,19 @@
                                 <span class="w-7 h-7 rounded-full bg-hub-primary flex items-center justify-center text-white text-sm font-bold">
                                     {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}
                                 </span>
-                                <span class="text-sm text-hub-text-sec">{{ Auth::user()->name }}</span>
+                                <span class="text-sm text-slate-700">{{ Auth::user()->name }}</span>
                             </button>
                             <div x-show="open" x-transition
-                                 class="absolute right-0 mt-1 w-44 bg-hub-surface border border-hub-border rounded-xl shadow-xl py-1 z-50">
+                                 class="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50">
                                 <a href="{{ route('profil.index') }}"
-                                   class="block px-4 py-2 text-sm text-hub-text-sec hover:text-hub-text hover:bg-hub-surface-hover transition-colors">
+                                   class="block px-4 py-2 text-sm text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors">
                                     Mon profil
                                 </a>
-                                <div class="border-t border-hub-border my-1"></div>
+                                <div class="border-t border-slate-200 my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit"
-                                            class="w-full text-left px-4 py-2 text-sm text-error hover:bg-hub-surface-hover transition-colors">
+                                            class="w-full text-left px-4 py-2 text-sm text-error hover:bg-slate-100 transition-colors">
                                         Déconnexion
                                     </button>
                                 </form>
@@ -165,7 +165,7 @@
 
                 {{-- Burger Mobile --}}
                 <button @click="mobileOpen = !mobileOpen"
-                        class="lg:hidden p-2 rounded-lg hover:bg-hub-surface-hover transition-colors text-hub-text-sec">
+                        class="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-700">
                     <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
@@ -177,24 +177,24 @@
         </div>
 
         {{-- Menu Mobile --}}
-        <div x-show="mobileOpen" x-transition class="lg:hidden border-t border-hub-border bg-hub-surface">
+        <div x-show="mobileOpen" x-transition class="lg:hidden border-t border-slate-200 bg-white">
             <nav class="px-4 py-3 space-y-1">
-                <a href="{{ route('personnages.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Personnages</a>
-                <a href="{{ route('armes.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Armes</a>
-                <a href="{{ route('ennemis.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Ennemis</a>
-                <a href="{{ route('materiaux.index') }}" class="block py-2 text-sm text-hub-muted hover:text-hub-text pl-4">↳ Matériaux</a>
-                <a href="{{ route('animaux.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Animaux</a>
-                <a href="{{ route('ingredients.index') }}" class="block py-2 text-sm text-hub-muted hover:text-hub-text pl-4">↳ Ingrédients</a>
-                <a href="{{ route('cuisine.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Cuisine</a>
-                <a href="{{ route('histoire.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Histoire</a>
-                <a href="{{ route('nations.index') }}" class="block py-2 text-sm text-hub-muted hover:text-hub-text pl-4">↳ Nations</a>
+                <a href="{{ route('personnages.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Personnages</a>
+                <a href="{{ route('armes.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Armes</a>
+                <a href="{{ route('ennemis.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Ennemis</a>
+                <a href="{{ route('materiaux.index') }}" class="block py-2 text-sm text-slate-500 hover:text-slate-950 pl-4">↳ Matériaux</a>
+                <a href="{{ route('animaux.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Animaux</a>
+                <a href="{{ route('ingredients.index') }}" class="block py-2 text-sm text-slate-500 hover:text-slate-950 pl-4">↳ Ingrédients</a>
+                <a href="{{ route('cuisine.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Cuisine</a>
+                <a href="{{ route('histoire.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Histoire</a>
+                <a href="{{ route('nations.index') }}" class="block py-2 text-sm text-slate-500 hover:text-slate-950 pl-4">↳ Nations</a>
             </nav>
-            <div class="px-4 py-3 border-t border-hub-border">
+            <div class="px-4 py-3 border-t border-slate-200">
                 @guest
-                    <a href="{{ route('login') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Connexion</a>
+                    <a href="{{ route('login') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Connexion</a>
                     <a href="{{ route('register') }}" class="block py-2 text-sm font-semibold text-hub-primary">Inscription</a>
                 @else
-                    <a href="{{ route('profil.index') }}" class="block py-2 text-sm text-hub-text-sec hover:text-hub-text">Mon profil ({{ Auth::user()->name }})</a>
+                    <a href="{{ route('profil.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Mon profil ({{ Auth::user()->name }})</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="block py-2 text-sm text-error">Déconnexion</button>

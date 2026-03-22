@@ -64,9 +64,9 @@
                 @foreach($nations as $nation)
                     <a href="{{ route('nations.show', $nation->slug) }}"
                        class="bg-hub-surface border border-hub-border rounded-2xl p-4 hover:border-hub-primary hover:bg-hub-surface-hover transition-all flex flex-col items-center gap-3">
-                        <img src="{{ $nation->photos->first()?->source_url ?? $nation->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $nation->panorama_url }}"
                              alt="{{ $nation->nom_region }}"
-                             class="w-20 h-20 object-contain">
+                             class="w-full h-32 object-cover rounded">
                         <span class="text-hub-text font-semibold text-center">{{ $nation->nom_region }}</span>
                     </a>
                 @endforeach

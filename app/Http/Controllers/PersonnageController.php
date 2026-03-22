@@ -46,7 +46,12 @@ class PersonnageController extends Controller
 
         $personnages = $query->get();
         $elements    = Elements::orderBy('libelle_element')->get();
-        $etoiles     = Etoile::orderBy('id_etoile')->get();
+        $etoiles     = Etoile::query()
+            ->select('libelle')
+            ->whereIn('libelle', ['4★', '5★'])
+            ->distinct()
+            ->orderBy('libelle')
+            ->get();
         $typeArmes   = TypeArme::orderBy('libelle_TArme')->get();
 
         return view('personnages.index', compact('personnages', 'elements', 'etoiles', 'typeArmes'));

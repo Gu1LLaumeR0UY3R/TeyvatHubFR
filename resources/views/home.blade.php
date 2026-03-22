@@ -17,8 +17,8 @@
                     Personnages, armes, ennemis, cuisine, régions — tout ce qu'il faut savoir sur le monde de Teyvat.
                 </p>
                 <div class="mt-8 flex flex-wrap gap-4">
-                    <a href="{{ route('personnages.index') }}"
-                       class="px-6 py-3 bg-hub-primary hover:bg-hub-primary/80 text-white font-semibold rounded-xl transition-colors duration-150 shadow-lg">
+                          <a href="{{ route('personnages.index') }}"
+                              class="px-6 py-3 bg-hub-primary hover:bg-hub-primary/80 text-black font-semibold rounded-xl transition-colors duration-150 shadow-lg">
                         Explorer
                     </a>
                     @guest

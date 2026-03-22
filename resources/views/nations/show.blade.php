@@ -12,7 +12,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
             <div class="flex-shrink-0">
-                <img src="{{ $nation->full_image_url }}"
+                <img src="{{ $nation->icone_url }}"
                      alt="{{ $nation->nom_region }}"
                      class="w-40 h-40 rounded-xl object-contain">
             </div>
