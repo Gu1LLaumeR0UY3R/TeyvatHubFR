@@ -47,4 +47,24 @@ class Animal extends Model
     {
         return $this->morphMany(Photo::class, 'photoable');
     }
+
+    public function getIconeUrlAttribute(): string
+    {
+        $photo = $this->photos->first();
+        if (!$photo) {
+            return asset('images/placeholder.webp');
+        }
+        if ($photo->source_url) {
+            return $photo->source_url;
+        }
+        if (filter_var($photo->chemin_photo, FILTER_VALIDATE_URL)) {
+            return $photo->chemin_photo;
+        }
+        return \Illuminate\Support\Facades\Storage::url($photo->chemin_photo);
+    }
+
+    public function getFullImageUrlAttribute(): string
+    {
+        return $this->icone_url;
+    }
 }

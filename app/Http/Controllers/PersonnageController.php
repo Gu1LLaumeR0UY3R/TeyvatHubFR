@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Elements;
 use App\Models\Etoile;
 use App\Models\Personnage;
+use App\Models\TypeArme;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -12,7 +13,7 @@ class PersonnageController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Personnage::with(['element', 'etoile', 'photos']);
+        $query = Personnage::with(['element', 'etoile', 'typeArme', 'photos']);
 
         if ($request->search) {
             $query->where('nom_perso', 'LIKE', '%' . $request->search . '%');
@@ -43,11 +44,12 @@ class PersonnageController extends Controller
                 $query->orderBy('nom_perso');
         }
 
-        $personnages = $query->paginate(20)->withQueryString();
-        $elements = Elements::orderBy('libelle_element')->get();
-        $etoiles = Etoile::orderBy('id_etoile')->get();
+        $personnages = $query->get();
+        $elements    = Elements::orderBy('libelle_element')->get();
+        $etoiles     = Etoile::orderBy('id_etoile')->get();
+        $typeArmes   = TypeArme::orderBy('libelle_TArme')->get();
 
-        return view('personnages.index', compact('personnages', 'elements', 'etoiles'));
+        return view('personnages.index', compact('personnages', 'elements', 'etoiles', 'typeArmes'));
     }
 
     public function show(Personnage $personnage): View

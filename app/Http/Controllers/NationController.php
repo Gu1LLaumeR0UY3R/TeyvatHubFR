@@ -11,7 +11,7 @@ class NationController extends Controller
     {
         $nations = Nation::with('photos')->orderBy('nom_region')->get();
 
-        return view('histoire.nations.index', compact('nations'));
+        return view('nations.index', compact('nations'));
     }
 
     public function show(Nation $nation): View
@@ -24,6 +24,6 @@ class NationController extends Controller
             'produits',
         ]);
 
-        return view('histoire.nations.show', compact('nation'));
+        return view('nations.show', compact('nation'));
     }
 }

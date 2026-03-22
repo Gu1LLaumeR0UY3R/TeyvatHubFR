@@ -43,8 +43,8 @@ class ArmeController extends Controller
                 $query->orderBy('nom_arme');
         }
 
-        $armes = $query->paginate(20)->withQueryString();
-        $types = TypeArme::orderBy('libelle_TArme')->get();
+        $armes   = $query->get();
+        $types   = TypeArme::orderBy('libelle_TArme')->get();
         $etoiles = Etoile::orderBy('id_etoile')->get();
 
         return view('armes.index', compact('armes', 'types', 'etoiles'));

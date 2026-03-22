@@ -16,9 +16,7 @@ class NationFactory extends Factory
         return [
             'nom_region'    => $nom,
             'slug'          => Str::slug($nom),
-            'description'   => $this->faker->paragraph(),
-            'latitude'      => $this->faker->latitude(),
-            'longitude'     => $this->faker->longitude(),
+            'descri_region' => $this->faker->paragraph(),
         ];
     }
 }

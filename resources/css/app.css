@@ -1,3 +1,48 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== DESIGN SYSTEM — CARDS ===== */
+:root {
+    /* Bordures par rareté */
+    --border-1star: #6b7280;
+    --border-2star: #16a34a;
+    --border-3star: #2563eb;
+    --border-4star: #9333ea;
+    --border-5star: #f59e0b;
+
+    /* Couleurs par élément */
+    --color-pyro: #ff4d1c;
+    --color-hydro: #1c96ff;
+    --color-cryo: #98e8f0;
+    --color-electro: #b46cff;
+    --color-dendro: #67c23a;
+    --color-anemo: #3dc8a5;
+    --color-geo: #f0b232;
+}
+
+/* Classes d'élément */
+.element-pyro    { --element-color: var(--color-pyro); }
+.element-hydro   { --element-color: var(--color-hydro); }
+.element-cryo    { --element-color: var(--color-cryo); }
+.element-electro { --element-color: var(--color-electro); }
+.element-dendro  { --element-color: var(--color-dendro); }
+.element-anemo   { --element-color: var(--color-anemo); }
+.element-geo     { --element-color: var(--color-geo); }
+
+/* Classes de rareté */
+.rarity-1 { --rarity-border: var(--border-1star); }
+.rarity-2 { --rarity-border: var(--border-2star); }
+.rarity-3 { --rarity-border: var(--border-3star); }
+.rarity-4 { --rarity-border: var(--border-4star); }
+.rarity-5 { --rarity-border: var(--border-5star); }
+
+/* Composant card — bordure + hover uniforme */
+.card-entity {
+    border: 2px solid var(--rarity-border, #4b5563);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-entity:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px var(--element-color, rgba(255,255,255,0.15));
+}

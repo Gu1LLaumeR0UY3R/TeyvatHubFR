@@ -15,6 +15,9 @@ use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OutilsController;
 use App\Http\Controllers\AmiController;
+use App\Http\Controllers\RoulettePersonnageController;
+use App\Http\Controllers\RouletteTeamController;
+use App\Http\Controllers\MotusController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use Illuminate\Support\Facades\Route;
@@ -37,8 +40,15 @@ Route::get('/materiaux/{materiaux}', [MateriauxController::class, 'show'])->name
 Route::get('/ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
 Route::get('/ingredients/{ingredient}', [IngredientController::class, 'show'])->name('ingredients.show');
 Route::get('/histoire', [HistoireController::class, 'index'])->name('histoire.index');
-Route::get('/histoire/nations', [NationController::class, 'index'])->name('nations.index');
-Route::get('/histoire/nations/{nation}', [NationController::class, 'show'])->name('nations.show');
+Route::get('/nations', [NationController::class, 'index'])->name('nations.index');
+Route::get('/nations/{nation}', [NationController::class, 'show'])->name('nations.show');
+// Alias legacy
+Route::get('/histoire/nations', fn() => redirect()->route('nations.index'));
+Route::get('/histoire/nations/{nation}', fn(string $nation) => redirect()->route('nations.show', $nation));
+
+// Jeux publics
+Route::get('/jeux/motus', [MotusController::class, 'index'])->name('jeux.motus');
+Route::post('/jeux/motus/valider', [MotusController::class, 'valider'])->name('jeux.motus.valider');
 
 // Outils publics
 Route::get('/outils/personnage-du-jour', [OutilsController::class, 'personnageDuJour'])->name('outils.personnage-du-jour');
@@ -72,6 +82,10 @@ Route::middleware('auth')->prefix('profil')->group(function () {
 Route::middleware('auth')->prefix('outils')->group(function () {
     Route::get('/roulette', [OutilsController::class, 'roulette'])->name('outils.roulette');
     Route::patch('/roulette/sauvegarder', [OutilsController::class, 'rouletteSauvegarder'])->name('outils.roulette.sauvegarder');
+    Route::get('/roulette-personnage', [RoulettePersonnageController::class, 'index'])->name('outils.roulette-personnage');
+    Route::post('/roulette-personnage/confirmer', [RoulettePersonnageController::class, 'confirmer'])->name('outils.roulette-personnage.confirmer');
+    Route::get('/roulette-team', [RouletteTeamController::class, 'index'])->name('outils.roulette-team');
+    Route::post('/roulette-team/generer', [RouletteTeamController::class, 'generer'])->name('outils.roulette-team.generer');
     Route::get('/team', [OutilsController::class, 'team'])->name('outils.team');
     Route::post('/team/generer', [OutilsController::class, 'teamGenerer'])->name('outils.team.generer');
     Route::get('/comparateur', [OutilsController::class, 'comparateur'])->name('outils.comparateur');

@@ -78,11 +78,13 @@ class Issue33HistoireNationControllerTest extends TestCase
         $this->get(route('nations.show', 'introuvable'))->assertStatus(404);
     }
 
-    // Critère 9 : accès par id retourne 404
+    // Critère 9 : accès par id retourne 404 (en suivant la redirection)
     public function test_acces_par_id_retourne_404(): void
     {
         $nation = $this->makeNation();
-        $this->get('/histoire/nations/' . $nation->id_region)->assertStatus(404);
+        $this->followingRedirects()
+             ->get('/histoire/nations/' . $nation->id_region)
+             ->assertStatus(404);
     }
 
     // Critère 10 : pages accessibles sans connexion
