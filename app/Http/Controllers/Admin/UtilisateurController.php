@@ -12,8 +12,34 @@ class UtilisateurController extends Controller
 {
     public function index(): View
     {
-        $utilisateurs = User::orderBy('name')->paginate(20);
-        return view('admin.utilisateurs.index', compact('utilisateurs'));
+        $sort = request('sort', 'nom_asc');
+
+        $utilisateursQuery = User::query();
+
+        switch ($sort) {
+            case 'nom_desc':
+                $utilisateursQuery->orderByDesc('name');
+                break;
+            case 'email_asc':
+                $utilisateursQuery->orderBy('email');
+                break;
+            case 'email_desc':
+                $utilisateursQuery->orderByDesc('email');
+                break;
+            case 'status_asc':
+                $utilisateursQuery->orderBy('banni_le');
+                break;
+            case 'status_desc':
+                $utilisateursQuery->orderByDesc('banni_le');
+                break;
+            case 'nom_asc':
+            default:
+                $utilisateursQuery->orderBy('name');
+                break;
+        }
+
+        $utilisateurs = $utilisateursQuery->paginate(20)->withQueryString();
+        return view('admin.utilisateurs.index', compact('utilisateurs', 'sort'));
     }
 
     public function create(): View
@@ -81,5 +107,25 @@ class UtilisateurController extends Controller
         $utilisateur->update(['banni_le' => null]);
         return redirect()->route('admin.utilisateurs.index')
             ->with('success', 'Ban levé.');
+    }
+
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Aucun utilisateur sélectionné.');
+        }
+
+        $data = $request->validate([
+            'action' => ['required', 'in:bannir,debannir'],
+        ]);
+
+        if ($data['action'] === 'bannir') {
+            User::whereIn('id', $ids)->update(['banni_le' => now()]);
+            return back()->with('success', count($ids) . ' utilisateur(s) banni(s).');
+        }
+
+        User::whereIn('id', $ids)->update(['banni_le' => null]);
+        return back()->with('success', count($ids) . ' utilisateur(s) débanni(s).');
     }
 }

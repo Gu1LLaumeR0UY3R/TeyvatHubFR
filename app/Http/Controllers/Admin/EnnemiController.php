@@ -14,9 +14,37 @@ class EnnemiController extends Controller
 {
     public function index(): View
     {
-        $ennemis = Ennemi::with(['typeEnnemi', 'photos'])
-            ->orderBy('nom_ennemi')->paginate(20);
-        return view('admin.ennemis.index', compact('ennemis'));
+        $sort = request('sort', 'nom_asc');
+
+        $ennemisQuery = Ennemi::query()->with(['typeEnnemi', 'element', 'photos']);
+
+        switch ($sort) {
+            case 'nom_desc':
+                $ennemisQuery->orderByDesc('nom_ennemi');
+                break;
+            case 'type_asc':
+                $ennemisQuery->orderBy('fid_typeEnne');
+                break;
+            case 'type_desc':
+                $ennemisQuery->orderByDesc('fid_typeEnne');
+                break;
+            case 'element_asc':
+                $ennemisQuery->orderBy('fid_element');
+                break;
+            case 'element_desc':
+                $ennemisQuery->orderByDesc('fid_element');
+                break;
+            case 'nom_asc':
+            default:
+                $ennemisQuery->orderBy('nom_ennemi');
+                break;
+        }
+
+        $ennemis = $ennemisQuery->paginate(20)->withQueryString();
+        $typesEnnemi = TypeEnnemi::all();
+        $elements = Elements::all();
+
+        return view('admin.ennemis.index', compact('ennemis', 'typesEnnemi', 'elements', 'sort'));
     }
 
     public function create(): View
@@ -89,5 +117,27 @@ class EnnemiController extends Controller
         $ennemi->delete();
         return redirect()->route('admin.ennemis.index')
             ->with('success', 'Ennemi supprimé.');
+    }
+
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Aucun ennemi sélectionné.');
+        }
+
+        $data = $request->validate([
+            'fid_typeEnne' => ['nullable', 'exists:type_ennemi,id_typeEnnemi'],
+            'fid_element' => ['nullable', 'exists:elements,id_element'],
+        ]);
+
+        $data = array_filter($data, fn($v) => $v !== null);
+        if (empty($data)) {
+            return back()->with('error', 'Aucune modification à appliquer.');
+        }
+
+        Ennemi::whereIn('id_ennemi', $ids)->update($data);
+
+        return back()->with('success', count($ids) . ' ennemi(s) mis à jour.');
     }
 }

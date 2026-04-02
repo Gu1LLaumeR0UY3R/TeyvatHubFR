@@ -13,9 +13,30 @@ class CuisineController extends Controller
 {
     public function index(): View
     {
-        $plats = Plat::with(['rarete', 'photos'])
-            ->orderBy('nom_plat')->paginate(20);
-        return view('admin.cuisine.index', compact('plats'));
+        $sort = request('sort', 'nom_asc');
+
+        $platsQuery = Plat::query()->with(['rarete', 'photos']);
+
+        switch ($sort) {
+            case 'nom_desc':
+                $platsQuery->orderByDesc('nom_plat');
+                break;
+            case 'rarete_asc':
+                $platsQuery->orderBy('fid_rareté');
+                break;
+            case 'rarete_desc':
+                $platsQuery->orderByDesc('fid_rareté');
+                break;
+            case 'nom_asc':
+            default:
+                $platsQuery->orderBy('nom_plat');
+                break;
+        }
+
+        $plats = $platsQuery->paginate(20)->withQueryString();
+        $raretes = Rarete::all();
+
+        return view('admin.cuisine.index', compact('plats', 'raretes', 'sort'));
     }
 
     public function create(): View
@@ -86,5 +107,26 @@ class CuisineController extends Controller
         $plat->delete();
         return redirect()->route('admin.cuisine.index')
             ->with('success', 'Plat supprimé.');
+    }
+
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Aucun plat sélectionné.');
+        }
+
+        $data = $request->validate([
+            'fid_rareté' => ['nullable', 'exists:rareté,id_rareté'],
+        ]);
+
+        $data = array_filter($data, fn($v) => $v !== null);
+        if (empty($data)) {
+            return back()->with('error', 'Aucune modification à appliquer.');
+        }
+
+        Plat::whereIn('id_plat', $ids)->update($data);
+
+        return back()->with('success', count($ids) . ' plat(s) mis à jour.');
     }
 }

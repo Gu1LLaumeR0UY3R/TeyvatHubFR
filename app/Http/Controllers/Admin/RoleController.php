@@ -12,8 +12,28 @@ class RoleController extends Controller
 {
     public function index(): View
     {
-        $roles = Role::withCount('personnages')->orderBy('nom_role')->paginate(20);
-        return view('admin.roles.index', compact('roles'));
+        $sort = request('sort', 'libelle_asc');
+
+        $rolesQuery = Role::query()->withCount('personnages');
+
+        switch ($sort) {
+            case 'libelle_desc':
+                $rolesQuery->orderByDesc('libelle_role');
+                break;
+            case 'count_asc':
+                $rolesQuery->orderBy('personnages_count');
+                break;
+            case 'count_desc':
+                $rolesQuery->orderByDesc('personnages_count');
+                break;
+            case 'libelle_asc':
+            default:
+                $rolesQuery->orderBy('libelle_role');
+                break;
+        }
+
+        $roles = $rolesQuery->paginate(20)->withQueryString();
+        return view('admin.roles.index', compact('roles', 'sort'));
     }
 
     public function create(): View
@@ -63,5 +83,26 @@ class RoleController extends Controller
         $role->delete();
         return redirect()->route('admin.roles.index')
             ->with('success', 'Rôle supprimé.');
+    }
+
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Aucun rôle sélectionné.');
+        }
+
+        $data = $request->validate([
+            'descri_role' => ['nullable', 'string'],
+        ]);
+
+        $data = array_filter($data, fn($v) => $v !== null && $v !== '');
+        if (empty($data)) {
+            return back()->with('error', 'Aucune modification à appliquer.');
+        }
+
+        Role::whereIn('id_role', $ids)->update($data);
+
+        return back()->with('success', count($ids) . ' rôle(s) mis à jour.');
     }
 }

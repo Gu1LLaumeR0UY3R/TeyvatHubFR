@@ -10,10 +10,29 @@ use Illuminate\View\View;
 
 class NationController extends Controller
 {
+    private function indexRouteName(): string
+    {
+        return request()->routeIs('admin.regions.*') ? 'admin.regions.index' : 'admin.nations.index';
+    }
+
     public function index(): View
     {
-        $nations = Nation::with(['photos'])->orderBy('nom_region')->paginate(20);
-        return view('admin.nations.index', compact('nations'));
+        $sort = request('sort', 'nom_asc');
+
+        $nationsQuery = Nation::query()->with(['photos']);
+
+        switch ($sort) {
+            case 'nom_desc':
+                $nationsQuery->orderByDesc('nom_region');
+                break;
+            case 'nom_asc':
+            default:
+                $nationsQuery->orderBy('nom_region');
+                break;
+        }
+
+        $nations = $nationsQuery->paginate(20)->withQueryString();
+        return view('admin.nations.index', compact('nations', 'sort'));
     }
 
     public function create(): View
@@ -32,10 +51,10 @@ class NationController extends Controller
 
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('photos/regions', 'public');
-            $region->photos()->create(['chemin_photo' => $path, 'source_url' => null]);
+            $nation->photos()->create(['chemin_photo' => $path, 'source_url' => null]);
         }
 
-        return redirect()->route('admin.nations.index')
+        return redirect()->route($this->indexRouteName())
             ->with('success', 'Nation créée avec succès.');
     }
 
@@ -71,14 +90,35 @@ class NationController extends Controller
             $nation->photos()->create(['chemin_photo' => $path, 'source_url' => null]);
         }
 
-        return redirect()->route('admin.nations.index')
+        return redirect()->route($this->indexRouteName())
             ->with('success', 'Nation mise à jour.');
     }
 
     public function destroy(Nation $nation): RedirectResponse
     {
         $nation->delete();
-        return redirect()->route('admin.regions.index')
+        return redirect()->route($this->indexRouteName())
             ->with('success', 'Région supprimée.');
+    }
+
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Aucune nation sélectionnée.');
+        }
+
+        $data = $request->validate([
+            'descri_region' => ['nullable', 'string'],
+        ]);
+
+        $data = array_filter($data, fn($v) => $v !== null && $v !== '');
+        if (empty($data)) {
+            return back()->with('error', 'Aucune modification à appliquer.');
+        }
+
+        Nation::whereIn('id_region', $ids)->update($data);
+
+        return back()->with('success', count($ids) . ' nation(s) mise(s) à jour.');
     }
 }
