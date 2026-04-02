@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Evenement;
 use App\Models\Photo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
@@ -17,7 +18,7 @@ class Issue5EvenementTest extends TestCase
     public function test_migration_evenements_execute_sans_erreur(): void
     {
         // Si RefreshDatabase passe, la migration s'est exécutée
-        $this->assertTrue(\Schema::hasTable('evenement'));
+        $this->assertTrue(Schema::hasTable('evenement'));
     }
 
     public function test_modele_evenement_existe(): void
@@ -62,7 +63,7 @@ class Issue5EvenementTest extends TestCase
         $evt = Evenement::factory()->create();
         $evt->photos()->create(['chemin_photo' => 'test.jpg', 'source_url' => null]);
         $photo = Photo::first();
-        $this->assertEquals(Evenement::class, $photo->photoable_type);
+        $this->assertEquals('evenement', $photo->photoable_type);
     }
 
     public function test_fillable_colonnes(): void
@@ -75,10 +76,10 @@ class Issue5EvenementTest extends TestCase
 
     public function test_table_a_colonnes_requises(): void
     {
-        $this->assertTrue(\Schema::hasColumn('evenement', 'titre'));
-        $this->assertTrue(\Schema::hasColumn('evenement', 'descri_courte'));
-        $this->assertTrue(\Schema::hasColumn('evenement', 'description'));
-        $this->assertTrue(\Schema::hasColumn('evenement', 'date_debut'));
-        $this->assertTrue(\Schema::hasColumn('evenement', 'date_fin'));
+        $this->assertTrue(Schema::hasColumn('evenement', 'titre'));
+        $this->assertTrue(Schema::hasColumn('evenement', 'descri_courte'));
+        $this->assertTrue(Schema::hasColumn('evenement', 'description'));
+        $this->assertTrue(Schema::hasColumn('evenement', 'date_debut'));
+        $this->assertTrue(Schema::hasColumn('evenement', 'date_fin'));
     }
 }
