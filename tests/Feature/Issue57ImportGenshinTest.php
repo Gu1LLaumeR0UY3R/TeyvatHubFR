@@ -28,12 +28,13 @@ class Issue57ImportGenshinTest extends TestCase
                 ['name' => 'Pyro', 'icon_url' => 'https://cdn.example.com/pyro.webp'],
                 ['name' => 'Électro', 'icon_url' => 'https://cdn.example.com/electro.webp'],
             ], 200),
+            'https://teyvat-dev.vercel.app/api/regions*' => Http::response([], 200),
             'https://teyvat-dev.vercel.app/api/weapons*' => Http::response([
                 [
                     'name'        => 'Aquila Favonia',
                     'rarity'      => 5,
                     'icon_url'    => 'https://cdn.example.com/aquila.webp',
-                    'weapon_type' => ['name' => 'Épée', 'icon_url' => 'https://cdn.example.com/sword.webp'],
+                    'type'        => ['name' => 'Épée', 'icon_url' => 'https://cdn.example.com/sword.webp'],
                 ],
             ], 200),
             'https://teyvat-dev.vercel.app/api/characters*' => Http::response([
@@ -45,6 +46,7 @@ class Issue57ImportGenshinTest extends TestCase
                     'weapon_type' => ['name' => 'Épée'],
                 ],
             ], 200),
+            'https://teyvat-dev.vercel.app/api/materials*' => Http::response([], 200),
         ]);
     }
 

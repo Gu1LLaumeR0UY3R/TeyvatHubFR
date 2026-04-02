@@ -31,11 +31,11 @@ class Issue58ImportGenshinCommandTest extends TestCase
         $responses = array_merge($defaults, $options);
         
         Http::fake([
-            'teyvat-dev.vercel.app/api/elements' => Http::response($responses['elements'], 200),
-            'teyvat-dev.vercel.app/api/regions' => Http::response($responses['regions'], 200),
-            'teyvat-dev.vercel.app/api/weapons' => Http::response($responses['weapons'], 200),
-            'teyvat-dev.vercel.app/api/characters' => Http::response($responses['characters'], 200),
-            'teyvat-dev.vercel.app/api/materials' => Http::response($responses['materials'], 200),
+            'https://teyvat-dev.vercel.app/api/elements*' => Http::response($responses['elements'], 200),
+            'https://teyvat-dev.vercel.app/api/regions*' => Http::response($responses['regions'], 200),
+            'https://teyvat-dev.vercel.app/api/weapons*' => Http::response($responses['weapons'], 200),
+            'https://teyvat-dev.vercel.app/api/characters*' => Http::response($responses['characters'], 200),
+            'https://teyvat-dev.vercel.app/api/materials*' => Http::response($responses['materials'], 200),
         ]);
     }
 
@@ -108,7 +108,7 @@ class Issue58ImportGenshinCommandTest extends TestCase
                 ['id' => 1, 'name' => 'Sword 1', 'type' => ['id' => 1, 'name' => 'Sword', 'icon_url' => ''], 'rarity' => 3, 'icon_url' => ''],
             ],
             'characters' => [
-                ['id' => 1, 'name' => 'Hu Tao', 'rarity' => 5, 'element' => ['id' => 1, 'name' => 'Pyro', 'icon_url' => ''], 'icon_url' => 'https://example.com/hutao.png'],
+                ['id' => 1, 'name' => 'Hu Tao', 'rarity' => 5, 'element' => ['id' => 1, 'name' => 'Pyro', 'icon_url' => ''], 'weapon_type' => ['name' => 'Sword'], 'icon_url' => 'https://example.com/hutao.png'],
             ],
         ]);
 
@@ -180,7 +180,7 @@ class Issue58ImportGenshinCommandTest extends TestCase
                 ['id' => 2, 'name' => 'Polearm2', 'type' => ['id' => 4, 'name' => 'Polearm', 'icon_url' => ''], 'rarity' => 3, 'icon_url' => ''],
             ],
             'characters' => [
-                ['id' => 1, 'name' => 'Test Char', 'rarity' => 5, 'element' => ['id' => 1, 'name' => 'Pyro', 'icon_url' => ''], 'icon_url' => ''],
+                ['id' => 1, 'name' => 'Test Char', 'rarity' => 5, 'element' => ['id' => 1, 'name' => 'Pyro', 'icon_url' => ''], 'weapon_type' => ['name' => 'Sword'], 'icon_url' => ''],
             ],
         ]);
 

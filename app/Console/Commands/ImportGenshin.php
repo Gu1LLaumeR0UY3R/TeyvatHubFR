@@ -126,7 +126,7 @@ class ImportGenshin extends Command
         $this->info('🔄 Import des types d\'armes…');
         $weapons = Http::timeout(15)->get("{$base}/weapons")->json() ?? [];
         $types = collect($weapons)
-            ->pluck('type.name')
+            ->map(fn($w) => $w['weapon_type']['name'] ?? $w['type']['name'] ?? null)
             ->filter(fn($t) => !empty($t))
             ->unique()
             ->values();
@@ -153,7 +153,7 @@ class ImportGenshin extends Command
         foreach ($weapons as $w) {
             $arme = Arme::firstOrNew(['slug' => Str::slug($w['name'])]);
             
-            $typeName = $w['type']['name'] ?? null;
+            $typeName = $w['weapon_type']['name'] ?? $w['type']['name'] ?? null;
             if (empty($typeName)) {
                 $this->warn("⚠️  Arme '{$w['name']}' n'a pas de type d'arme, ignorée");
                 continue;

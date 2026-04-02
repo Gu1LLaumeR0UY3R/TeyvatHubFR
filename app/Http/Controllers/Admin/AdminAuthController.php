@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use RuntimeException;
 
 class AdminAuthController extends Controller
 {
@@ -29,7 +30,18 @@ class AdminAuthController extends Controller
 
         $admin = Admin::where('email_admin', $request->email)->first();
 
-        if (!$admin || !Hash::check($request->password, $admin->mot_de_passe_admin)) {
+        if (!$admin) {
+            return back()->withErrors(['email' => 'Identifiants incorrects.'])->withInput();
+        }
+
+        try {
+            $validPassword = Hash::check($request->password, $admin->mot_de_passe_admin);
+        } catch (RuntimeException $exception) {
+            // If a legacy/plain hash is stored, fail login gracefully instead of throwing a 500.
+            $validPassword = false;
+        }
+
+        if (! $validPassword) {
             return back()->withErrors(['email' => 'Identifiants incorrects.'])->withInput();
         }
 

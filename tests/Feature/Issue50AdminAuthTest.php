@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -35,6 +36,24 @@ class Issue50AdminAuthTest extends TestCase
             'email'    => 'admin@teyvathub.fr',
             'password' => 'mauvais_mdp',
         ])->assertSessionHasErrors('email');
+    }
+
+    // Régression : un hash legacy/non-Bcrypt ne doit pas provoquer une 500
+    public function test_login_admin_legacy_hash_ne_provoque_pas_500(): void
+    {
+        DB::table('admin')->insert([
+            'pseudo_admin' => 'LegacyAdmin',
+            'email_admin' => 'legacy@teyvathub.fr',
+            'mot_de_passe_admin' => 'legacy_plaintext_password',
+            'role' => 'superadmin',
+        ]);
+
+        $this->post(route('admin.authenticate'), [
+            'email' => 'legacy@teyvathub.fr',
+            'password' => 'legacy_plaintext_password',
+        ])
+            ->assertStatus(302)
+            ->assertSessionHasErrors('email');
     }
 
     // Critère 3 : login valide redirige vers dashboard
