@@ -3,7 +3,8 @@
 
     <h1 class="text-2xl font-bold text-hub-gold mb-6">Nouveau personnage</h1>
 
-    <form action="{{ route('admin.personnages.store') }}" method="POST" enctype="multipart/form-data" class="max-w-lg space-y-4">
+    <form action="{{ route('admin.personnages.store') }}" method="POST" enctype="multipart/form-data" class="max-w-lg space-y-4"
+          x-data="{ elementSelected: '{{ old('fid_element') }}' }">
         @csrf
 
         <div>
@@ -14,20 +15,44 @@
         </div>
 
         <div>
-            <label class="block text-hub-text-sec mb-1">Élément</label>
-            <select name="fid_element" class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text">
-                <option value="">— Aucun —</option>
+            <label class="block text-hub-text-sec mb-2">Élément</label>
+            {{-- Champ caché pour le submit --}}
+            <input type="hidden" name="fid_element" x-model="elementSelected">
+            <div class="flex flex-wrap gap-2">
+                <button type="button" @click="elementSelected = ''"
+                    :class="elementSelected === '' ? 'ring-2 ring-hub-gold opacity-100' : 'opacity-50 hover:opacity-80'"
+                    class="flex flex-col items-center gap-1 p-2 rounded-lg bg-hub-surface border border-hub-border transition-all duration-150">
+                    <span class="w-8 h-8 flex items-center justify-center text-hub-text-sec text-xs">—</span>
+                    <span class="text-xs text-hub-text-sec">Aucun</span>
+                </button>
                 @foreach($elements as $el)
-                    <option value="{{ $el->id_element }}" {{ old('fid_element') == $el->id_element ? 'selected' : '' }}>{{ $el->libelle_element }}</option>
+                    @php
+                        $photo   = $el->photos->first();
+                        $iconUrl = $photo?->source_url
+                            ?? ($photo && !filter_var($photo->chemin_photo, FILTER_VALIDATE_URL)
+                                ? asset('storage/'.$photo->chemin_photo)
+                                : ($photo?->chemin_photo ?? null))
+                            ?? asset('images/placeholder.svg');
+                    @endphp
+                    <button type="button" @click="elementSelected = '{{ $el->id_element }}'"
+                        :class="elementSelected === '{{ $el->id_element }}' ? 'ring-2 ring-hub-gold opacity-100 scale-110' : 'opacity-50 hover:opacity-80'"
+                        class="flex flex-col items-center gap-1 p-2 rounded-lg bg-hub-surface border border-hub-border transition-all duration-150"
+                        title="{{ $el->libelle_element }}">
+                        <img src="{{ $iconUrl }}" alt="{{ $el->libelle_element }}" class="w-8 h-8 object-contain">
+                        <span class="text-xs text-hub-text">{{ $el->libelle_element }}</span>
+                    </button>
                 @endforeach
-            </select>
+            </div>
         </div>
 
         <div>
             <label class="block text-hub-text-sec mb-1">Rareté</label>
             <select name="fid_etoile" required class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text">
                 @foreach($etoiles as $etoile)
-                    <option value="{{ $etoile->id_etoile }}" {{ old('fid_etoile') == $etoile->id_etoile ? 'selected' : '' }}>{{ $etoile->libelle }}</option>
+                    @php $nb = (int) preg_replace('/[^0-9]/', '', $etoile->libelle); @endphp
+                    <option value="{{ $etoile->id_etoile }}" {{ old('fid_etoile') == $etoile->id_etoile ? 'selected' : '' }}>
+                        {{ str_repeat('★', $nb) }} ({{ $nb }}★)
+                    </option>
                 @endforeach
             </select>
         </div>
@@ -52,8 +77,15 @@
         </div>
 
         <div>
-            <label class="block text-hub-text-sec mb-1">Photo</label>
-            <input type="file" name="photo" accept="image/*" class="text-hub-text">
+            <label class="block text-hub-text-sec mb-1">Icône (carte &amp; grille)</label>
+            <p class="text-xs text-hub-text-sec mb-1">Image carrée 256×256 recommandée.</p>
+            <input type="file" name="photo_icone" accept="image/*" class="text-hub-text">
+        </div>
+
+        <div>
+            <label class="block text-hub-text-sec mb-1">Portrait (page détail)</label>
+            <p class="text-xs text-hub-text-sec mb-1">Image complète du personnage (fond transparent ou splash art).</p>
+            <input type="file" name="photo_portrait" accept="image/*" class="text-hub-text">
         </div>
 
         <div class="flex gap-3">

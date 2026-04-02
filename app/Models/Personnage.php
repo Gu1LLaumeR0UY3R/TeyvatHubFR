@@ -23,6 +23,8 @@ class Personnage extends Model
     protected $fillable = [
         'nom_perso', 'slug', 'affinite_perso',
         'fid_TP', 'fid_etoile', 'fid_element', 'fid_TArmes',
+        'arme_icon',
+        'background_actif', 'block_order',
     ];
 
     protected static function booted(): void
@@ -87,12 +89,29 @@ class Personnage extends Model
         return $this->morphMany(Photo::class, 'photoable');
     }
 
-    public function getIconeUrlAttribute(): string
+    public function videos(): HasMany
     {
-        $photo = $this->photos->first();
-        if (!$photo) {
-            return asset('images/placeholder.webp');
-        }
+        return $this->hasMany(PersonnageVideo::class, 'fid_perso', 'id_perso')->orderBy('ordre');
+    }
+
+    public function armesRecommandees(): HasMany
+    {
+        return $this->hasMany(PersonnageArmeRecommandee::class, 'fid_perso', 'id_perso')->orderBy('position');
+    }
+
+    public function artefactsRecommandees(): HasMany
+    {
+        return $this->hasMany(PersonnageArtefactRecommandee::class, 'fid_perso', 'id_perso')->orderBy('position');
+    }
+
+    public function nations(): BelongsToMany
+    {
+        return $this->belongsToMany(Nation::class, 'personnage_nation', 'fid_perso', 'fid_nation');
+    }
+
+    /** Résout l'URL d'une photo à partir de son objet. */
+    private function resolvePhotoUrl(Photo $photo): string
+    {
         if ($photo->source_url) {
             return $photo->source_url;
         }
@@ -102,8 +121,32 @@ class Personnage extends Model
         return \Illuminate\Support\Facades\Storage::url($photo->chemin_photo);
     }
 
+    /** Icône ronde (carte + grille). */
+    public function getIconeUrlAttribute(): string
+    {
+        $photo = $this->photos->where('type', 'icone')->first()
+                 ?? $this->photos->whereNull('type')->first()
+                 ?? $this->photos->first();
+        if (!$photo) {
+            return asset('images/placeholder.webp');
+        }
+        return $this->resolvePhotoUrl($photo);
+    }
+
+    /** Portrait plein (page détail). */
+    public function getPortraitUrlAttribute(): string
+    {
+        $photo = $this->photos->where('type', 'portrait')->first()
+                 ?? $this->photos->where('type', 'icone')->first()
+                 ?? $this->photos->first();
+        if (!$photo) {
+            return asset('images/placeholder.webp');
+        }
+        return $this->resolvePhotoUrl($photo);
+    }
+
     public function getFullImageUrlAttribute(): string
     {
-        return $this->icone_url;
+        return $this->portrait_url;
     }
 }

@@ -100,6 +100,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
         Route::post('/import-genshin', [AdminController::class, 'importGenshin'])->name('admin.import-genshin');
+        Route::patch('/personnages/bulk-update', [\App\Http\Controllers\Admin\PersonnageController::class, 'bulkUpdate'])->name('admin.personnages.bulk-update');
         Route::resource('/personnages', \App\Http\Controllers\Admin\PersonnageController::class)->names([
             'index'   => 'admin.personnages.index',
             'create'  => 'admin.personnages.create',
@@ -109,6 +110,21 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.personnages.update',
             'destroy' => 'admin.personnages.destroy',
         ]);
+        // Routes AJAX blocs personnage
+        Route::prefix('personnages/{personnage:slug}/block')->group(function () {
+            Route::put('main-zone', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateMainZone'])->name('admin.personnage.block.main-zone.update');
+            Route::post('main-zone/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadImage'])->name('admin.personnage.block.main-zone.upload');
+            Route::get('main-zone/backgrounds', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'getBackgroundsByNation'])->name('admin.personnage.block.main-zone.backgrounds');
+            Route::put('armes-recommandees', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArmesRecommandees'])->name('admin.personnage.block.armes.update');
+            Route::delete('armes-recommandees/{id_arme}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArmeRecommandee'])->name('admin.personnage.block.armes.delete');
+            Route::put('artefacts-recommandes', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArtefactsRecommandees'])->name('admin.personnage.block.artefacts.update');
+            Route::delete('artefacts-recommandes/{id_build}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArtefactRecommande'])->name('admin.personnage.block.artefacts.delete');
+            Route::put('constellations', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellations'])->name('admin.personnage.block.constellations.update');
+            Route::post('constellations/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadConstellationImage'])->name('admin.personnage.block.constellations.upload');
+            Route::put('competences', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateCompetences'])->name('admin.personnage.block.competences.update');
+            Route::patch('order', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateBlockOrder'])->name('admin.personnage.block.order');
+        });
+        Route::patch('/armes/bulk-update', [\App\Http\Controllers\Admin\ArmeController::class, 'bulkUpdate'])->name('admin.armes.bulk-update');
         Route::resource('/armes', \App\Http\Controllers\Admin\ArmeController::class)->names([
             'index'   => 'admin.armes.index',
             'create'  => 'admin.armes.create',
@@ -118,6 +134,7 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.armes.update',
             'destroy' => 'admin.armes.destroy',
         ]);
+        Route::patch('/ennemis/bulk-update', [\App\Http\Controllers\Admin\EnnemiController::class, 'bulkUpdate'])->name('admin.ennemis.bulk-update');
         Route::resource('/ennemis', \App\Http\Controllers\Admin\EnnemiController::class)->names([
             'index'   => 'admin.ennemis.index',
             'create'  => 'admin.ennemis.create',
@@ -127,6 +144,7 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.ennemis.update',
             'destroy' => 'admin.ennemis.destroy',
         ]);
+        Route::patch('/animaux/bulk-update', [\App\Http\Controllers\Admin\AnimalController::class, 'bulkUpdate'])->name('admin.animaux.bulk-update');
         Route::resource('/animaux', \App\Http\Controllers\Admin\AnimalController::class)->names([
             'index'   => 'admin.animaux.index',
             'create'  => 'admin.animaux.create',
@@ -136,6 +154,7 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.animaux.update',
             'destroy' => 'admin.animaux.destroy',
         ]);
+        Route::patch('/cuisine/bulk-update', [\App\Http\Controllers\Admin\CuisineController::class, 'bulkUpdate'])->name('admin.cuisine.bulk-update');
         Route::resource('/cuisine', \App\Http\Controllers\Admin\CuisineController::class)->names([
             'index'   => 'admin.cuisine.index',
             'create'  => 'admin.cuisine.create',
@@ -145,6 +164,7 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.cuisine.update',
             'destroy' => 'admin.cuisine.destroy',
         ]);
+        Route::patch('/nations/bulk-update', [\App\Http\Controllers\Admin\NationController::class, 'bulkUpdate'])->name('admin.nations.bulk-update');
         Route::resource('/nations', \App\Http\Controllers\Admin\NationController::class)->names([
             'index'   => 'admin.nations.index',
             'create'  => 'admin.nations.create',
@@ -153,6 +173,17 @@ Route::prefix('admin')->group(function () {
             'edit'    => 'admin.nations.edit',
             'update'  => 'admin.nations.update',
             'destroy' => 'admin.nations.destroy',
+        ]);
+        // Alias legacy: conserver les anciennes routes admin.regions.*
+        Route::patch('/regions/bulk-update', [\App\Http\Controllers\Admin\NationController::class, 'bulkUpdate'])->name('admin.regions.bulk-update');
+        Route::resource('/regions', \App\Http\Controllers\Admin\NationController::class)->names([
+            'index'   => 'admin.regions.index',
+            'create'  => 'admin.regions.create',
+            'store'   => 'admin.regions.store',
+            'show'    => 'admin.regions.show',
+            'edit'    => 'admin.regions.edit',
+            'update'  => 'admin.regions.update',
+            'destroy' => 'admin.regions.destroy',
         ]);
         Route::resource('/evenements', \App\Http\Controllers\Admin\EvenementController::class)->names([
             'index'   => 'admin.evenements.index',
@@ -163,6 +194,7 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.evenements.update',
             'destroy' => 'admin.evenements.destroy',
         ]);
+        Route::patch('/chronologie/bulk-update', [\App\Http\Controllers\Admin\ChronologieController::class, 'bulkUpdate'])->name('admin.chronologie.bulk-update');
         Route::resource('/chronologie', \App\Http\Controllers\Admin\ChronologieController::class)->names([
             'index'   => 'admin.chronologie.index',
             'create'  => 'admin.chronologie.create',
@@ -173,6 +205,7 @@ Route::prefix('admin')->group(function () {
             'destroy' => 'admin.chronologie.destroy',
         ]);
         Route::patch('/chronologie/{chronologie}/ordre', [\App\Http\Controllers\Admin\ChronologieController::class, 'updateOrdre'])->name('admin.chronologie.ordre');
+        Route::patch('/roles/bulk-update', [\App\Http\Controllers\Admin\RoleController::class, 'bulkUpdate'])->name('admin.roles.bulk-update');
         Route::resource('/roles', \App\Http\Controllers\Admin\RoleController::class)->names([
             'index'   => 'admin.roles.index',
             'create'  => 'admin.roles.create',
@@ -182,6 +215,7 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.roles.update',
             'destroy' => 'admin.roles.destroy',
         ]);
+        Route::patch('/utilisateurs/bulk-update', [\App\Http\Controllers\Admin\UtilisateurController::class, 'bulkUpdate'])->name('admin.utilisateurs.bulk-update');
         Route::resource('/utilisateurs', \App\Http\Controllers\Admin\UtilisateurController::class)->names([
             'index'   => 'admin.utilisateurs.index',
             'create'  => 'admin.utilisateurs.create',

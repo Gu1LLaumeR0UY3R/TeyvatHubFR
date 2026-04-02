@@ -12,7 +12,7 @@ class Photo extends Model
     protected $table = 'photo';
     protected $primaryKey = 'id_photo';
 
-    protected $fillable = ['chemin_photo', 'source_url', 'photoable_type', 'photoable_id'];
+    protected $fillable = ['chemin_photo', 'source_url', 'photoable_type', 'photoable_id', 'type'];
 
     public function photoable(): MorphTo
     {
