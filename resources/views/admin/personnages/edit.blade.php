@@ -151,6 +151,24 @@
         .th-weapon-icon-wrap img { width:30px; height:30px; object-fit:contain; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25)); }
         .th-state-dot { width:10px; height:10px; border-radius:999px; border:1px solid #94a3b8; background:#e2e8f0; }
         .th-state-dot.is-active { background:#0ea5e9; border-color:#0284c7; }
+        .th-weapon-card.is-dragging { opacity: 0.45; }
+        .th-weapon-card.is-drop-target { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25); }
+        .th-grab-handle {
+            width: 20px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #94a3b8;
+            border-radius: 8px;
+            color: #64748b;
+            background: #f1f5f9;
+            cursor: grab;
+            user-select: none;
+            font-size: 14px;
+            line-height: 1;
+        }
+        .th-grab-handle:active { cursor: grabbing; }
 
 
         @media (max-width: 900px) {
@@ -499,8 +517,18 @@
 
                     <div class="space-y-2">
                         <template x-for="(arme, index) in armes" :key="arme.id_arme + '-' + index">
-                            <div class="th-weapon-card">
+                            <div class="th-weapon-card"
+                                 draggable="true"
+                                 :class="{
+                                    'is-dragging': dragArmeIndex === index,
+                                    'is-drop-target': dropArmeIndex === index && dragArmeIndex !== index
+                                 }"
+                                 @dragstart="onArmeDragStart(index, $event)"
+                                 @dragover.prevent="onArmeDragOver(index, $event)"
+                                 @drop.prevent="onArmeDrop(index, $event)"
+                                 @dragend="onArmeDragEnd()">
                                 <div class="th-weapon-card-inner">
+                                    <button type="button" class="th-grab-handle" title="Glisser pour réordonner" @mousedown.prevent>⋮⋮</button>
                                     <div class="th-weapon-icon-wrap" :class="rarityClass(arme.stars || arme.fid_etoile)">
                                         <img :src="arme.icon" :alt="arme.nom">
                                     </div>
@@ -524,8 +552,6 @@
                                         Starter
                                     </button>
                                     <div class="flex items-center gap-1">
-                                        <button type="button" class="w-6 h-6 rounded border border-slate-300 text-slate-700" @click="moveArmeUp(index)">↑</button>
-                                        <button type="button" class="w-6 h-6 rounded border border-slate-300 text-slate-700" @click="moveArmeDown(index)">↓</button>
                                         <button type="button" class="w-6 h-6 rounded border border-red-300 text-red-600" @click="removeArme(index)">×</button>
                                     </div>
                                 </div>
@@ -656,7 +682,7 @@
             <template x-if="filteredAvailableArmes.length">
                 <div class="th-armes-picker-grid">
                     <template x-for="arme in filteredAvailableArmes" :key="'picker-' + arme.id">
-                        <button type="button" @click="addArme(arme); showArmesPicker = false;"
+                        <button type="button" @click="addArme(arme)"
                                 class="th-armes-picker-item">
                             <div class="th-armes-picker-icon">
                                 <div class="th-weapon-icon-wrap" :class="rarityClass(arme.stars || arme.fid_etoile)">
@@ -735,6 +761,8 @@
                 },
                 toastTimer: null,
                 selectedVideoIndex: 0,
+                dragArmeIndex: null,
+                dropArmeIndex: null,
 
                 get selectedElementIcon()    { return this.elementIcons[this.mainZone.fid_element]    || defaultWeapon; },
                 get selectedNationIcon() {
@@ -800,6 +828,15 @@
                     this.armes = starter ? [...others, starter] : [...others];
                 },
                 setStarter(index) {
+                    const wasStarter = Boolean(this.armes[index]?.is_starter);
+
+                    if (wasStarter) {
+                        // Re-clic: retire l'etat starter.
+                        this.armes = this.armes.map(a => ({ ...a, is_starter: false }));
+                        this.armesError = '';
+                        return;
+                    }
+
                     this.armes = this.armes.map((a, i) => ({ ...a, is_starter: i === index }));
                     this.normalizeStarterPosition();
                     this.armesError = '';
@@ -820,23 +857,38 @@
                         is_starter: false,
                         origine: null,
                     });
-
-                    this.showArmesPicker = false;
                 },
                 removeArme(index) {
                     this.armes.splice(index, 1);
                 },
-                moveArmeUp(index) {
-                    if (index <= 0) return;
-                    const tmp = this.armes[index - 1];
-                    this.armes[index - 1] = this.armes[index];
-                    this.armes[index] = tmp;
+                onArmeDragStart(index, event) {
+                    this.dragArmeIndex = index;
+                    this.dropArmeIndex = index;
+                    if (event.dataTransfer) {
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData('text/plain', String(index));
+                    }
                 },
-                moveArmeDown(index) {
-                    if (index >= this.armes.length - 1) return;
-                    const tmp = this.armes[index + 1];
-                    this.armes[index + 1] = this.armes[index];
-                    this.armes[index] = tmp;
+                onArmeDragOver(index, event) {
+                    if (event.dataTransfer) {
+                        event.dataTransfer.dropEffect = 'move';
+                    }
+                    this.dropArmeIndex = index;
+                },
+                onArmeDrop(index) {
+                    if (this.dragArmeIndex === null || this.dragArmeIndex === index) {
+                        this.onArmeDragEnd();
+                        return;
+                    }
+
+                    const moved = this.armes.splice(this.dragArmeIndex, 1)[0];
+                    const targetIndex = this.dragArmeIndex < index ? index - 1 : index;
+                    this.armes.splice(targetIndex, 0, moved);
+                    this.onArmeDragEnd();
+                },
+                onArmeDragEnd() {
+                    this.dragArmeIndex = null;
+                    this.dropArmeIndex = null;
                 },
                 async saveArmes({ strict = true } = {}) {
                     if (!this.armes.length) {
