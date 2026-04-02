@@ -23,7 +23,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
             <div class="flex-shrink-0">
-                <img src="{{ $arme->photos->first()?->source_url ?? $arme->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $arme->photos->first()?->source_url ?? $arme->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $arme->nom_arme }}"
                      class="w-32 h-32 rounded-xl object-contain border-2 border-hub-border p-2 bg-hub-surface-hover">
             </div>

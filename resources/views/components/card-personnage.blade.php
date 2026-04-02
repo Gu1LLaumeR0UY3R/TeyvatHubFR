@@ -18,6 +18,8 @@
         @if($personnage->element)
             <p class="text-xs mt-1" style="color: var(--element-color, #888)">{{ $personnage->element->libelle_element }}</p>
         @endif
-        <p class="text-hub-gold text-xs">{{ $personnage->etoile?->libelle ?? '' }}</p>
+        <p class="text-hub-gold text-xs tracking-wide" aria-label="Rareté {{ (int) $stars }} étoiles">
+            {{ str_repeat('✦', max(1, (int) $stars)) }}
+        </p>
     </div>
 </a>

@@ -11,7 +11,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
             <div class="flex-shrink-0">
-                <img src="{{ $materiaux->photos->first()?->source_url ?? $materiaux->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $materiaux->photos->first()?->source_url ?? $materiaux->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $materiaux->nom_mat }}"
                      class="w-32 h-32 rounded-xl object-contain border-2 border-hub-border p-2 bg-hub-surface-hover">
             </div>
@@ -43,7 +43,7 @@
                 @foreach($materiaux->ennemis as $ennemi)
                     <a href="{{ route('ennemis.show', $ennemi->slug) }}"
                        class="flex items-center gap-3 p-3 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $ennemi->photos->first()?->source_url ?? $ennemi->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $ennemi->photos->first()?->source_url ?? $ennemi->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $ennemi->nom_ennemi }}"
                              class="w-10 h-10 rounded object-cover flex-shrink-0">
                         <span class="text-hub-text text-sm font-medium">{{ $ennemi->nom_ennemi }}</span>

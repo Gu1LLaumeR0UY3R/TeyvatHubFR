@@ -19,7 +19,7 @@
             @foreach($armes as $arme)
                 <a href="{{ route('armes.show', $arme->slug) }}"
                    class="bg-hub-surface border border-hub-border rounded-xl p-3 hover:border-hub-primary transition-all flex flex-col items-center gap-2">
-                    <img src="{{ $arme->photos->first()?->source_url ?? $arme->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                    <img src="{{ $arme->photos->first()?->source_url ?? $arme->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                          alt="{{ $arme->nom_arme }}"
                          class="w-16 h-16 object-contain">
                     <span class="text-hub-text text-xs font-medium text-center">{{ $arme->nom_arme }}</span>

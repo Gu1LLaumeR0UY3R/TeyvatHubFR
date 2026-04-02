@@ -22,7 +22,7 @@
             @foreach($personnages as $personnage)
                 <a href="{{ route('personnages.show', $personnage->slug) }}"
                    class="bg-hub-surface border border-hub-border rounded-xl p-3 hover:border-hub-primary transition-all flex flex-col items-center gap-2">
-                    <img src="{{ $personnage->photos->first()?->source_url ?? $personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                    <img src="{{ $personnage->photos->first()?->source_url ?? $personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                          alt="{{ $personnage->nom_perso }}"
                          class="w-16 h-16 rounded-lg object-contain">
                     <span class="text-hub-text text-xs font-medium text-center">{{ $personnage->nom_perso }}</span>

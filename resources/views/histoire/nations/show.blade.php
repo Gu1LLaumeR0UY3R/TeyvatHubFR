@@ -14,7 +14,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
             <div class="flex-shrink-0">
-                <img src="{{ $nation->photos->first()?->source_url ?? $nation->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $nation->photos->first()?->source_url ?? $nation->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $nation->nom_region }}"
                      class="w-40 h-40 rounded-xl object-contain">
             </div>
@@ -54,7 +54,7 @@
                 @foreach($nation->ennemis as $ennemi)
                     <a href="{{ route('ennemis.show', $ennemi->slug) }}"
                        class="flex flex-col items-center gap-2 p-3 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $ennemi->photos->first()?->source_url ?? $ennemi->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $ennemi->photos->first()?->source_url ?? $ennemi->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $ennemi->nom_ennemi }}"
                              class="w-16 h-16 object-contain">
                         <span class="text-hub-text text-xs text-center font-medium">{{ $ennemi->nom_ennemi }}</span>
@@ -72,7 +72,7 @@
                 @foreach($nation->animaux as $animal)
                     <a href="{{ route('animaux.show', $animal->slug) }}"
                        class="flex flex-col items-center gap-2 p-3 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $animal->nom_animal }}"
                              class="w-16 h-16 object-contain">
                         <span class="text-hub-text text-xs text-center font-medium">{{ $animal->nom_animal }}</span>

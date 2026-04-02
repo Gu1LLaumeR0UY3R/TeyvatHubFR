@@ -12,7 +12,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
             <div class="flex-shrink-0">
-                <img src="{{ $plat->photos->first()?->source_url ?? $plat->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $plat->photos->first()?->source_url ?? $plat->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $plat->nom_plat }}"
                      class="w-40 h-40 rounded-xl object-contain border-2 border-hub-border p-2 bg-hub-surface-hover">
             </div>
@@ -38,7 +38,7 @@
                 @foreach($plat->ingredients as $ingredient)
                     <a href="{{ route('ingredients.show', $ingredient->slug) }}"
                        class="flex flex-col items-center gap-2 p-3 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $ingredient->nom_ingre }}"
                              class="w-12 h-12 object-contain">
                         <span class="text-hub-text text-xs text-center font-medium">{{ $ingredient->nom_ingre }}</span>
@@ -57,7 +57,7 @@
                 @if($plat->specialite->personnage)
                     <a href="{{ route('personnages.show', $plat->specialite->personnage->slug) }}"
                        class="flex items-center gap-4 hover:opacity-80 transition-opacity">
-                        <img src="{{ $plat->specialite->personnage->photos->first()?->source_url ?? $plat->specialite->personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $plat->specialite->personnage->photos->first()?->source_url ?? $plat->specialite->personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $plat->specialite->personnage->nom_perso }}"
                              class="w-16 h-16 rounded-xl object-cover border border-hub-border">
                         <div>

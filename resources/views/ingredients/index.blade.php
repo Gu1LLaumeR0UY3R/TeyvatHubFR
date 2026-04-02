@@ -33,7 +33,7 @@
             @foreach($ingredients as $ingredient)
                 <a href="{{ route('ingredients.show', $ingredient->slug) }}"
                    class="bg-hub-surface border border-hub-border rounded-xl p-3 hover:border-hub-primary hover:bg-hub-surface-hover transition-all flex flex-col items-center gap-2">
-                    <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                    <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                          alt="{{ $ingredient->nom_ingre }}"
                          class="w-16 h-16 object-contain">
                     <span class="text-hub-text text-xs font-medium text-center leading-tight">{{ $ingredient->nom_ingre }}</span>

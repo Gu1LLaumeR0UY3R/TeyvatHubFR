@@ -36,7 +36,7 @@
                 @foreach($team as $perso)
                     <a href="{{ route('personnages.show', $perso->slug) }}"
                        class="bg-hub-surface border border-hub-border rounded-2xl p-4 hover:border-hub-primary transition-all flex flex-col items-center gap-2">
-                        <img src="{{ $perso->photos->first()?->source_url ?? $perso->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $perso->photos->first()?->source_url ?? $perso->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $perso->nom_perso }}"
                              class="w-24 h-24 rounded-xl object-contain">
                         <span class="text-hub-text font-medium text-sm text-center">{{ $perso->nom_perso }}</span>

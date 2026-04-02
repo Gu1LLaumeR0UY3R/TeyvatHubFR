@@ -46,3 +46,123 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 24px -4px var(--element-color, rgba(255,255,255,0.15));
 }
+
+/* ===================================================================
+   CHARACTER SHOW — HERO BLOCK
+   Scope : .character-show-hero
+   Couvre uniquement la partie haute de la fiche personnage admin :
+   portrait, hero (nom/rôle), vidéo, meta-pills.
+   Conçu pour une page pleine largeur (sans sidebar).
+   N'affecte pas les sections armes, artefacts, etc.
+   Aucune dépendance aux tokens hub-* de Tailwind.
+=================================================================== */
+
+.character-show-hero {
+    --csh-panel:   rgba(13, 18, 42, 0.72);
+    --csh-border:  rgba(255, 255, 255, 0.12);
+    --csh-text:    #eef2ff;
+    --csh-muted:   #bdc8ec;
+    --csh-accent:  #6fd0be;
+
+    &[data-element="anemo"]   { --csh-accent: #74C2A8; }
+    &[data-element="geo"]     { --csh-accent: #f2be42; }
+    &[data-element="electro"] { --csh-accent: #b88ef8; }
+    &[data-element="dendro"]  { --csh-accent: #9ecf34; }
+    &[data-element="hydro"]   { --csh-accent: #67c5ff; }
+    &[data-element="pyro"]    { --csh-accent: #ff8550; }
+    &[data-element="cryo"]    { --csh-accent: #91d8ee; }
+
+    max-width: 1280px;
+    margin: 0 auto 2.5rem;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid var(--csh-border);
+    background:
+        linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.015)),
+        linear-gradient(180deg, rgba(10,15,35,0.9), rgba(10,15,35,0.74));
+    box-shadow:
+        0 24px 56px rgba(5,9,28,0.52),
+        inset 0 1px 0 rgba(255,255,255,0.07);
+
+    display: grid;
+    grid-template-columns: clamp(200px, 20vw, 260px) minmax(0, 1fr);
+    grid-template-areas:
+        "portrait hero"
+        "portrait video"
+        "portrait meta";
+    column-gap: 2rem;
+    row-gap: 1rem;
+    align-items: start;
+
+    color: var(--csh-text);
+    font-family: 'Space Grotesk', 'Trebuchet MS', sans-serif;
+    animation: csh-fade-up 0.5s ease-out;
+}
+
+.character-show-hero::before,
+.character-show-hero::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(18px);
+    opacity: 0.22;
+}
+.character-show-hero::before {
+    width: 300px; height: 300px;
+    top: -130px; right: -80px;
+    background: var(--csh-accent);
+}
+.character-show-hero::after {
+    width: 240px; height: 240px;
+    bottom: -130px; left: -100px;
+    background: #f6aa4f;
+}
+
+.character-show-hero .csh-portrait {
+    grid-area: portrait;
+    position: relative;
+    z-index: 1;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: linear-gradient(180deg, rgba(8,12,30,0.4), rgba(8,12,30,0.18));
+    align-self: stretch;
+    min-height: 400px;
+    box-shadow: 0 16px 32px rgba(0,0,0,0.24);
+}
+.character-show-hero .csh-portrait img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 18%;
+    transform: scale(1.02);
+}
+
+.character-show-hero .csh-hero { grid-area: hero; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.character-show-hero .csh-kicker { display: inline-block; margin: 0 0 0.65rem; padding: 0.28rem 0.62rem; border-radius: 999px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.04); color: var(--csh-muted); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.character-show-hero .csh-name { font-family: 'Cinzel', Georgia, serif; font-size: clamp(2rem, 4vw, 3.4rem); margin: 0 0 0.45rem; line-height: 1.05; text-shadow: 0 4px 18px rgba(0,0,0,0.26); color: var(--csh-text); }
+.character-show-hero .csh-role { margin: 0; color: var(--csh-muted); font-size: clamp(0.95rem, 1.8vw, 1.15rem); }
+
+.character-show-hero .csh-video { grid-area: video; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); background: var(--csh-panel); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); aspect-ratio: 16 / 6; overflow: hidden; }
+.character-show-hero .csh-video iframe { display: block; width: 100%; height: 100%; border: 0; border-radius: 14px; }
+
+.character-show-hero .csh-meta { grid-area: meta; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; padding-top: 0.7rem; }
+.character-show-hero .csh-pill { background: var(--csh-panel); border: 1px solid rgba(255,255,255,0.11); border-radius: 13px; padding: 0.75rem 0.9rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.character-show-hero .csh-pill:hover { border-color: color-mix(in srgb, var(--csh-accent) 40%, rgba(255,255,255,0.12)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 0 0 1px color-mix(in srgb, var(--csh-accent) 20%, transparent); }
+.character-show-hero .csh-pill-label { display: block; color: var(--csh-muted); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.15rem; }
+.character-show-hero .csh-pill-value { display: block; font-size: 0.97rem; font-weight: 600; color: var(--csh-text); }
+.character-show-hero .csh-pill--element .csh-pill-value { color: var(--csh-accent); }
+
+@keyframes csh-fade-up { from { opacity: 0; transform: translateY(12px) scale(0.997); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 760px) {
+    .character-show-hero { grid-template-columns: 1fr; grid-template-areas: "portrait" "hero" "video" "meta"; padding: 1.3rem; border-radius: 18px; column-gap: 0; }
+    .character-show-hero .csh-portrait { width: min(72vw, 100%); min-height: 240px; align-self: auto; }
+    .character-show-hero .csh-video { aspect-ratio: 16 / 9; }
+    .character-show-hero .csh-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+

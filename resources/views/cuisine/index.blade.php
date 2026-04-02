@@ -44,7 +44,7 @@
                 <a href="{{ route('cuisine.show', $plat->slug) }}"
                    class="group bg-hub-surface border border-hub-border rounded-xl overflow-hidden hover:border-hub-primary hover:shadow-lg transition-all duration-200">
                     <div class="aspect-square bg-hub-surface-hover overflow-hidden p-4">
-                        <img src="{{ $plat->photos->first()?->source_url ?? $plat->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $plat->photos->first()?->source_url ?? $plat->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $plat->nom_plat }}"
                              class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200">
                     </div>

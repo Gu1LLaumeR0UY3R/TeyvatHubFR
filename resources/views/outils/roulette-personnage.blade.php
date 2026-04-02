@@ -46,7 +46,7 @@
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-8 mb-6 text-center">
             <div class="w-40 h-40 mx-auto mb-6 rounded-2xl overflow-hidden bg-hub-surface-hover border-2 border-hub-border"
                  :class="animating ? 'animate-pulse' : ''">
-                <img :src="animating ? personalityList[currentIndex]?.icone_url : (selected?.icone_url ?? '{{ asset('images/placeholder.webp') }}')"
+                <img :src="animating ? personalityList[currentIndex]?.icone_url : (selected?.icone_url ?? '{{ asset('images/placeholder.svg') }}')"
                      :alt="animating ? '' : (selected?.nom ?? 'Clique sur Lancer')"
                      class="w-full h-full object-contain">
             </div>

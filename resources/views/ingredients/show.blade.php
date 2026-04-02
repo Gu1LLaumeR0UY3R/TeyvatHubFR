@@ -12,7 +12,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
             <div class="flex-shrink-0">
-                <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $ingredient->nom_ingre }}"
                      class="w-32 h-32 object-contain">
             </div>
@@ -30,7 +30,7 @@
                 @foreach($ingredient->animaux as $animal)
                     <a href="{{ route('animaux.show', $animal->slug) }}"
                        class="flex flex-col items-center gap-2 p-3 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $animal->nom_animal }}"
                              class="w-16 h-16 object-contain">
                         <span class="text-hub-text text-xs text-center font-medium">{{ $animal->nom_animal }}</span>
@@ -48,7 +48,7 @@
                 @foreach($ingredient->plats as $plat)
                     <a href="{{ route('cuisine.show', $plat->slug) }}"
                        class="flex flex-col items-center gap-2 p-3 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $plat->photos->first()?->source_url ?? $plat->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $plat->photos->first()?->source_url ?? $plat->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $plat->nom_plat }}"
                              class="w-16 h-16 object-contain">
                         <span class="text-hub-text text-xs text-center font-medium">{{ $plat->nom_plat }}</span>

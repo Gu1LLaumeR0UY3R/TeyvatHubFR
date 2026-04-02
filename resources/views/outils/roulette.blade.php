@@ -22,7 +22,7 @@
         <div class="inline-flex items-center justify-center w-48 h-48 rounded-2xl border-2 border-hub-border bg-hub-surface mb-4"
              :class="spinning ? 'animate-pulse border-hub-primary' : ''">
             <template x-if="result && !spinning">
-                <img :src="result.photo || '{{ asset('images/placeholder.webp') }}'"
+                <img :src="result.photo || '{{ asset('images/placeholder.svg') }}'"
                      :alt="result.nom"
                      class="w-44 h-44 object-contain rounded-2xl">
             </template>

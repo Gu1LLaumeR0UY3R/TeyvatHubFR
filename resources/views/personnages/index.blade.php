@@ -39,9 +39,10 @@
             :class="rareteFilter === '' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
                 class="px-3 py-1 rounded-full text-sm transition-colors">Toutes raretés</button>
         @foreach($etoiles as $e)
-        <button type="button" @click.prevent="rareteFilter = (rareteFilter === '{{ $e->libelle }}' ? '' : '{{ $e->libelle }}')"
-            :class="rareteFilter === '{{ $e->libelle }}' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
-                class="px-3 py-1 rounded-full text-sm transition-colors">{{ $e->libelle }}</button>
+        @php $rareteValue = preg_replace('/[^0-9]/', '', $e->libelle); @endphp
+        <button type="button" @click.prevent="rareteFilter = (rareteFilter === '{{ $rareteValue }}' ? '' : '{{ $rareteValue }}')"
+            :class="rareteFilter === '{{ $rareteValue }}' ? 'bg-hub-primary text-black border border-hub-primary' : 'bg-hub-surface text-hub-text-sec border border-hub-border'"
+                class="px-3 py-1 rounded-full text-sm transition-colors text-hub-gold">{{ str_repeat('✦', (int) $rareteValue) }}</button>
         @endforeach
     </div>
 
@@ -67,7 +68,7 @@
             @foreach($personnages as $perso)
                 <div data-nom="{{ strtolower($perso->nom_perso) }}"
                      data-element="{{ $perso->element?->libelle_element ?? '' }}"
-                     data-rarete="{{ $perso->etoile?->libelle ?? '' }}"
+                     data-rarete="{{ preg_replace('/[^0-9]/', '', $perso->etoile?->libelle ?? '') }}"
                      data-arme="{{ $perso->typeArme?->libelle_TArme ?? '' }}"
                      x-show="(!search || $el.dataset.nom.includes(search.toLowerCase())) &&
                               (!elementFilter || $el.dataset.element === elementFilter) &&

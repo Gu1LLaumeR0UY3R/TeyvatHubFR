@@ -9,7 +9,7 @@
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-8">
             <div class="flex justify-center mb-6">
                 <div class="relative">
-                    <img src="{{ $correct->photos->first()?->source_url ?? $correct->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                    <img src="{{ $correct->photos->first()?->source_url ?? $correct->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                          alt="Personnage mystère"
                          class="w-40 h-40 rounded-2xl object-contain filter brightness-0">
                 </div>

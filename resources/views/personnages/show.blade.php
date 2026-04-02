@@ -13,7 +13,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
             <div class="flex-shrink-0">
-                <img src="{{ $personnage->photos->first()?->source_url ?? $personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $personnage->photos->first()?->source_url ?? $personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $personnage->nom_perso }}"
                      class="w-40 h-40 rounded-xl object-cover border-2 border-hub-border">
             </div>
@@ -99,12 +99,66 @@
         </div>
     @endif
 
-    {{-- Bloc 5 : Spécialité culinaire --}}
+    {{-- Bloc 5 : Armes recommandées --}}
+    @if($personnage->armesRecommandees->count())
+        <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
+            <h2 class="text-xl font-bold text-hub-text mb-4">Armes recommandées</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                @foreach($personnage->armesRecommandees as $armeRec)
+                    @php
+                        $arme = $armeRec->arme;
+                        $rarity = (int) optional($arme)->fid_etoile ?: 1;
+                        $rarityClass = match($rarity) {
+                            1 => 'bg-slate-600',
+                            2 => 'bg-emerald-500',
+                            3 => 'bg-cyan-500',
+                            4 => 'bg-violet-500',
+                            5 => 'bg-yellow-500',
+                            default => 'bg-slate-600',
+                        };
+                        $origineIcon = match($armeRec->origine) {
+                            'tirage' => '🎯',
+                            'evenement' => '🧭',
+                            'creation' => '🛠️',
+                            'achat' => '🏪',
+                            default => '❔',
+                        };
+                    @endphp
+                    <a href="{{ $arme ? route('armes.show', $arme->slug) : '#' }}" class="block border border-hub-border rounded-xl p-4 transition hover:shadow-lg bg-hub-surface-hover">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-11 h-11 rounded-lg overflow-hidden bg-slate-800 flex items-center justify-center">
+                                    <img src="{{ optional($arme)->photos->first()?->source_url ?? optional($arme)->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}" alt="{{ optional($arme)->nom_arme ?? 'arme' }}" class="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-hub-text">{{ optional($arme)->nom_arme ?? 'N/A' }}</h3>
+                                    <p class="text-xs text-hub-text-sec">{{ optional($arme)->typeArme?->libelle_TArme ?? 'Type inconnu' }}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs px-2 py-1 font-bold text-white rounded {{ $rarityClass }}">{{ $rarity }}★</span>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between text-sm">
+                            <span class="inline-flex items-center gap-1 text-hub-text-sec">{{ $origineIcon }} {{ ucfirst($armeRec->origine ?? 'tirage') }}</span>
+                            @if($armeRec->starter)
+                                <span class="inline-flex items-center gap-1 text-green-300">🌱 Starter</span>
+                            @endif
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-xs text-hub-text-sec">Position {{ $armeRec->position }}</span>
+                            <span class="text-xs text-hub-text-sec">Source : {{ $armeRec->origine ?? 'tirage' }}</span>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- Bloc 6 : Spécialité culinaire --}}
     @if($personnage->specialite && $personnage->specialite->plat)
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6" x-data="{ open: false }">
             <h2 class="text-xl font-bold text-hub-text mb-4">Spécialité culinaire</h2>
             <div class="flex items-center gap-4">
-                <img src="{{ $personnage->specialite->plat->photos->first()?->source_url ?? $personnage->specialite->plat->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $personnage->specialite->plat->photos->first()?->source_url ?? $personnage->specialite->plat->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $personnage->specialite->plat->nom_plat }}"
                      class="w-16 h-16 rounded-lg object-cover border border-hub-border">
                 <div>

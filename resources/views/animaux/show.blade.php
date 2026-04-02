@@ -12,7 +12,7 @@
     <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
             <div class="flex-shrink-0">
-                <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                      alt="{{ $animal->nom_animal }}"
                      class="w-40 h-40 rounded-xl object-cover border-2 border-hub-border">
             </div>
@@ -36,14 +36,14 @@
     @endif
 
     {{-- Bloc 3 : Régions --}}
-    @if($animal->regions->count())
+    @if($animal->nations->count())
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
             <h2 class="text-xl font-bold text-hub-text mb-4">Nations</h2>
             <div class="flex flex-wrap gap-3">
                 @foreach($animal->nations as $nation)
                     <a href="{{ route('nations.show', $nation->slug) }}"
                        class="flex items-center gap-2 px-4 py-2 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $nation->photos->first()?->source_url ?? $nation->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $nation->photos->first()?->source_url ?? $nation->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $nation->nom_region }}"
                              class="w-8 h-8 rounded object-cover">
                         <span class="text-hub-text text-sm font-medium">{{ $nation->nom_region }}</span>
@@ -61,7 +61,7 @@
                 @foreach($animal->ingredients as $ingredient)
                     <a href="{{ route('ingredients.show', $ingredient->slug) }}"
                        class="flex flex-col items-center gap-2 p-3 bg-hub-surface-hover rounded-xl border border-hub-border hover:border-hub-primary transition-colors">
-                        <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $ingredient->photos->first()?->source_url ?? $ingredient->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $ingredient->nom_ingre }}"
                              class="w-16 h-16 object-contain">
                         <span class="text-hub-text text-xs text-center font-medium">{{ $ingredient->nom_ingre }}</span>

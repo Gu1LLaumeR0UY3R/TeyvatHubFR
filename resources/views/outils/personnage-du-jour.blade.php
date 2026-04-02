@@ -7,7 +7,7 @@
 
     @if($personnage)
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-8 inline-flex flex-col items-center gap-4">
-            <img src="{{ $personnage->photos->first()?->source_url ?? $personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+            <img src="{{ $personnage->photos->first()?->source_url ?? $personnage->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                  alt="{{ $personnage->nom_perso }}"
                  class="w-48 h-48 rounded-2xl object-contain">
             <h2 class="text-2xl font-bold text-hub-text">{{ $personnage->nom_perso }}</h2>

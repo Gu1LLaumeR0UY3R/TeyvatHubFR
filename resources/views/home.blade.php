@@ -70,7 +70,7 @@
             <a href="{{ route('personnages.show', $perso->slug) }}"
                class="group bg-hub-surface border border-hub-border hover:border-hub-primary/40 rounded-xl overflow-hidden transition-all duration-150 hover:bg-hub-surface-hover">
                 <div class="aspect-square bg-hub-bg flex items-center justify-center overflow-hidden">
-                    <img src="{{ $perso->photos->first()?->source_url ?? $perso->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                    <img src="{{ $perso->photos->first()?->source_url ?? $perso->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                          alt="{{ $perso->nom_perso }}"
                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                          loading="lazy">

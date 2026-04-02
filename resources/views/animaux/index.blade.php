@@ -43,7 +43,7 @@
                 <a href="{{ route('animaux.show', $animal->slug) }}"
                    class="group bg-hub-surface border border-hub-border rounded-xl overflow-hidden hover:border-hub-primary hover:shadow-lg transition-all duration-200">
                     <div class="aspect-square bg-hub-surface-hover overflow-hidden">
-                        <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $animal->photos->first()?->source_url ?? $animal->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $animal->nom_animal }}"
                              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
                     </div>

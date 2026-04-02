@@ -37,7 +37,7 @@
                 <a href="{{ route('materiaux.show', $mat->slug) }}"
                    class="group bg-hub-surface border border-hub-border rounded-xl overflow-hidden hover:border-hub-primary hover:shadow-lg transition-all duration-200">
                     <div class="aspect-square bg-hub-surface-hover overflow-hidden p-4">
-                        <img src="{{ $mat->photos->first()?->source_url ?? $mat->photos->first()?->chemin_photo ?? asset('images/placeholder.webp') }}"
+                        <img src="{{ $mat->photos->first()?->source_url ?? $mat->photos->first()?->chemin_photo ?? asset('images/placeholder.svg') }}"
                              alt="{{ $mat->nom_mat }}"
                              class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200">
                     </div>

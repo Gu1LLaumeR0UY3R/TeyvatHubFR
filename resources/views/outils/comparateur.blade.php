@@ -48,7 +48,7 @@
         <div class="grid grid-cols-2 gap-6">
             <template x-if="perso1">
                 <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 flex flex-col items-center gap-3">
-                    <img :src="find(perso1)?.photo || '{{ asset('images/placeholder.webp') }}'"
+                    <img :src="find(perso1)?.photo || '{{ asset('images/placeholder.svg') }}'"
                          :alt="find(perso1)?.nom"
                          class="w-32 h-32 object-contain rounded-xl">
                     <p class="text-hub-text font-bold text-lg text-center" x-text="find(perso1)?.nom"></p>
@@ -61,7 +61,7 @@
 
             <template x-if="perso2">
                 <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 flex flex-col items-center gap-3">
-                    <img :src="find(perso2)?.photo || '{{ asset('images/placeholder.webp') }}'"
+                    <img :src="find(perso2)?.photo || '{{ asset('images/placeholder.svg') }}'"
                          :alt="find(perso2)?.nom"
                          class="w-32 h-32 object-contain rounded-xl">
                     <p class="text-hub-text font-bold text-lg text-center" x-text="find(perso2)?.nom"></p>
