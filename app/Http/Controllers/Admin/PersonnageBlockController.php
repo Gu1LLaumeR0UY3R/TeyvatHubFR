@@ -24,7 +24,16 @@ class PersonnageBlockController extends Controller
 {
     public function updateMainZone(Request $request, Personnage $personnage): JsonResponse
     {
-        $nationTable = Schema::hasTable('nation') ? 'nation' : 'région';
+        $nationTable = Schema::hasTable('nation')
+            ? 'nation'
+            : (Schema::hasTable('région') ? 'région' : null);
+
+        $nationRules = ['sometimes', 'array'];
+        $nationItemRules = ['integer'];
+
+        if ($nationTable) {
+            $nationItemRules[] = Rule::exists($nationTable, 'id_region');
+        }
 
         $data = $request->validate([
             'nom_perso' => ['required', 'string', 'max:100'],
@@ -33,8 +42,8 @@ class PersonnageBlockController extends Controller
             'fid_TArmes' => ['nullable', 'integer', 'exists:type_armes,id_TArmes'],
             'fid_TP' => ['nullable', 'integer', 'exists:type_perso,id_TP'],
             'background_actif' => ['nullable', 'string', 'max:255'],
-            'fid_nations' => ['sometimes', 'array'],
-            'fid_nations.*' => ['integer', Rule::exists($nationTable, 'id_region')],
+            'fid_nations' => $nationRules,
+            'fid_nations.*' => $nationItemRules,
             'videos' => ['sometimes', 'array'],
             'videos.*.url_video' => ['required', 'url', 'max:255'],
         ]);
@@ -81,8 +90,11 @@ class PersonnageBlockController extends Controller
             'fid_etoile' => $data['fid_etoile'],
             'fid_TArmes' => $data['fid_TArmes'] ?? null,
             'fid_TP' => $data['fid_TP'] ?? $personnage->fid_TP,
-            'arme_icon' => $armeIcon,
         ];
+
+        if (Schema::hasColumn('personnage', 'arme_icon')) {
+            $updatePayload['arme_icon'] = $armeIcon;
+        }
 
         if (Schema::hasColumn('personnage', 'background_actif')) {
             $updatePayload['background_actif'] = $data['background_actif'] ?? null;
@@ -90,7 +102,11 @@ class PersonnageBlockController extends Controller
 
         $personnage->update($updatePayload);
 
-        if (array_key_exists('fid_nations', $data)) {
+        if (
+            array_key_exists('fid_nations', $data)
+            && $nationTable
+            && Schema::hasTable('personnage_nation')
+        ) {
             $personnage->nations()->sync($data['fid_nations']);
         }
 

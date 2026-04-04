@@ -98,7 +98,19 @@ class PersonnageController extends Controller
 
     public function edit(Personnage $personnage): View
     {
-        $personnage->load(['element', 'etoile', 'typeArme', 'typePerso', 'photos', 'videos', 'armesRecommandees.arme']);
+        $personnage->load([
+            'element',
+            'etoile',
+            'typeArme',
+            'typePerso',
+            'photos',
+            'videos',
+            'nations',
+            'armesRecommandees.arme',
+            'artefactsRecommandees.artefact1',
+            'artefactsRecommandees.artefact2',
+            'constellations',
+        ]);
 
         $elements  = Elements::all();
         $etoiles   = Etoile::all();

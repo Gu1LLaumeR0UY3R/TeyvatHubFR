@@ -68,6 +68,12 @@ class PersonnageController extends Controller
             'specialite.plat.photos',
             'roles',
             'photos',
+            'videos',
+            'nations',
+            'typeArme',
+            'armesRecommandees.arme.typeArme.photos',
+            'artefactsRecommandees.artefact1',
+            'artefactsRecommandees.artefact2',
         ]);
 
         return view('personnages.show', compact('personnage'));

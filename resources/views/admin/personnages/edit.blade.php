@@ -81,9 +81,163 @@
         .csh-pill-value { color:var(--csh-text); font-size:.95rem; font-weight:700; }
         .csh-pill--element .csh-pill-value { color: var(--csh-accent); font-weight:800; }
         .csh-meta { grid-area:meta; display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:.42rem; padding-top:.63rem; }
+        .csh-preview-table {
+            display:grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin: 0 1.5rem 1.5rem;
+        }
+        .csh-preview-panel {
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(8,13,30,0.9));
+            box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32);
+            overflow: hidden;
+            min-height: 100%;
+        }
+        .csh-preview-panel-head {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:.75rem;
+            padding: 1rem 1.15rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .csh-preview-panel-title { color:#e5eefc; font-size:.92rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+        .csh-preview-panel-subtitle { color:#8aa0ca; font-size:.72rem; }
+        .csh-preview-weapon-list { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:.85rem; padding: 1rem 1.15rem 1.15rem; }
+        .csh-preview-artefact-list { display:grid; gap:.85rem; padding: 1rem 1.15rem 1.15rem; }
 
         .csh-weapon-item { border:1px solid rgba(148,163,184,0.35); border-radius:0.6rem; background:rgba(15,23,42,0.58); padding:.55rem; }
+        .csh-weapon-item {
+            position: relative;
+            display:flex;
+            align-items:center;
+            gap:.75rem;
+            min-height:72px;
+            background: linear-gradient(180deg, rgba(18, 28, 55, 0.86), rgba(10, 16, 34, 0.88));
+        }
         .csh-weapon-name { font-weight:700; color:#e2e8f0; }
+        .csh-weapon-copy { min-width:0; flex:1; }
+        .csh-weapon-type { color:#98a8c7; font-size:.72rem; }
+        .csh-weapon-index {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:.72rem;
+            font-weight:700;
+            color:#eff6ff;
+            background: rgba(255,255,255,0.08);
+            border:1px solid rgba(255,255,255,0.1);
+            flex-shrink:0;
+        }
+        .csh-weapon-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border:1px solid rgba(255,255,255,0.22);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+        .csh-weapon-icon-wrap img { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.35)); }
+        .csh-weapon-badge {
+            display:inline-flex;
+            align-items:center;
+            gap:.28rem;
+            margin-top:.35rem;
+            padding:.18rem .45rem;
+            border-radius:999px;
+            font-size:.68rem;
+            font-weight:700;
+            letter-spacing:.02em;
+            background: rgba(16, 185, 129, 0.18);
+            color: #b9f7df;
+            border:1px solid rgba(52, 211, 153, 0.34);
+        }
+        .csh-artefact-item {
+            border:1px solid rgba(148,163,184,0.3);
+            border-radius:14px;
+            padding:.85rem .95rem;
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.9), rgba(9, 14, 27, 0.92));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .csh-artefact-head {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:.75rem;
+            margin-bottom:.5rem;
+        }
+        .csh-artefact-title { color:#e2e8f0; font-size:.9rem; font-weight:700; }
+        .csh-artefact-piece { color:#fef3c7; font-size:.72rem; font-weight:700; }
+        .csh-artefact-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.35rem 0; }
+        .csh-artefact-name { color:#cbd5e1; font-size:.82rem; }
+        .csh-artefact-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
+        .csh-weapon-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
+        .csh-constellation-shell {
+            margin: 0 1.5rem 1.5rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(10, 15, 30, 0.95), rgba(5, 10, 24, 0.92));
+            box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32);
+            overflow: hidden;
+        }
+        .csh-constellation-grid {
+            display:grid;
+            grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+            min-height: 360px;
+        }
+        .csh-constellation-media {
+            padding: 1rem;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            background: radial-gradient(circle at top, rgba(125, 211, 252, 0.12), rgba(15, 23, 42, 0.4));
+        }
+        .csh-constellation-frame {
+            height: 100%;
+            min-height: 300px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 14px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(30,41,59,0.7), rgba(15,23,42,0.92));
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .csh-constellation-frame img { width:100%; height:100%; object-fit:cover; }
+        .csh-constellation-empty-media { color:#93a7cb; font-size:.82rem; text-align:center; padding: 0 1rem; }
+        .csh-constellation-content { padding: 1rem 1.15rem 1.15rem; display:flex; flex-direction:column; gap:.9rem; }
+        .csh-constellation-tabs { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.5rem; }
+        .csh-constellation-tab {
+            border:1px solid rgba(148,163,184,0.4);
+            border-radius:10px;
+            padding:.45rem .55rem;
+            color:#cbd5e1;
+            background: rgba(15,23,42,0.55);
+            text-align:left;
+            font-size:.76rem;
+            transition: .15s ease;
+        }
+        .csh-constellation-tab:hover { border-color: rgba(125,211,252,.7); color:#e2e8f0; }
+        .csh-constellation-tab.is-active {
+            border-color:#7dd3fc;
+            box-shadow: 0 0 0 1px rgba(125,211,252,0.35) inset;
+            background: rgba(14,116,144,0.22);
+            color:#e0f2fe;
+        }
+        .csh-constellation-detail {
+            border:1px solid rgba(148,163,184,0.35);
+            border-radius:12px;
+            padding:.8rem .9rem;
+            background: rgba(15,23,42,0.5);
+        }
+        .csh-constellation-title { color:#f1f5f9; font-size:1rem; font-weight:700; }
+        .csh-constellation-desc { color:#cbd5e1; font-size:.84rem; line-height:1.45; margin-top:.45rem; white-space:pre-wrap; }
         .csh-weapon-link { color:#93c5fd; text-decoration:underline; }
         .csh-weapon-rarity-1 { background:#9ca3af; }
         .csh-weapon-rarity-2 { background:#34d399; }
@@ -151,7 +305,7 @@
         .th-weapon-icon-wrap img { width:30px; height:30px; object-fit:contain; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25)); }
         .th-state-dot { width:10px; height:10px; border-radius:999px; border:1px solid #94a3b8; background:#e2e8f0; }
         .th-state-dot.is-active { background:#0ea5e9; border-color:#0284c7; }
-        .th-weapon-card.is-dragging { opacity: 0.45; }
+        .th-weapon-card.is-dragging { opacity: 0.62; transform: scale(0.985); }
         .th-weapon-card.is-drop-target { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25); }
         .th-grab-handle {
             width: 20px;
@@ -169,12 +323,28 @@
             line-height: 1;
         }
         .th-grab-handle:active { cursor: grabbing; }
+        .th-drop-ghost {
+            border: 1px dashed #7dd3fc;
+            border-radius: 10px;
+            background: rgba(14, 165, 233, 0.08);
+            padding: 0;
+            overflow: hidden;
+            opacity: 0.55;
+            pointer-events: auto;
+        }
+        .th-drop-ghost .th-weapon-card-inner,
+        .th-drop-ghost .border-t {
+            background: rgba(255, 255, 255, 0.72);
+        }
 
 
         @media (max-width: 900px) {
             .character-show-hero { grid-template-columns: 1fr; grid-template-areas: "hero" "portrait" "video" "meta"; padding:1.1rem; }
             .csh-portrait { min-height: 280px; }
             .csh-video { aspect-ratio:16/9; }
+            .csh-preview-table { grid-template-columns: 1fr; }
+            .csh-constellation-grid { grid-template-columns: 1fr; }
+            .csh-constellation-media { border-right:0; border-bottom:1px solid rgba(255,255,255,0.08); }
         }
     </style>
 
@@ -279,6 +449,7 @@
             'fid_etoile' => (string)$personnage->fid_etoile,
             'fid_TArmes' => $personnage->fid_TArmes ? (string)$personnage->fid_TArmes : '',
             'fid_TP' => $personnage->fid_TP ? (string)$personnage->fid_TP : '',
+            'fid_nation' => $personnage->nations->first()?->id_region ? (string) $personnage->nations->first()->id_region : '',
             'arme_icon' => $personnage->arme_icon ?? null,
             'videos' => $personnage->videos->map(fn($v)=>['url_video'=>$v->url_video])->values(),
         ]);
@@ -330,6 +501,47 @@
                 'position' => $w->position,
             ];
         });
+
+        $existingArtefactsJson = $personnage->artefactsRecommandees->map(function ($build) {
+            $artefact1 = $build->artefact1?->nom_artefact;
+            $artefact2 = $build->artefact2?->nom_artefact;
+
+            return [
+                'id_build' => $build->id_build,
+                'artefact1_nom' => $artefact1,
+                'pieces_1' => (int) $build->pieces_1,
+                'artefact2_nom' => $artefact2,
+                'pieces_2' => (int) ($build->pieces_2 ?? 0),
+                'position' => (int) $build->position,
+            ];
+        })->values();
+
+        $constellationImageFor = function (string $slug, int $index): string {
+            $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
+            foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
+                $path = $base . '.' . $ext;
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                    return asset('storage/' . $path);
+                }
+            }
+
+            return asset('images/placeholder.svg');
+        };
+
+        $constellationsJson = $personnage->constellations
+            ->sortBy('id_const')
+            ->values()
+            ->map(function ($constellation, $idx) use ($personnage, $constellationImageFor) {
+                $index = $idx + 1;
+                return [
+                    'id_const' => (int) $constellation->id_const,
+                    'index' => $index,
+                    'label' => 'C' . $index,
+                    'titre_const' => $constellation->titre_const,
+                    'descri_const' => $constellation->descri_const,
+                    'image_url' => $constellationImageFor($personnage->slug, $index),
+                ];
+            });
     @endphp
 
     <div id="personnage-editor-config"
@@ -343,6 +555,8 @@
          data-arme-icon="{{ e($personnage->arme_icon ?? '') }}"
          data-available-armes="{{ e(json_encode($availableArmesJson)) }}"
          data-existing-armes="{{ e(json_encode($existingArmesJson)) }}"
+         data-existing-artefacts="{{ e(json_encode($existingArtefactsJson)) }}"
+         data-constellations="{{ e(json_encode($constellationsJson)) }}"
          data-element-icons="{{ e(json_encode($elementIcons)) }}"
          data-nation-icons="{{ e(json_encode($nationIcons)) }}"
          data-weapon-type-icons="{{ e(json_encode($weaponTypeIcons)) }}"
@@ -359,39 +573,43 @@
          data-save-main-zone-url="{{ route('admin.personnage.block.main-zone.update', $personnage) }}"
          data-save-armes-url="{{ route('admin.personnage.block.armes.update', $personnage) }}"
          data-save-artefacts-url="{{ route('admin.personnage.block.artefacts.update', $personnage) }}"
+         data-save-constellations-url="{{ route('admin.personnage.block.constellations.update', $personnage) }}"
+         data-upload-constellation-url="{{ route('admin.personnage.block.constellations.upload', $personnage) }}"
          data-showcase-url="{{ route('personnages.show', $personnage) }}"
          data-csrf="{{ csrf_token() }}"
          class="hidden"></div>
 
     <div class="flex h-screen overflow-hidden" x-data="personnageEditLayout()" x-init="init()">
 
-        <template x-teleport="body">
-            <div x-show="toast.show"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 translate-y-1"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 translate-y-1"
-                 class="fixed bottom-5 right-5 z-[9999] rounded-lg border bg-white px-4 py-2 text-sm font-medium shadow-lg"
-                 :class="toast.type === 'success'
-                        ? 'text-emerald-800 border-emerald-300'
-                        : 'text-red-800 border-red-300'"
-                 x-text="toast.text"></div>
-        </template>
+         <div x-show="toast.show"
+              x-cloak
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 translate-y-1"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 translate-y-0"
+              x-transition:leave-end="opacity-0 translate-y-1"
+              class="fixed bottom-5 right-5 z-[9999] rounded-lg border bg-white px-4 py-2 text-sm font-medium text-black shadow-lg"
+              :class="toast.type === 'success'
+                  ? 'border-emerald-300 text-emerald-800'
+                  : 'border-red-300 text-red-800'"
+              x-text="toast.text"></div>
 
         {{-- ===================== SIDEBAR GAUCHE ===================== --}}
-        <aside class="w-80 shrink-0 flex flex-col bg-white border-r border-slate-300 overflow-y-auto text-black">
+        <div class="shrink-0 flex h-full">
+            <aside class="flex flex-col bg-white overflow-y-auto text-black transition-all duration-200"
+                   :class="sidebarCollapsed ? 'w-0 border-r-0' : 'w-80 border-r border-slate-300'">
 
-            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-300 bg-slate-100 sticky top-0 z-20 shadow-sm">
-                <h2 class="font-bold text-black text-sm">Édition du personnage</h2>
-                <button @click="saveMainZone()"
-                        class="px-3 py-1.5 text-sm font-semibold rounded bg-blue-600 hover:bg-blue-500 text-white focus:outline-none">
-                    Sauvegarder
-                </button>
-            </div>
+                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-300 bg-slate-100 sticky top-0 z-20 shadow-sm"
+                     x-show="!sidebarCollapsed">
+                    <h2 class="font-bold text-black text-sm">Édition du personnage</h2>
+                    <button @click="saveMainZone()"
+                            class="px-3 py-1.5 text-sm font-semibold rounded bg-blue-600 hover:bg-blue-500 text-white focus:outline-none">
+                        Sauvegarder
+                    </button>
+                </div>
 
-            <div class="p-4 space-y-5 text-black text-sm">
+                <div class="p-4 space-y-5 text-black text-sm" x-show="!sidebarCollapsed">
 
                 <div>
                           <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide mb-1">Nom du personnage</label>
@@ -454,7 +672,9 @@
 
                 <div>
                     <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide mb-2">Images</label>
-                    <div class="space-y-2">
+                    <div class="space-y-2"
+                        @dragover.prevent
+                        @drop.prevent="onArmeDropAtEnd($event)">
                         <div class="flex items-center gap-3 rounded border border-slate-300 bg-white px-3 py-2 cursor-pointer hover:bg-slate-50"
                              @click="document.getElementById('portrait-upload').click()">
                             <img :src="portraitPreview" class="w-10 h-10 rounded object-cover border border-slate-300" />
@@ -515,45 +735,107 @@
                         <div class="mb-2 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700" x-text="armesError"></div>
                     </template>
 
-                    <div class="space-y-2">
+                    <div class="space-y-2" @dragover.prevent @drop.prevent="onArmeDropAtEnd($event)">
                         <template x-for="(arme, index) in armes" :key="arme.id_arme + '-' + index">
-                            <div class="th-weapon-card"
-                                 draggable="true"
-                                 :class="{
-                                    'is-dragging': dragArmeIndex === index,
-                                    'is-drop-target': dropArmeIndex === index && dragArmeIndex !== index
-                                 }"
-                                 @dragstart="onArmeDragStart(index, $event)"
-                                 @dragover.prevent="onArmeDragOver(index, $event)"
-                                 @drop.prevent="onArmeDrop(index, $event)"
-                                 @dragend="onArmeDragEnd()">
+                            <div>
+                                <template x-if="draggedArme && dragArmeIndex !== index && dropArmeIndex === index">
+                                    <div class="th-drop-ghost"
+                                         @dragover.prevent="dropArmeIndex = normalizeDropArmeIndex(index)"
+                                         @drop.prevent="dropArmeIndex = normalizeDropArmeIndex(index); onArmeDrop()">
+                                        <div class="th-weapon-card-inner">
+                                            <div class="th-grab-handle opacity-60">⋮⋮</div>
+                                            <div class="th-weapon-icon-wrap" :class="rarityClass(draggedArme.stars || draggedArme.fid_etoile)">
+                                                <img :src="draggedArme.icon" :alt="draggedArme.nom">
+                                            </div>
+
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-sm font-semibold text-slate-900 truncate" x-text="draggedArme.nom"></div>
+                                                <div class="text-[11px] text-slate-600" x-text="(draggedArme.etoile || '?') + ' - ' + (draggedArme.type || 'Type inconnu')"></div>
+                                            </div>
+
+                                            <div class="flex items-center gap-1 opacity-70">
+                                                <span class="th-state-dot"></span>
+                                                <span class="th-state-dot" :class="draggedArme.is_starter ? 'is-active' : ''"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between border-t border-slate-200 px-2 py-1.5 bg-white">
+                                            <span class="text-[11px] font-medium rounded px-2 py-1 border"
+                                                  :class="draggedArme.is_starter ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-300'">
+                                                Starter
+                                            </span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <div class="th-weapon-card"
+                                     draggable="true"
+                                     :class="{
+                                        'is-dragging': dragArmeIndex === index,
+                                        'is-drop-target': (dropArmeIndex === index || dropArmeIndex === index + 1) && dragArmeIndex !== index
+                                     }"
+                                     @dragstart="onArmeDragStart(index, $event)"
+                                     @dragover.prevent="onArmeDragOver(index, $event)"
+                                     @drop.prevent="onArmeDrop(index, $event)"
+                                     @dragend="onArmeDragEnd()">
+                                    <div class="th-weapon-card-inner">
+                                        <button type="button" class="th-grab-handle" title="Glisser pour réordonner" @mousedown.prevent>⋮⋮</button>
+                                        <div class="th-weapon-icon-wrap" :class="rarityClass(arme.stars || arme.fid_etoile)">
+                                            <img :src="arme.icon" :alt="arme.nom">
+                                        </div>
+
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-sm font-semibold text-slate-900 truncate" x-text="arme.nom"></div>
+                                            <div class="text-[11px] text-slate-600" x-text="(arme.etoile || '?') + ' - ' + (arme.type || 'Type inconnu')"></div>
+                                        </div>
+
+                                        <div class="flex items-center gap-1">
+                                            <span class="th-state-dot"></span>
+                                            <span class="th-state-dot" :class="arme.is_starter ? 'is-active' : ''"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between border-t border-slate-200 px-2 py-1.5 bg-white">
+                                        <button type="button"
+                                                class="text-[11px] font-medium rounded px-2 py-1 border"
+                                                :class="arme.is_starter ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-300'"
+                                                @click="setStarter(index)">
+                                            Starter
+                                        </button>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" class="w-6 h-6 rounded border border-red-300 text-red-600" @click="removeArme(index)">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="draggedArme && dropArmeIndex === armes.length">
+                            <div class="th-drop-ghost"
+                                 @dragover.prevent="dropArmeIndex = normalizeDropArmeIndex(armes.length)"
+                                 @drop.prevent="dropArmeIndex = normalizeDropArmeIndex(armes.length); onArmeDrop()">
                                 <div class="th-weapon-card-inner">
-                                    <button type="button" class="th-grab-handle" title="Glisser pour réordonner" @mousedown.prevent>⋮⋮</button>
-                                    <div class="th-weapon-icon-wrap" :class="rarityClass(arme.stars || arme.fid_etoile)">
-                                        <img :src="arme.icon" :alt="arme.nom">
+                                    <div class="th-grab-handle opacity-60">⋮⋮</div>
+                                    <div class="th-weapon-icon-wrap" :class="rarityClass(draggedArme.stars || draggedArme.fid_etoile)">
+                                        <img :src="draggedArme.icon" :alt="draggedArme.nom">
                                     </div>
 
                                     <div class="min-w-0 flex-1">
-                                        <div class="text-sm font-semibold text-slate-900 truncate" x-text="arme.nom"></div>
-                                        <div class="text-[11px] text-slate-600" x-text="(arme.etoile || '?') + ' - ' + (arme.type || 'Type inconnu')"></div>
+                                        <div class="text-sm font-semibold text-slate-900 truncate" x-text="draggedArme.nom"></div>
+                                        <div class="text-[11px] text-slate-600" x-text="(draggedArme.etoile || '?') + ' - ' + (draggedArme.type || 'Type inconnu')"></div>
                                     </div>
 
-                                    <div class="flex items-center gap-1">
+                                    <div class="flex items-center gap-1 opacity-70">
                                         <span class="th-state-dot"></span>
-                                        <span class="th-state-dot" :class="arme.is_starter ? 'is-active' : ''"></span>
+                                        <span class="th-state-dot" :class="draggedArme.is_starter ? 'is-active' : ''"></span>
                                     </div>
                                 </div>
 
                                 <div class="flex items-center justify-between border-t border-slate-200 px-2 py-1.5 bg-white">
-                                    <button type="button"
-                                            class="text-[11px] font-medium rounded px-2 py-1 border"
-                                            :class="arme.is_starter ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-300'"
-                                            @click="setStarter(index)">
+                                    <span class="text-[11px] font-medium rounded px-2 py-1 border"
+                                          :class="draggedArme.is_starter ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-300'">
                                         Starter
-                                    </button>
-                                    <div class="flex items-center gap-1">
-                                        <button type="button" class="w-6 h-6 rounded border border-red-300 text-red-600" @click="removeArme(index)">×</button>
-                                    </div>
+                                    </span>
                                 </div>
                             </div>
                         </template>
@@ -571,8 +853,88 @@
                     </div>
                 </div>
 
+                <div class="rounded border border-slate-300 bg-slate-50 p-3">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-700 mb-2">Artefacts</div>
+                    <p class="text-xs text-slate-600">Section prête. L'éditeur artefacts sera branché dans ce sous-menu.</p>
+                </div>
+
+                <hr class="border-slate-300" />
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Constellations</label>
+                        <button type="button" @click="saveConstellations()"
+                                class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
+                            Sauvegarder constellations
+                        </button>
+                    </div>
+
+                    <template x-if="constellationsError">
+                        <div class="mb-2 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700" x-text="constellationsError"></div>
+                    </template>
+
+                    <template x-if="constellations.length">
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-3 gap-1">
+                                <template x-for="(constellation, index) in constellations" :key="`sidebar-c-${constellation.id_const || index}`">
+                                    <button type="button"
+                                            class="rounded border px-2 py-1 text-[11px] font-semibold"
+                                            :class="selectedConstellationIndex === index ? 'border-sky-500 bg-sky-100 text-sky-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'"
+                                            @click="selectedConstellationIndex = index"
+                                            x-text="constellation.label || ('C' + (index + 1))"></button>
+                                </template>
+                            </div>
+
+                            <div class="rounded border border-slate-300 bg-slate-50 p-2 space-y-2" x-show="activeConstellation">
+                                <div>
+                                    <label class="block text-slate-700 text-[11px] font-semibold mb-1">Nom</label>
+                                    <input type="text" x-model="activeConstellation.titre_const"
+                                           class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-black" />
+                                </div>
+                                <div>
+                                    <label class="block text-slate-700 text-[11px] font-semibold mb-1">Description</label>
+                                    <textarea x-model="activeConstellation.descri_const" rows="4"
+                                              class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-black"></textarea>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <img :src="activeConstellation.image_url || '{{ asset('images/placeholder.svg') }}'"
+                                         class="w-11 h-11 rounded object-cover border border-slate-300" alt="">
+                                    <button type="button"
+                                            class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                                            @click="document.getElementById('constellation-upload-' + (selectedConstellationIndex + 1)).click()">
+                                        Upload image
+                                    </button>
+                                </div>
+
+                                <template x-for="(constellation, index) in constellations" :key="`upload-c-${constellation.id_const || index}`">
+                                    <input type="file"
+                                           class="hidden"
+                                           accept="image/*"
+                                           :id="'constellation-upload-' + (index + 1)"
+                                           @change="uploadConstellationImage($event, index)" />
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="!constellations.length">
+                        <p class="text-xs text-slate-600 italic">Aucune constellation disponible.</p>
+                    </template>
+                </div>
+
+                </div>
+            </aside>
+
+            <div class="w-0 relative shrink-0">
+                <button type="button"
+                        class="absolute left-0 top-3 z-20 flex h-10 w-7 -translate-x-px items-center justify-center rounded-r-md border border-l-0 border-slate-300 bg-white text-sm font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-100"
+                        @click="sidebarCollapsed = !sidebarCollapsed"
+                        :title="sidebarCollapsed ? 'Ouvrir la sidebar' : 'Fermer la sidebar'">
+                    <span x-text="sidebarCollapsed ? '>' : '<'"></span>
+                </button>
             </div>
-        </aside>
+        </div>
 
         {{-- ===================== ZONE PREVIEW DROITE ===================== --}}
         <div class="flex-1 overflow-y-auto bg-slate-950">
@@ -646,6 +1008,129 @@
                     <button type="button" @click="nextVideo()" class="rounded bg-slate-700 px-2 py-0.5 hover:bg-slate-600">▶</button>
                 </div>
             </div>
+
+            <section class="csh-preview-table mx-6">
+                <div class="csh-preview-panel">
+                    <div class="csh-preview-panel-head">
+                        <div>
+                            <div class="csh-preview-panel-title">Armes</div>
+                            <div class="csh-preview-panel-subtitle">Colonne gauche du tableau preview</div>
+                        </div>
+                        <div class="text-xs text-slate-400" x-text="armes.length ? `${armes.length} arme(s)` : 'Aucune arme'"></div>
+                    </div>
+
+                    <template x-if="armes.length">
+                        <div class="csh-preview-weapon-list">
+                            <template x-for="(arme, index) in armes" :key="`preview-${arme.id_arme}-${index}`">
+                                <article class="csh-weapon-item">
+                                    <div class="csh-weapon-index" x-text="index + 1"></div>
+                                    <div class="csh-weapon-icon-wrap" :class="rarityClass(arme.stars || arme.fid_etoile)">
+                                        <img :src="arme.icon" :alt="arme.nom">
+                                    </div>
+                                    <div class="csh-weapon-copy">
+                                        <div class="csh-weapon-name truncate" x-text="arme.nom"></div>
+                                        <div class="csh-weapon-type" x-text="(arme.etoile || '?') + ' · ' + (arme.type || 'Type inconnu')"></div>
+                                        <template x-if="arme.is_starter">
+                                            <div class="csh-weapon-badge">Starter</div>
+                                        </template>
+                                    </div>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template x-if="!armes.length">
+                        <div class="csh-weapon-empty">Aucune arme recommandée pour le moment.</div>
+                    </template>
+                </div>
+
+                <div class="csh-preview-panel">
+                    <div class="csh-preview-panel-head">
+                        <div>
+                            <div class="csh-preview-panel-title">Artefacts</div>
+                            <div class="csh-preview-panel-subtitle">Colonne droite du tableau preview</div>
+                        </div>
+                        <div class="text-xs text-slate-400" x-text="artefactBuilds.length ? `${artefactBuilds.length} build(s)` : 'Aucun build'"></div>
+                    </div>
+
+                    <template x-if="artefactBuilds.length">
+                        <div class="csh-preview-artefact-list">
+                            <template x-for="(build, index) in artefactBuilds" :key="`preview-build-${build.id_build || index}`">
+                                <article class="csh-artefact-item">
+                                    <div class="csh-artefact-head">
+                                        <div class="csh-artefact-title" x-text="`Build ${index + 1}`"></div>
+                                        <div class="csh-artefact-piece" x-text="build.artefact2_nom ? '2P + 2P' : `${build.pieces_1}P`"></div>
+                                    </div>
+                                    <div class="csh-artefact-row">
+                                        <span class="csh-artefact-name" x-text="build.artefact1_nom || 'Artefact principal'"></span>
+                                        <span class="csh-artefact-piece" x-text="`${build.pieces_1}P`"></span>
+                                    </div>
+                                    <template x-if="build.artefact2_nom">
+                                        <div class="csh-artefact-row">
+                                            <span class="csh-artefact-name" x-text="build.artefact2_nom"></span>
+                                            <span class="csh-artefact-piece" x-text="`${build.pieces_2}P`"></span>
+                                        </div>
+                                    </template>
+                                </article>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template x-if="!artefactBuilds.length">
+                        <div class="csh-artefact-empty">Aucun artefact recommandé pour le moment.</div>
+                    </template>
+                </div>
+            </section>
+
+            <section class="csh-constellation-shell mx-6">
+                <div class="csh-preview-panel-head">
+                    <div>
+                        <div class="csh-preview-panel-title">Constellations</div>
+                        <div class="csh-preview-panel-subtitle">Image à gauche, détails cliquables à droite</div>
+                    </div>
+                    <div class="text-xs text-slate-400" x-text="constellations.length ? `${constellations.length} constellation(s)` : 'Aucune constellation'"></div>
+                </div>
+
+                <div class="csh-constellation-grid">
+                    <div class="csh-constellation-media">
+                        <div class="csh-constellation-frame">
+                            <template x-if="activeConstellation && activeConstellation.image_url">
+                                <img :src="activeConstellation.image_url" :alt="activeConstellation.titre_const || 'Constellation'">
+                            </template>
+                            <template x-if="!activeConstellation">
+                                <div class="csh-constellation-empty-media">Aucune constellation sélectionnée.</div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="csh-constellation-content">
+                        <template x-if="constellations.length">
+                            <div class="csh-constellation-tabs">
+                                <template x-for="(constellation, index) in constellations" :key="`preview-c-${constellation.id_const || index}`">
+                                    <button type="button"
+                                            class="csh-constellation-tab"
+                                            :class="selectedConstellationIndex === index ? 'is-active' : ''"
+                                            @click="selectedConstellationIndex = index">
+                                        <div x-text="constellation.label || ('C' + (index + 1))"></div>
+                                        <div class="truncate text-[11px] opacity-80" x-text="constellation.titre_const || 'Sans titre'"></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template x-if="activeConstellation">
+                            <div class="csh-constellation-detail">
+                                <div class="csh-constellation-title" x-text="activeConstellation.titre_const || 'Constellation sans nom'"></div>
+                                <div class="csh-constellation-desc" x-text="activeConstellation.descri_const || 'Aucune description.'"></div>
+                            </div>
+                        </template>
+
+                        <template x-if="!constellations.length">
+                            <div class="csh-artefact-empty">Aucune constellation disponible pour ce personnage.</div>
+                        </template>
+                    </div>
+                </div>
+            </section>
         </div>
 
         {{-- ===================== MODAL AJOUT ARMES ===================== --}}
@@ -716,6 +1201,8 @@
             const parsedMain    = safeJsonParse(data.mainZone, {});
             const availableArmes = safeJsonParse(data.availableArmes, []);
             const existingArmes  = safeJsonParse(data.existingArmes, []);
+            const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
+            const existingConstellations = safeJsonParse(data.constellations, []);
             const elementIcons   = safeJsonParse(data.elementIcons, {});
             const nationIcons    = safeJsonParse(data.nationIcons, {});
             const weaponTypeIcons = safeJsonParse(data.weaponTypeIcons, {});
@@ -743,10 +1230,15 @@
                 iconePreview:    data.iconePreview    || defaultIcone,
                 weaponToAdd: '',
                 armes:           existingArmes,
+                artefactBuilds:  existingArtefacts,
+                constellations:  existingConstellations,
+                selectedConstellationIndex: 0,
+                sidebarCollapsed: false,
                 availableArmes:  availableArmes,
                 showArmesPicker: false,
                 weaponRarityFilter: '',
                 armesError: '',
+                constellationsError: '',
                 elementIcons,
                 nationIcons,
                 weaponTypeIcons,
@@ -764,6 +1256,14 @@
                 dragArmeIndex: null,
                 dropArmeIndex: null,
 
+                get draggedArme() {
+                    return this.dragArmeIndex === null ? null : (this.armes[this.dragArmeIndex] || null);
+                },
+                get activeConstellation() {
+                    if (!this.constellations.length) return null;
+                    const idx = Math.max(0, Math.min(this.selectedConstellationIndex, this.constellations.length - 1));
+                    return this.constellations[idx] || null;
+                },
                 get selectedElementIcon()    { return this.elementIcons[this.mainZone.fid_element]    || defaultWeapon; },
                 get selectedNationIcon() {
                     const key = String(this.mainZone.fid_nation || '');
@@ -861,9 +1361,32 @@
                 removeArme(index) {
                     this.armes.splice(index, 1);
                 },
+                normalizeDropArmeIndex(index) {
+                    let nextIndex = Math.max(0, Math.min(index, this.armes.length));
+
+                    if (this.dragArmeIndex === null) {
+                        return nextIndex;
+                    }
+
+                    const dragged = this.armes[this.dragArmeIndex] || null;
+                    if (!dragged) {
+                        return nextIndex;
+                    }
+
+                    if (dragged.is_starter) {
+                        return this.armes.length;
+                    }
+
+                    const starterIndex = this.armes.findIndex((arme, idx) => arme.is_starter && idx !== this.dragArmeIndex);
+                    if (starterIndex !== -1) {
+                        nextIndex = Math.min(nextIndex, starterIndex);
+                    }
+
+                    return nextIndex;
+                },
                 onArmeDragStart(index, event) {
                     this.dragArmeIndex = index;
-                    this.dropArmeIndex = index;
+                    this.dropArmeIndex = this.normalizeDropArmeIndex(index);
                     if (event.dataTransfer) {
                         event.dataTransfer.effectAllowed = 'move';
                         event.dataTransfer.setData('text/plain', String(index));
@@ -873,18 +1396,41 @@
                     if (event.dataTransfer) {
                         event.dataTransfer.dropEffect = 'move';
                     }
-                    this.dropArmeIndex = index;
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const isAfter = event.clientY > (rect.top + rect.height / 2);
+                    this.dropArmeIndex = this.normalizeDropArmeIndex(index + (isAfter ? 1 : 0));
                 },
-                onArmeDrop(index) {
-                    if (this.dragArmeIndex === null || this.dragArmeIndex === index) {
+                onArmeDrop() {
+                    if (this.dragArmeIndex === null || this.dropArmeIndex === null) {
                         this.onArmeDragEnd();
                         return;
                     }
 
                     const moved = this.armes.splice(this.dragArmeIndex, 1)[0];
-                    const targetIndex = this.dragArmeIndex < index ? index - 1 : index;
+                    let targetIndex = this.dropArmeIndex;
+                    if (this.dragArmeIndex < targetIndex) {
+                        targetIndex -= 1;
+                    }
+                    if (moved?.is_starter) {
+                        targetIndex = this.armes.length;
+                    } else {
+                        const starterIndex = this.armes.findIndex(arme => arme.is_starter);
+                        if (starterIndex !== -1) {
+                            targetIndex = Math.min(targetIndex, starterIndex);
+                        }
+                    }
+                    targetIndex = Math.max(0, Math.min(targetIndex, this.armes.length));
                     this.armes.splice(targetIndex, 0, moved);
                     this.onArmeDragEnd();
+                },
+                onArmeDropAtEnd() {
+                    if (this.dragArmeIndex === null) {
+                        this.onArmeDragEnd();
+                        return;
+                    }
+
+                    this.dropArmeIndex = this.normalizeDropArmeIndex(this.armes.length);
+                    this.onArmeDrop();
                 },
                 onArmeDragEnd() {
                     this.dragArmeIndex = null;
@@ -989,6 +1535,77 @@
                     this.mainZone.videos.splice(i, 1);
                     if (this.selectedVideoIndex >= this.mainZone.videos.length) {
                         this.selectedVideoIndex = Math.max(0, this.mainZone.videos.length - 1);
+                    }
+                },
+                async saveConstellations() {
+                    if (!this.constellations.length) return;
+
+                    try {
+                        const payload = this.constellations.map(c => ({
+                            id_const: Number(c.id_const),
+                            titre_const: String(c.titre_const || '').trim(),
+                            descri_const: c.descri_const || '',
+                        }));
+
+                        const resp = await fetch(data.saveConstellationsUrl, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': data.csrf },
+                            body: JSON.stringify({ constellations: payload }),
+                        });
+
+                        if (!resp.ok) {
+                            let msg = 'Erreur sauvegarde constellations';
+                            try {
+                                const j = await resp.json();
+                                const firstKey = Object.keys(j?.errors || {})[0];
+                                if (firstKey && j.errors[firstKey]?.[0]) {
+                                    msg = j.errors[firstKey][0];
+                                }
+                            } catch (e) {
+                                // Keep fallback message.
+                            }
+                            this.constellationsError = msg;
+                            this.showToast(msg, 'error');
+                            return;
+                        }
+
+                        this.constellationsError = '';
+                        this.showToast('Constellations sauvegardées', 'success');
+                    } catch (e) {
+                        this.constellationsError = e?.message || 'Erreur sauvegarde constellations';
+                        this.showToast(this.constellationsError, 'error');
+                    }
+                },
+                async uploadConstellationImage(event, index) {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+
+                    const form = new FormData();
+                    form.append('image', file);
+                    form.append('constellation_index', String(index + 1));
+
+                    try {
+                        const resp = await fetch(data.uploadConstellationUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': data.csrf },
+                            body: form,
+                        });
+
+                        if (!resp.ok) {
+                            this.showToast('Erreur upload image constellation', 'error');
+                            return;
+                        }
+
+                        const j = await resp.json();
+                        const t = Date.now();
+                        if (this.constellations[index]) {
+                            this.constellations[index].image_url = `${j.url}?t=${t}`;
+                        }
+                        this.showToast(`Image C${index + 1} mise à jour`, 'success');
+                    } catch (e) {
+                        this.showToast('Erreur upload image constellation', 'error');
+                    } finally {
+                        event.target.value = '';
                     }
                 },
                 async uploadImage(event, type) {
