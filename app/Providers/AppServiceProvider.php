@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Models\{
     Personnage, Nation, Plat, Materiaux, Ennemi, Ingredient,
-    SousRegion, Elements, TypeArme, Arme, Evenement, Animal,
+    SousRegion, Elements, TypeArme, Arme, Evenement, Animal, Constellation,
     Etoile, Chronologie
 };
 
@@ -41,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
             'etoile'       => Etoile::class,
             'evenement'    => Evenement::class,
             'chronologie'  => Chronologie::class,
+            'constellation'=> Constellation::class,
         ]);
     }
 }

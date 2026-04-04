@@ -238,6 +238,61 @@
         }
         .csh-constellation-title { color:#f1f5f9; font-size:1rem; font-weight:700; }
         .csh-constellation-desc { color:#cbd5e1; font-size:.84rem; line-height:1.45; margin-top:.45rem; white-space:pre-wrap; }
+        .th-const-map-shell { border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; padding: .75rem; }
+        .th-const-map-canvas {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border: 1px dashed #94a3b8;
+            border-radius: 12px;
+            overflow: hidden;
+            background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+            cursor: crosshair;
+        }
+        .th-const-map-canvas img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            user-select: none;
+        }
+        .th-const-map-point {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            border: 2px solid #ffffff;
+            background: #0ea5e9;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(2, 6, 23, 0.35);
+        }
+        .th-const-map-point.is-selected {
+            background: #22c55e;
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35), 0 4px 10px rgba(2, 6, 23, 0.35);
+        }
+        .th-const-map-remove {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 1px solid #ef4444;
+            background: #ffffff;
+            color: #dc2626;
+            line-height: 1;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
         .csh-weapon-link { color:#93c5fd; text-decoration:underline; }
         .csh-weapon-rarity-1 { background:#9ca3af; }
         .csh-weapon-rarity-2 { background:#34d399; }
@@ -542,6 +597,35 @@
                     'image_url' => $constellationImageFor($personnage->slug, $index),
                 ];
             });
+
+        $constCarte = $personnage->constellations->sortBy('id_const')->first();
+        $constellationMapPositionsJson = [];
+        if ($constCarte && is_array($constCarte->positions_const)) {
+            foreach ($constCarte->positions_const as $k => $point) {
+                if (!is_array($point) || !isset($point['x']) || !isset($point['y'])) {
+                    continue;
+                }
+                $key = (string) $k;
+                if (!in_array($key, ['1', '2', '3', '4', '5', '6'], true)) {
+                    continue;
+                }
+                $constellationMapPositionsJson[$key] = [
+                    'x' => round((float) $point['x'], 1),
+                    'y' => round((float) $point['y'], 1),
+                ];
+            }
+        }
+
+        $constellationMapImage = asset('images/placeholder.svg');
+        if ($constCarte && $constCarte->photo) {
+            if ($constCarte->photo->source_url) {
+                $constellationMapImage = $constCarte->photo->source_url;
+            } elseif (filter_var((string) $constCarte->photo->chemin_photo, FILTER_VALIDATE_URL)) {
+                $constellationMapImage = $constCarte->photo->chemin_photo;
+            } elseif ($constCarte->photo->chemin_photo) {
+                $constellationMapImage = asset('storage/' . ltrim((string) $constCarte->photo->chemin_photo, '/'));
+            }
+        }
     @endphp
 
     <div id="personnage-editor-config"
@@ -557,6 +641,8 @@
          data-existing-armes="{{ e(json_encode($existingArmesJson)) }}"
          data-existing-artefacts="{{ e(json_encode($existingArtefactsJson)) }}"
          data-constellations="{{ e(json_encode($constellationsJson)) }}"
+         data-const-map-positions="{{ e(json_encode($constellationMapPositionsJson)) }}"
+         data-const-map-image="{{ e($constellationMapImage) }}"
          data-element-icons="{{ e(json_encode($elementIcons)) }}"
          data-nation-icons="{{ e(json_encode($nationIcons)) }}"
          data-weapon-type-icons="{{ e(json_encode($weaponTypeIcons)) }}"
@@ -923,6 +1009,86 @@
                     </template>
                 </div>
 
+                <hr class="border-slate-300" />
+
+                <div id="constellation-map" class="th-const-map-shell">
+                    <div class="mb-2 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-slate-700">Carte constellation</div>
+                            <div class="text-[11px] text-slate-600">Image de fond + placement C1 a C6</div>
+                        </div>
+                    </div>
+
+                    <form method="POST"
+                          action="{{ route('admin.personnages.update', $personnage) }}"
+                          enctype="multipart/form-data"
+                          class="space-y-2">
+                        @csrf
+                        @method('PUT')
+
+                        <input type="hidden" name="nom_perso" :value="mainZone.nom_perso">
+                        <input type="hidden" name="fid_element" :value="mainZone.fid_element">
+                        <input type="hidden" name="fid_etoile" :value="mainZone.fid_etoile">
+                        <input type="hidden" name="fid_TArmes" :value="mainZone.fid_TArmes">
+                        <input type="hidden" name="fid_TP" :value="mainZone.fid_TP">
+                        <input type="hidden" name="positions_const" :value="constellationMapPositionsJson">
+
+                        <div class="th-const-map-canvas"
+                             x-ref="constellationMapCanvas"
+                             @click="onConstellationMapClick($event)">
+                            <img :src="constellationMapImage || '{{ asset('images/placeholder.svg') }}'" alt="Carte constellation">
+
+                            <template x-for="index in [1,2,3,4,5,6]" :key="`map-point-${index}`">
+                                <template x-if="constellationMapPositions[String(index)]">
+                                    <button type="button"
+                                            class="th-const-map-point"
+                                            :class="selectedMapPoint === index ? 'is-selected' : ''"
+                                            :style="mapPointStyle(index)"
+                                            @click.stop="selectedMapPoint = index">
+                                        <span x-text="index"></span>
+                                        <span class="th-const-map-remove" @click.stop="clearMapPoint(index)">x</span>
+                                    </button>
+                                </template>
+                            </template>
+                        </div>
+
+                        <div class="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700">
+                            Prochain point a placer : <span class="font-semibold" x-text="nextMapPointLabel"></span>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-[11px] font-semibold text-slate-700">Image URL</label>
+                            <input type="url"
+                                   name="constellation_map_image_url"
+                                   x-model="constellationMapImageUrlInput"
+                                   @input="applyConstellationMapImageUrl()"
+                                   class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-black"
+                                   placeholder="https://..." />
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-[11px] font-semibold text-slate-700">Uploader image de fond</label>
+                            <input type="file"
+                                   name="constellation_map_image"
+                                   accept="image/*"
+                                   @change="previewConstellationMapImage($event)"
+                                   class="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-black" />
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-[11px] font-semibold text-slate-700">JSON (lecture seule)</label>
+                            <textarea readonly rows="5"
+                                      class="w-full rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700"
+                                      :value="constellationMapPositionsPretty"></textarea>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full rounded border border-blue-600 bg-blue-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-blue-500">
+                            Enregistrer carte constellation
+                        </button>
+                    </form>
+                </div>
+
                 </div>
             </aside>
 
@@ -1203,6 +1369,7 @@
             const existingArmes  = safeJsonParse(data.existingArmes, []);
             const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
             const existingConstellations = safeJsonParse(data.constellations, []);
+            const existingConstellationMapPositions = safeJsonParse(data.constMapPositions, {});
             const elementIcons   = safeJsonParse(data.elementIcons, {});
             const nationIcons    = safeJsonParse(data.nationIcons, {});
             const weaponTypeIcons = safeJsonParse(data.weaponTypeIcons, {});
@@ -1233,6 +1400,10 @@
                 artefactBuilds:  existingArtefacts,
                 constellations:  existingConstellations,
                 selectedConstellationIndex: 0,
+                constellationMapPositions: existingConstellationMapPositions,
+                selectedMapPoint: null,
+                constellationMapImage: data.constMapImage || '{{ asset("images/placeholder.svg") }}',
+                constellationMapImageUrlInput: '',
                 sidebarCollapsed: false,
                 availableArmes:  availableArmes,
                 showArmesPicker: false,
@@ -1263,6 +1434,38 @@
                     if (!this.constellations.length) return null;
                     const idx = Math.max(0, Math.min(this.selectedConstellationIndex, this.constellations.length - 1));
                     return this.constellations[idx] || null;
+                },
+                get nextMapPointLabel() {
+                    if (this.selectedMapPoint !== null) {
+                        return `C${this.selectedMapPoint} (repositionnement)`;
+                    }
+                    for (let i = 1; i <= 6; i += 1) {
+                        if (!this.constellationMapPositions[String(i)]) {
+                            return `C${i}`;
+                        }
+                    }
+                    return 'Tous les points places';
+                },
+                get constellationMapPositionsJson() {
+                    const normalized = {};
+                    for (let i = 1; i <= 6; i += 1) {
+                        const key = String(i);
+                        const point = this.constellationMapPositions[key];
+                        if (!point) continue;
+                        normalized[key] = {
+                            x: this.roundPercent(point.x),
+                            y: this.roundPercent(point.y),
+                        };
+                    }
+                    return JSON.stringify(normalized);
+                },
+                get constellationMapPositionsPretty() {
+                    const json = this.constellationMapPositionsJson;
+                    try {
+                        return JSON.stringify(JSON.parse(json), null, 2);
+                    } catch (e) {
+                        return '{}';
+                    }
                 },
                 get selectedElementIcon()    { return this.elementIcons[this.mainZone.fid_element]    || defaultWeapon; },
                 get selectedNationIcon() {
@@ -1360,6 +1563,59 @@
                 },
                 removeArme(index) {
                     this.armes.splice(index, 1);
+                },
+                roundPercent(value) {
+                    const num = Number(value);
+                    if (Number.isNaN(num)) return 0;
+                    return Math.round(Math.max(0, Math.min(100, num)) * 10) / 10;
+                },
+                mapPointStyle(index) {
+                    const key = String(index);
+                    const point = this.constellationMapPositions[key];
+                    const x = this.roundPercent(point?.x ?? 0);
+                    const y = this.roundPercent(point?.y ?? 0);
+                    return `left:${x}%;top:${y}%;`;
+                },
+                nextMapPointIndex() {
+                    for (let i = 1; i <= 6; i += 1) {
+                        if (!this.constellationMapPositions[String(i)]) {
+                            return i;
+                        }
+                    }
+                    return null;
+                },
+                onConstellationMapClick(event) {
+                    const canvas = this.$refs.constellationMapCanvas;
+                    if (!canvas) return;
+
+                    const rect = canvas.getBoundingClientRect();
+                    if (rect.width <= 0 || rect.height <= 0) return;
+
+                    const x = this.roundPercent(((event.clientX - rect.left) / rect.width) * 100);
+                    const y = this.roundPercent(((event.clientY - rect.top) / rect.height) * 100);
+
+                    const targetIndex = this.selectedMapPoint ?? this.nextMapPointIndex();
+                    if (!targetIndex) return;
+
+                    this.constellationMapPositions[String(targetIndex)] = { x, y };
+                    this.selectedMapPoint = null;
+                },
+                clearMapPoint(index) {
+                    delete this.constellationMapPositions[String(index)];
+                    if (this.selectedMapPoint === index) {
+                        this.selectedMapPoint = null;
+                    }
+                    this.constellationMapPositions = { ...this.constellationMapPositions };
+                },
+                applyConstellationMapImageUrl() {
+                    const value = String(this.constellationMapImageUrlInput || '').trim();
+                    if (!value) return;
+                    this.constellationMapImage = value;
+                },
+                previewConstellationMapImage(event) {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    this.constellationMapImage = URL.createObjectURL(file);
                 },
                 normalizeDropArmeIndex(index) {
                     let nextIndex = Math.max(0, Math.min(index, this.armes.length));

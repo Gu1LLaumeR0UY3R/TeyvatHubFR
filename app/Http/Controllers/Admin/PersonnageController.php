@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Elements;
 use App\Models\Etoile;
+use App\Models\Constellation;
 use App\Models\Personnage;
 use App\Models\Role;
 use App\Models\TypeArme;
 use App\Models\TypePerso;
 use App\Models\Nation;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -109,7 +112,7 @@ class PersonnageController extends Controller
             'armesRecommandees.arme',
             'artefactsRecommandees.artefact1',
             'artefactsRecommandees.artefact2',
-            'constellations',
+            'constellations.photo',
         ]);
 
         $elements  = Elements::all();
@@ -133,9 +136,18 @@ class PersonnageController extends Controller
             'fid_element'=> ['required', 'exists:elements,id_element'],
             'fid_TArmes' => ['required', 'exists:type_armes,id_TArmes'],
             'fid_TP'     => ['required', 'exists:type_perso,id_TP'],
+            'positions_const' => ['nullable', 'json'],
+            'constellation_map_image' => ['nullable', 'image', 'max:5120'],
+            'constellation_map_image_url' => ['nullable', 'url', 'max:500'],
         ]);
 
-        $personnage->update($data);
+        $personnage->update([
+            'nom_perso' => $data['nom_perso'],
+            'fid_etoile' => $data['fid_etoile'],
+            'fid_element' => $data['fid_element'],
+            'fid_TArmes' => $data['fid_TArmes'],
+            'fid_TP' => $data['fid_TP'],
+        ]);
 
         if ($request->hasFile('photo')) {
             $old = $personnage->photos->first();
@@ -147,6 +159,74 @@ class PersonnageController extends Controller
             }
             $path = $request->file('photo')->store('photos/personnages', 'public');
             $personnage->photos()->create(['chemin_photo' => $path, 'source_url' => null]);
+        }
+
+        $constCarte = Constellation::where('fid_perso', $personnage->id_perso)
+            ->orderBy('id_const')
+            ->first();
+
+        if ($constCarte) {
+            if ($request->filled('positions_const') && Schema::hasColumn('constellation', 'positions_const')) {
+                $decodedPositions = json_decode((string) $request->input('positions_const'), true);
+
+                if (is_array($decodedPositions)) {
+                    $normalizedPositions = [];
+                    for ($i = 1; $i <= 6; $i++) {
+                        $rawPoint = $decodedPositions[(string) $i] ?? $decodedPositions[$i] ?? null;
+                        if (!is_array($rawPoint)) {
+                            continue;
+                        }
+
+                        if (!isset($rawPoint['x']) || !isset($rawPoint['y'])) {
+                            continue;
+                        }
+
+                        $x = max(0, min(100, (float) $rawPoint['x']));
+                        $y = max(0, min(100, (float) $rawPoint['y']));
+                        $normalizedPositions[(string) $i] = [
+                            'x' => round($x, 1),
+                            'y' => round($y, 1),
+                        ];
+                    }
+
+                    if ($constCarte->positions_const !== $normalizedPositions) {
+                        $constCarte->positions_const = $normalizedPositions;
+                    }
+                }
+            }
+
+            if ($request->filled('constellation_map_image_url')) {
+                $url = (string) $request->input('constellation_map_image_url');
+                $constCarte->photo()->updateOrCreate(
+                    [],
+                    [
+                        'chemin_photo' => $url,
+                        'source_url' => $url,
+                    ]
+                );
+            }
+
+            if ($request->hasFile('constellation_map_image')) {
+                $oldPhoto = $constCarte->photo;
+                if ($oldPhoto && !filter_var((string) $oldPhoto->chemin_photo, FILTER_VALIDATE_URL)) {
+                    Storage::disk('public')->delete($oldPhoto->chemin_photo);
+                }
+
+                $storedPath = $request->file('constellation_map_image')
+                    ->store('photos/personnages/constellations/maps', 'public');
+
+                $constCarte->photo()->updateOrCreate(
+                    [],
+                    [
+                        'chemin_photo' => $storedPath,
+                        'source_url' => null,
+                    ]
+                );
+            }
+
+            if ($constCarte->isDirty('positions_const')) {
+                $constCarte->save();
+            }
         }
 
         return redirect()->route('admin.personnages.index')
