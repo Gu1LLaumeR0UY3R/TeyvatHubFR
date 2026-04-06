@@ -34,23 +34,28 @@ class Issue82ConstellationMapEditorTest extends TestCase
         return ['admin_id' => $admin->id_admin];
     }
 
-    private function makePersonnageWithConstellation(): array
+    private function makePersonnage(): Personnage
     {
-        $element = Elements::firstOrCreate(['libelle_element' => 'Hydro']);
-        $etoile = Etoile::firstOrCreate(['libelle' => '5★']);
+        $element  = Elements::firstOrCreate(['libelle_element' => 'Hydro']);
+        $etoile   = Etoile::firstOrCreate(['libelle' => '5★']);
         $typeArme = TypeArme::firstOrCreate(['libelle_TArme' => 'Epee']);
         $typePerso = TypePerso::firstOrCreate(['libelle_TP' => 'jouable']);
 
-        $personnage = Personnage::factory()->create([
-            'nom_perso' => 'Furina',
+        return Personnage::factory()->create([
+            'nom_perso'   => 'Furina',
             'fid_element' => $element->id_element,
-            'fid_etoile' => $etoile->id_etoile,
-            'fid_TArmes' => $typeArme->id_TArmes,
-            'fid_TP' => $typePerso->id_TP,
+            'fid_etoile'  => $etoile->id_etoile,
+            'fid_TArmes'  => $typeArme->id_TArmes,
+            'fid_TP'      => $typePerso->id_TP,
         ]);
+    }
+
+    private function makePersonnageWithConstellation(): array
+    {
+        $personnage = $this->makePersonnage();
 
         $constellation = Constellation::create([
-            'fid_perso' => $personnage->id_perso,
+            'fid_perso'   => $personnage->id_perso,
             'titre_const' => 'C1',
             'descri_const' => 'Description',
         ]);
@@ -58,57 +63,66 @@ class Issue82ConstellationMapEditorTest extends TestCase
         return [$personnage, $constellation];
     }
 
-    private function updatePayload(Personnage $personnage): array
-    {
-        return [
-            'nom_perso' => $personnage->nom_perso,
-            'fid_element' => $personnage->fid_element,
-            'fid_etoile' => $personnage->fid_etoile,
-            'fid_TArmes' => $personnage->fid_TArmes,
-            'fid_TP' => $personnage->fid_TP,
-        ];
-    }
-
     public function test_update_stocke_les_positions_constellation_en_pourcentage(): void
     {
-        [$personnage, $constellation] = $this->makePersonnageWithConstellation();
+        // Pas besoin de constellation pré-existante : le contrôleur fait un firstOrCreate
+        $personnage = $this->makePersonnage();
 
         $positions = [
-            '1' => ['x' => 42.56, 'y' => 18.34],
-            '2' => ['x' => 101.7, 'y' => -4.8],
-            '3' => ['x' => 55.2, 'y' => 55.1],
+            'points' => [
+                '1' => ['x' => 42.56, 'y' => 18.34],
+                '2' => ['x' => 101.7, 'y' => -4.8],
+                '3' => ['x' => 55.2, 'y' => 55.1],
+            ],
+            'lines' => [
+                ['from' => 1, 'to' => 2],
+                ['from' => 2, 'to' => 1],
+                ['from' => 2, 'to' => 3],
+                ['from' => 2, 'to' => 8],
+            ],
         ];
 
         $this->withSession($this->adminSession())
-            ->put(route('admin.personnages.update', $personnage), [
-                ...$this->updatePayload($personnage),
+            ->post(route('admin.personnage.block.constellation-map.update', $personnage), [
                 'positions_const' => json_encode($positions, JSON_THROW_ON_ERROR),
             ])
-            ->assertRedirect(route('admin.personnages.index'));
+            ->assertOk()
+            ->assertJson(['success' => true]);
 
-        $constellation->refresh();
+        $constCarte = Constellation::where('fid_perso', $personnage->id_perso)->first();
+        $this->assertNotNull($constCarte);
 
         $this->assertEquals([
-            '1' => ['x' => 42.6, 'y' => 18.3],
-            '2' => ['x' => 100.0, 'y' => 0.0],
-            '3' => ['x' => 55.2, 'y' => 55.1],
-        ], $constellation->positions_const);
+            'points' => [
+                '1' => ['x' => 42.6, 'y' => 18.3],
+                '2' => ['x' => 100.0, 'y' => 0.0],
+                '3' => ['x' => 55.2, 'y' => 55.1],
+            ],
+            'lines' => [
+                ['from' => 1, 'to' => 2],
+                ['from' => 2, 'to' => 3],
+            ],
+        ], $constCarte->positions_const);
     }
 
     public function test_update_stocke_image_de_carte_dans_photo_polymorphique(): void
     {
-        [$personnage, $constellation] = $this->makePersonnageWithConstellation();
+        // Fonctionne même sans constellation pré-existante
+        $personnage = $this->makePersonnage();
 
         $this->withSession($this->adminSession())
-            ->put(route('admin.personnages.update', $personnage), [
-                ...$this->updatePayload($personnage),
+            ->post(route('admin.personnage.block.constellation-map.update', $personnage), [
                 'constellation_map_image_url' => 'https://cdn.example.com/maps/furina-map.png',
             ])
-            ->assertRedirect(route('admin.personnages.index'));
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $constCarte = Constellation::where('fid_perso', $personnage->id_perso)->first();
+        $this->assertNotNull($constCarte);
 
         $this->assertDatabaseHas('photo', [
             'photoable_type' => 'constellation',
-            'photoable_id' => $constellation->id_const,
+            'photoable_id' => $constCarte->id_const,
             'chemin_photo' => 'https://cdn.example.com/maps/furina-map.png',
             'source_url' => 'https://cdn.example.com/maps/furina-map.png',
         ]);
@@ -122,7 +136,9 @@ class Issue82ConstellationMapEditorTest extends TestCase
             ->get(route('admin.personnages.edit', $personnage))
             ->assertStatus(200)
             ->assertSee('id="constellation-map"', false)
-            ->assertSee('Prochain point a placer', false)
-            ->assertSee('name="positions_const"', false);
+            ->assertSee('name="positions_const"', false)
+            ->assertSee('Mise en place des points', false)
+            ->assertSee('Mode ligne', false)
+            ->assertSee('Apercu statique dans la sidebar', false);
     }
 }

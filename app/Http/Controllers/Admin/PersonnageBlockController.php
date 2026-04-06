@@ -466,6 +466,108 @@ class PersonnageBlockController extends Controller
         ]);
     }
 
+    public function updateConstellationMap(Request $request, Personnage $personnage): JsonResponse
+    {
+        $request->validate([
+            'positions_const'             => ['nullable', 'json'],
+            'constellation_map_image'     => ['nullable', 'image', 'max:5120'],
+            'constellation_map_image_url' => ['nullable', 'url', 'max:500'],
+        ]);
+
+        // Ensure at least one constellation record exists to store map data
+        $constCarte = Constellation::where('fid_perso', $personnage->id_perso)
+            ->orderBy('id_const')
+            ->first();
+
+        if (!$constCarte) {
+            $constCarte = Constellation::create([
+                'fid_perso'   => $personnage->id_perso,
+                'titre_const' => 'Carte',
+                'descri_const' => null,
+            ]);
+        }
+
+        // Save positions + lines JSON
+        if ($request->filled('positions_const') && Schema::hasColumn('constellation', 'positions_const')) {
+            $decoded = json_decode((string) $request->input('positions_const'), true);
+
+            if (is_array($decoded)) {
+                $rawPoints = is_array($decoded['points'] ?? null) ? $decoded['points'] : $decoded;
+
+                $normalizedPoints = [];
+                for ($i = 1; $i <= 6; $i++) {
+                    $pt = $rawPoints[(string) $i] ?? $rawPoints[$i] ?? null;
+                    if (!is_array($pt) || !isset($pt['x'], $pt['y'])) {
+                        continue;
+                    }
+                    $normalizedPoints[(string) $i] = [
+                        'x' => round(max(0, min(100, (float) $pt['x'])), 1),
+                        'y' => round(max(0, min(100, (float) $pt['y'])), 1),
+                    ];
+                }
+
+                $normalizedLines = [];
+                $seen = [];
+                foreach (is_array($decoded['lines'] ?? null) ? $decoded['lines'] : [] as $line) {
+                    if (!is_array($line)) {
+                        continue;
+                    }
+                    $from = isset($line['from']) ? (int) $line['from'] : null;
+                    $to   = isset($line['to'])   ? (int) $line['to']   : null;
+                    if (!$from || !$to || $from === $to || $from < 1 || $from > 6 || $to < 1 || $to > 6) {
+                        continue;
+                    }
+                    if (!isset($normalizedPoints[(string) $from]) || !isset($normalizedPoints[(string) $to])) {
+                        continue;
+                    }
+                    $a = min($from, $to);
+                    $b = max($from, $to);
+                    $pair = "{$a}-{$b}";
+                    if (isset($seen[$pair])) {
+                        continue;
+                    }
+                    $seen[$pair] = true;
+                    $normalizedLines[] = ['from' => $a, 'to' => $b];
+                }
+
+                $constCarte->positions_const = ['points' => $normalizedPoints, 'lines' => $normalizedLines];
+                $constCarte->save();
+            }
+        }
+
+        // Save photo via URL
+        if ($request->filled('constellation_map_image_url')) {
+            $url = (string) $request->input('constellation_map_image_url');
+            $constCarte->photo()->updateOrCreate([], ['chemin_photo' => $url, 'source_url' => $url]);
+        }
+
+        // Save photo via file upload
+        if ($request->hasFile('constellation_map_image')) {
+            $oldPhoto = $constCarte->photo;
+            if ($oldPhoto && !filter_var((string) $oldPhoto->chemin_photo, FILTER_VALIDATE_URL)) {
+                Storage::disk('public')->delete($oldPhoto->chemin_photo);
+            }
+            $path = $request->file('constellation_map_image')
+                ->store('photos/personnages/constellations/maps', 'public');
+            $constCarte->photo()->updateOrCreate([], ['chemin_photo' => $path, 'source_url' => null]);
+        }
+
+        // Build image URL for the response
+        $photo    = $constCarte->fresh()->load('photo')->photo;
+        $imageUrl = null;
+        if ($photo) {
+            if ($photo->source_url) {
+                $imageUrl = $photo->source_url;
+            } elseif (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)) {
+                $imageUrl = $photo->chemin_photo;
+            } else {
+                $imageUrl = asset('storage/' . ltrim($photo->chemin_photo, '/'));
+            }
+        }
+
+        return response()->json(['success' => true, 'image_url' => $imageUrl]);
+    }
+
     public function updateCompetences(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([

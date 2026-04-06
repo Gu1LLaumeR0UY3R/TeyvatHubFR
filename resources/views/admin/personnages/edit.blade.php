@@ -239,22 +239,66 @@
         .csh-constellation-title { color:#f1f5f9; font-size:1rem; font-weight:700; }
         .csh-constellation-desc { color:#cbd5e1; font-size:.84rem; line-height:1.45; margin-top:.45rem; white-space:pre-wrap; }
         .th-const-map-shell { border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; padding: .75rem; }
+        .th-const-map-dropzone {
+            border: 1px dashed #94a3b8;
+            border-radius: 10px;
+            background: #ffffff;
+            padding: .5rem .6rem;
+            color: #475569;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .th-const-map-dropzone:hover { border-color: #0284c7; background: #f0f9ff; }
+        .th-const-map-dropzone input[type="file"] {
+            display: block;
+            width: 100%;
+            margin-top: .4rem;
+            font-size: 11px;
+            color: #334155;
+        }
         .th-const-map-canvas {
             position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
+            width: min(100%, 240px);
+            aspect-ratio: 4 / 5;
             border: 1px dashed #94a3b8;
             border-radius: 12px;
             overflow: hidden;
-            background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            margin: 0 auto;
+        }
+        .th-const-map-canvas--modal {
+            width: min(100%, 980px);
+            aspect-ratio: 16 / 10;
+            margin: 0 auto;
             cursor: crosshair;
         }
         .th-const-map-canvas img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            object-position: center;
             pointer-events: none;
             user-select: none;
+        }
+        .th-const-map-media {
+            position: absolute;
+            overflow: visible;
+        }
+        .th-const-map-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+        }
+        .th-const-map-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #f8fafc, #38bdf8);
+            transform-origin: 0 50%;
+            pointer-events: none;
+            box-shadow: 0 0 0 1px rgba(2, 132, 199, 0.15);
         }
         .th-const-map-point {
             position: absolute;
@@ -292,6 +336,40 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+        }
+        .th-const-map-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.6);
+            z-index: 70;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .th-const-map-modal {
+            width: min(1080px, 96vw);
+            max-height: 92vh;
+            overflow: auto;
+            border-radius: 14px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            box-shadow: 0 20px 60px rgba(2, 6, 23, 0.45);
+            padding: .9rem;
+        }
+        .th-const-mode-btn {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            border-radius: 8px;
+            padding: .25rem .5rem;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .th-const-mode-btn.is-active {
+            border-color: #0284c7;
+            background: #e0f2fe;
+            color: #075985;
         }
         .csh-weapon-link { color:#93c5fd; text-decoration:underline; }
         .csh-weapon-rarity-1 { background:#9ca3af; }
@@ -600,8 +678,11 @@
 
         $constCarte = $personnage->constellations->sortBy('id_const')->first();
         $constellationMapPositionsJson = [];
+        $constellationMapLinesJson = [];
         if ($constCarte && is_array($constCarte->positions_const)) {
-            foreach ($constCarte->positions_const as $k => $point) {
+            $rawMapPayload = $constCarte->positions_const;
+            $rawPoints = is_array($rawMapPayload['points'] ?? null) ? $rawMapPayload['points'] : $rawMapPayload;
+            foreach ($rawPoints as $k => $point) {
                 if (!is_array($point) || !isset($point['x']) || !isset($point['y'])) {
                     continue;
                 }
@@ -614,9 +695,25 @@
                     'y' => round((float) $point['y'], 1),
                 ];
             }
+
+            $rawLines = is_array($rawMapPayload['lines'] ?? null) ? $rawMapPayload['lines'] : [];
+            foreach ($rawLines as $line) {
+                if (!is_array($line)) {
+                    continue;
+                }
+                $from = isset($line['from']) ? (int) $line['from'] : null;
+                $to = isset($line['to']) ? (int) $line['to'] : null;
+                if (!$from || !$to || $from === $to) {
+                    continue;
+                }
+                if ($from < 1 || $from > 6 || $to < 1 || $to > 6) {
+                    continue;
+                }
+                $constellationMapLinesJson[] = ['from' => $from, 'to' => $to];
+            }
         }
 
-        $constellationMapImage = asset('images/placeholder.svg');
+        $constellationMapImage = '';
         if ($constCarte && $constCarte->photo) {
             if ($constCarte->photo->source_url) {
                 $constellationMapImage = $constCarte->photo->source_url;
@@ -642,6 +739,7 @@
          data-existing-artefacts="{{ e(json_encode($existingArtefactsJson)) }}"
          data-constellations="{{ e(json_encode($constellationsJson)) }}"
          data-const-map-positions="{{ e(json_encode($constellationMapPositionsJson)) }}"
+         data-const-map-lines="{{ e(json_encode($constellationMapLinesJson)) }}"
          data-const-map-image="{{ e($constellationMapImage) }}"
          data-element-icons="{{ e(json_encode($elementIcons)) }}"
          data-nation-icons="{{ e(json_encode($nationIcons)) }}"
@@ -661,6 +759,7 @@
          data-save-artefacts-url="{{ route('admin.personnage.block.artefacts.update', $personnage) }}"
          data-save-constellations-url="{{ route('admin.personnage.block.constellations.update', $personnage) }}"
          data-upload-constellation-url="{{ route('admin.personnage.block.constellations.upload', $personnage) }}"
+         data-save-constellation-map-url="{{ route('admin.personnage.block.constellation-map.update', $personnage) }}"
          data-showcase-url="{{ route('personnages.show', $personnage) }}"
          data-csrf="{{ csrf_token() }}"
          class="hidden"></div>
@@ -684,7 +783,10 @@
         {{-- ===================== SIDEBAR GAUCHE ===================== --}}
         <div class="shrink-0 flex h-full">
             <aside class="flex flex-col bg-white overflow-y-auto text-black transition-all duration-200"
-                   :class="sidebarCollapsed ? 'w-0 border-r-0' : 'w-80 border-r border-slate-300'">
+                   :class="sidebarCollapsed ? 'border-r-0' : 'border-r border-slate-300'"
+                   :style="sidebarCollapsed
+                       ? 'width:0;min-width:0;max-width:0;'
+                       : 'width:340px;min-width:340px;max-width:340px;'">
 
                 <div class="flex items-center justify-between px-4 py-3 border-b border-slate-300 bg-slate-100 sticky top-0 z-20 shadow-sm"
                      x-show="!sidebarCollapsed">
@@ -1017,43 +1119,54 @@
                             <div class="text-xs font-semibold uppercase tracking-wide text-slate-700">Carte constellation</div>
                             <div class="text-[11px] text-slate-600">Image de fond + placement C1 a C6</div>
                         </div>
+                        <button type="button"
+                                class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
+                                @click="openConstellationMapModal()">
+                            Mise en place des points
+                        </button>
                     </div>
 
-                    <form method="POST"
-                          action="{{ route('admin.personnages.update', $personnage) }}"
-                          enctype="multipart/form-data"
-                          class="space-y-2">
-                        @csrf
-                        @method('PUT')
-
-                        <input type="hidden" name="nom_perso" :value="mainZone.nom_perso">
-                        <input type="hidden" name="fid_element" :value="mainZone.fid_element">
-                        <input type="hidden" name="fid_etoile" :value="mainZone.fid_etoile">
-                        <input type="hidden" name="fid_TArmes" :value="mainZone.fid_TArmes">
-                        <input type="hidden" name="fid_TP" :value="mainZone.fid_TP">
+                    <form enctype="multipart/form-data"
+                          class="space-y-2"
+                          @submit.prevent="submitConstellationMapAjax($event)">
                         <input type="hidden" name="positions_const" :value="constellationMapPositionsJson">
 
-                        <div class="th-const-map-canvas"
-                             x-ref="constellationMapCanvas"
-                             @click="onConstellationMapClick($event)">
-                            <img :src="constellationMapImage || '{{ asset('images/placeholder.svg') }}'" alt="Carte constellation">
+                           <label class="th-const-map-dropzone">
+                            Drop image ici ou clique pour uploader
+                            <input type="file"
+                                x-ref="constellationMapUploadInput"
+                                name="constellation_map_image"
+                                accept="image/*"
+                                @change="previewConstellationMapImage($event)" />
+                           </label>
 
-                            <template x-for="index in [1,2,3,4,5,6]" :key="`map-point-${index}`">
-                                <template x-if="constellationMapPositions[String(index)]">
-                                    <button type="button"
-                                            class="th-const-map-point"
-                                            :class="selectedMapPoint === index ? 'is-selected' : ''"
-                                            :style="mapPointStyle(index)"
-                                            @click.stop="selectedMapPoint = index">
-                                        <span x-text="index"></span>
-                                        <span class="th-const-map-remove" @click.stop="clearMapPoint(index)">x</span>
-                                    </button>
+                        <div class="th-const-map-canvas"
+                             x-ref="constellationMapCanvas">
+                            <div class="th-const-map-media" :style="mapMediaStyle('constellationMapCanvas')">
+                                <img :src="constellationMapImage || '{{ asset('images/placeholder.svg') }}'"
+                                     alt="Carte constellation"
+                                     @load="updateConstellationMapNaturalSize($event)">
+
+                                <template x-for="(line, idx) in constellationMapLines" :key="`line-mini-${idx}`">
+                                    <template x-if="lineIsValid(line)">
+                                        <div class="th-const-map-line" :style="mapLineStyle(line, 'constellationMapCanvas')"></div>
+                                    </template>
                                 </template>
-                            </template>
+
+                                <template x-for="index in [1,2,3,4,5,6]" :key="`map-point-${index}`">
+                                    <template x-if="constellationMapPositions[String(index)]">
+                                        <div class="th-const-map-point"
+                                             :class="selectedMapPoint === index ? 'is-selected' : ''"
+                                             :style="mapPointStyle(index)">
+                                            <span x-text="index"></span>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
                         </div>
 
                         <div class="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700">
-                            Prochain point a placer : <span class="font-semibold" x-text="nextMapPointLabel"></span>
+                            Apercu statique dans la sidebar. Utilise la pop-up pour placer les points et les lignes.
                         </div>
 
                         <div class="space-y-1">
@@ -1066,27 +1179,86 @@
                                    placeholder="https://..." />
                         </div>
 
-                        <div class="space-y-1">
-                            <label class="block text-[11px] font-semibold text-slate-700">Uploader image de fond</label>
-                            <input type="file"
-                                   name="constellation_map_image"
-                                   accept="image/*"
-                                   @change="previewConstellationMapImage($event)"
-                                   class="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-black" />
-                        </div>
-
-                        <div class="space-y-1">
-                            <label class="block text-[11px] font-semibold text-slate-700">JSON (lecture seule)</label>
-                            <textarea readonly rows="5"
-                                      class="w-full rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700"
-                                      :value="constellationMapPositionsPretty"></textarea>
-                        </div>
-
                         <button type="submit"
                                 class="w-full rounded border border-blue-600 bg-blue-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-blue-500">
                             Enregistrer carte constellation
                         </button>
                     </form>
+
+                    <template x-if="showConstellationMapModal">
+                        <div class="th-const-map-modal-overlay" @click.self="closeConstellationMapModal()">
+                            <div class="th-const-map-modal">
+                                <div class="mb-3 flex items-center justify-between gap-2">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-900">Editeur carte constellation</div>
+                                        <div class="text-xs text-slate-600">Place les points avec precision puis relie-les en mode ligne</div>
+                                    </div>
+                                    <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700" @click="closeConstellationMapModal()">Fermer</button>
+                                </div>
+
+                                <div class="mb-3 flex items-center gap-2">
+                                    <button type="button" class="th-const-mode-btn" :class="mapEditorMode === 'point' ? 'is-active' : ''" @click="setMapEditorMode('point')">Mode point</button>
+                                    <button type="button" class="th-const-mode-btn" :class="mapEditorMode === 'line' ? 'is-active' : ''" @click="setMapEditorMode('line')">Mode ligne</button>
+                                    <span class="text-xs text-slate-600">Prochain : <span class="font-semibold" x-text="nextMapPointLabel"></span></span>
+                                </div>
+
+                                <div class="th-const-map-canvas th-const-map-canvas--modal"
+                                     x-ref="constellationMapModalCanvas"
+                                     >
+                                    <div class="th-const-map-media"
+                                         :style="mapMediaStyle('constellationMapModalCanvas')"
+                                         @click="onConstellationMapCanvasClick($event)">
+                                        <img :src="constellationMapImage || '{{ asset('images/placeholder.svg') }}'"
+                                             alt="Carte constellation"
+                                             @load="updateConstellationMapNaturalSize($event)">
+
+                                        <template x-for="(line, idx) in constellationMapLines" :key="`line-modal-${idx}`">
+                                            <template x-if="lineIsValid(line)">
+                                                <div class="th-const-map-line" :style="mapLineStyle(line, 'constellationMapModalCanvas')"></div>
+                                            </template>
+                                        </template>
+
+                                        <template x-for="index in [1,2,3,4,5,6]" :key="`modal-point-${index}`">
+                                            <template x-if="constellationMapPositions[String(index)]">
+                                                <button type="button"
+                                                        class="th-const-map-point"
+                                                        :class="selectedMapPoint === index || (mapEditorMode === 'line' && lineDraftStart === index) ? 'is-selected' : ''"
+                                                        :style="mapPointStyle(index)"
+                                                        @click.stop="onConstellationPointClick(index)">
+                                                    <span x-text="index"></span>
+                                                    <span class="th-const-map-remove" @click.stop="clearMapPoint(index)">x</span>
+                                                </button>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 rounded border border-slate-200 bg-white px-2 py-2">
+                                    <div class="mb-1 text-xs font-semibold text-slate-700">Lignes enregistrées</div>
+                                    <template x-if="!constellationMapLines.length">
+                                        <p class="text-xs text-slate-500 italic">Aucune ligne.</p>
+                                    </template>
+                                    <template x-if="constellationMapLines.length">
+                                        <div class="space-y-1">
+                                            <template x-for="(line, idx) in constellationMapLines" :key="`line-row-${idx}`">
+                                                <div class="flex items-center justify-between text-xs text-slate-700">
+                                                    <span x-text="`C${line.from} -> C${line.to}`"></span>
+                                                    <button type="button" class="rounded border border-red-300 bg-white px-1.5 py-0.5 text-[11px] text-red-600" @click="removeMapLine(idx)">x</button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="mt-3 space-y-1">
+                                    <label class="block text-[11px] font-semibold text-slate-700">JSON (lecture seule)</label>
+                                    <textarea readonly rows="6"
+                                              class="w-full rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700"
+                                              :value="constellationMapPositionsPretty"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 </div>
@@ -1260,10 +1432,13 @@
                 <div class="csh-constellation-grid">
                     <div class="csh-constellation-media">
                         <div class="csh-constellation-frame">
-                            <template x-if="activeConstellation && activeConstellation.image_url">
+                            <template x-if="constellationMapImage">
+                                <img :src="constellationMapImage" alt="Carte constellation">
+                            </template>
+                            <template x-if="!constellationMapImage && activeConstellation && activeConstellation.image_url">
                                 <img :src="activeConstellation.image_url" :alt="activeConstellation.titre_const || 'Constellation'">
                             </template>
-                            <template x-if="!activeConstellation">
+                            <template x-if="!constellationMapImage && !activeConstellation">
                                 <div class="csh-constellation-empty-media">Aucune constellation sélectionnée.</div>
                             </template>
                         </div>
@@ -1370,6 +1545,7 @@
             const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
             const existingConstellations = safeJsonParse(data.constellations, []);
             const existingConstellationMapPositions = safeJsonParse(data.constMapPositions, {});
+            const existingConstellationMapLines = safeJsonParse(data.constMapLines, []);
             const elementIcons   = safeJsonParse(data.elementIcons, {});
             const nationIcons    = safeJsonParse(data.nationIcons, {});
             const weaponTypeIcons = safeJsonParse(data.weaponTypeIcons, {});
@@ -1401,8 +1577,14 @@
                 constellations:  existingConstellations,
                 selectedConstellationIndex: 0,
                 constellationMapPositions: existingConstellationMapPositions,
+                constellationMapLines: Array.isArray(existingConstellationMapLines) ? existingConstellationMapLines : [],
                 selectedMapPoint: null,
-                constellationMapImage: data.constMapImage || '{{ asset("images/placeholder.svg") }}',
+                mapEditorMode: 'point',
+                showConstellationMapModal: false,
+                lineDraftStart: null,
+                constellationMapNaturalWidth: 0,
+                constellationMapNaturalHeight: 0,
+                constellationMapImage: data.constMapImage || '',
                 constellationMapImageUrlInput: '',
                 sidebarCollapsed: false,
                 availableArmes:  availableArmes,
@@ -1446,6 +1628,15 @@
                     }
                     return 'Tous les points places';
                 },
+                get lineDraftLabel() {
+                    if (this.mapEditorMode !== 'line') {
+                        return 'Passe en mode ligne pour relier des points';
+                    }
+                    if (this.lineDraftStart === null) {
+                        return 'Selectionne le point de depart';
+                    }
+                    return `Depart: C${this.lineDraftStart}, selectionne le point d'arrivee`;
+                },
                 get constellationMapPositionsJson() {
                     const normalized = {};
                     for (let i = 1; i <= 6; i += 1) {
@@ -1457,7 +1648,12 @@
                             y: this.roundPercent(point.y),
                         };
                     }
-                    return JSON.stringify(normalized);
+
+                    const lines = this.constellationMapLines
+                        .map(line => ({ from: Number(line.from), to: Number(line.to) }))
+                        .filter(line => this.lineIsValid(line));
+
+                    return JSON.stringify({ points: normalized, lines });
                 },
                 get constellationMapPositionsPretty() {
                     const json = this.constellationMapPositionsJson;
@@ -1569,12 +1765,87 @@
                     if (Number.isNaN(num)) return 0;
                     return Math.round(Math.max(0, Math.min(100, num)) * 10) / 10;
                 },
+                lineIsValid(line) {
+                    const from = Number(line?.from);
+                    const to = Number(line?.to);
+                    return Number.isInteger(from)
+                        && Number.isInteger(to)
+                        && from >= 1
+                        && from <= 6
+                        && to >= 1
+                        && to <= 6
+                        && from !== to
+                        && this.constellationMapPositions[String(from)]
+                        && this.constellationMapPositions[String(to)];
+                },
+                mapMediaMetrics(refName) {
+                    const canvas = this.$refs?.[refName];
+                    if (!canvas) {
+                        return { left: 0, top: 0, width: 0, height: 0 };
+                    }
+
+                    const canvasWidth = canvas.clientWidth || 0;
+                    const canvasHeight = canvas.clientHeight || 0;
+                    if (!canvasWidth || !canvasHeight) {
+                        return { left: 0, top: 0, width: 0, height: 0 };
+                    }
+
+                    const naturalWidth = this.constellationMapNaturalWidth || canvasWidth;
+                    const naturalHeight = this.constellationMapNaturalHeight || canvasHeight;
+                    const imageRatio = naturalWidth / naturalHeight;
+                    const canvasRatio = canvasWidth / canvasHeight;
+
+                    let width = canvasWidth;
+                    let height = canvasHeight;
+                    let left = 0;
+                    let top = 0;
+
+                    if (canvasRatio > imageRatio) {
+                        height = canvasHeight;
+                        width = height * imageRatio;
+                        left = (canvasWidth - width) / 2;
+                    } else {
+                        width = canvasWidth;
+                        height = width / imageRatio;
+                        top = (canvasHeight - height) / 2;
+                    }
+
+                    return { left, top, width, height };
+                },
+                mapMediaStyle(refName) {
+                    const metrics = this.mapMediaMetrics(refName);
+                    return `left:${metrics.left}px;top:${metrics.top}px;width:${metrics.width}px;height:${metrics.height}px;`;
+                },
                 mapPointStyle(index) {
                     const key = String(index);
                     const point = this.constellationMapPositions[key];
                     const x = this.roundPercent(point?.x ?? 0);
                     const y = this.roundPercent(point?.y ?? 0);
                     return `left:${x}%;top:${y}%;`;
+                },
+                mapLineStyle(line, refName) {
+                    const from = this.constellationMapPositions[String(line.from)];
+                    const to = this.constellationMapPositions[String(line.to)];
+                    if (!from || !to) {
+                        return 'display:none;';
+                    }
+
+                    const metrics = this.mapMediaMetrics(refName);
+                    if (!metrics.width || !metrics.height) {
+                        return 'display:none;';
+                    }
+
+                    const x1 = this.roundPercent(from.x);
+                    const y1 = this.roundPercent(from.y);
+                    const x2 = this.roundPercent(to.x);
+                    const y2 = this.roundPercent(to.y);
+
+                    const dxPx = ((x2 - x1) / 100) * metrics.width;
+                    const dyPx = ((y2 - y1) / 100) * metrics.height;
+                    const lenPx = Math.sqrt((dxPx * dxPx) + (dyPx * dyPx));
+                    const angle = Math.atan2(dyPx, dxPx) * (180 / Math.PI);
+
+                    return `left:${x1}%;top:${y1}%;width:${lenPx}px;transform:rotate(${angle}deg);`;
                 },
                 nextMapPointIndex() {
                     for (let i = 1; i <= 6; i += 1) {
@@ -1584,11 +1855,15 @@
                     }
                     return null;
                 },
-                onConstellationMapClick(event) {
-                    const canvas = this.$refs.constellationMapCanvas;
-                    if (!canvas) return;
+                onConstellationMapCanvasClick(event) {
+                    if (this.mapEditorMode !== 'point') {
+                        return;
+                    }
 
-                    const rect = canvas.getBoundingClientRect();
+                    const media = event.currentTarget;
+                    if (!media) return;
+
+                    const rect = media.getBoundingClientRect();
                     if (rect.width <= 0 || rect.height <= 0) return;
 
                     const x = this.roundPercent(((event.clientX - rect.left) / rect.width) * 100);
@@ -1600,10 +1875,75 @@
                     this.constellationMapPositions[String(targetIndex)] = { x, y };
                     this.selectedMapPoint = null;
                 },
+                updateConstellationMapNaturalSize(event) {
+                    const image = event?.target;
+                    if (!image) return;
+                    if (image.naturalWidth && image.naturalHeight) {
+                        this.constellationMapNaturalWidth = image.naturalWidth;
+                        this.constellationMapNaturalHeight = image.naturalHeight;
+                    }
+                },
+                setMapEditorMode(mode) {
+                    this.mapEditorMode = mode === 'line' ? 'line' : 'point';
+                    this.selectedMapPoint = null;
+                    this.lineDraftStart = null;
+                },
+                openConstellationMapModal() {
+                    this.showConstellationMapModal = true;
+                },
+                closeConstellationMapModal() {
+                    this.showConstellationMapModal = false;
+                    this.lineDraftStart = null;
+                    this.selectedMapPoint = null;
+                },
+                onConstellationPointClick(index) {
+                    if (this.mapEditorMode === 'line') {
+                        if (!this.constellationMapPositions[String(index)]) {
+                            return;
+                        }
+                        if (this.lineDraftStart === null) {
+                            this.lineDraftStart = index;
+                            return;
+                        }
+
+                        if (this.lineDraftStart === index) {
+                            this.lineDraftStart = null;
+                            return;
+                        }
+
+                        this.addMapLine(this.lineDraftStart, index);
+                        this.lineDraftStart = null;
+                        return;
+                    }
+
+                    this.selectedMapPoint = index;
+                },
+                addMapLine(from, to) {
+                    const a = Number(from);
+                    const b = Number(to);
+                    const normalizedFrom = Math.min(a, b);
+                    const normalizedTo = Math.max(a, b);
+                    const alreadyExists = this.constellationMapLines.some(line =>
+                        Number(line.from) === normalizedFrom && Number(line.to) === normalizedTo
+                    );
+                    if (alreadyExists) {
+                        return;
+                    }
+                    this.constellationMapLines.push({ from: normalizedFrom, to: normalizedTo });
+                },
+                removeMapLine(index) {
+                    this.constellationMapLines.splice(index, 1);
+                },
                 clearMapPoint(index) {
                     delete this.constellationMapPositions[String(index)];
+                    this.constellationMapLines = this.constellationMapLines.filter(line =>
+                        Number(line.from) !== Number(index) && Number(line.to) !== Number(index)
+                    );
                     if (this.selectedMapPoint === index) {
                         this.selectedMapPoint = null;
+                    }
+                    if (this.lineDraftStart === index) {
+                        this.lineDraftStart = null;
                     }
                     this.constellationMapPositions = { ...this.constellationMapPositions };
                 },
@@ -1611,6 +1951,17 @@
                     const value = String(this.constellationMapImageUrlInput || '').trim();
                     if (!value) return;
                     this.constellationMapImage = value;
+                },
+                onConstellationMapDrop(event) {
+                    const file = event.dataTransfer?.files?.[0];
+                    if (!file) return;
+                    const input = this.$refs.constellationMapUploadInput;
+                    if (input) {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        input.files = dt.files;
+                    }
+                    this.constellationMapImage = URL.createObjectURL(file);
                 },
                 previewConstellationMapImage(event) {
                     const file = event.target.files?.[0];
@@ -1862,6 +2213,41 @@
                         this.showToast('Erreur upload image constellation', 'error');
                     } finally {
                         event.target.value = '';
+                    }
+                },
+                async submitConstellationMapAjax(event) {
+                    const form = event.target;
+                    const fd = new FormData();
+                    // Positions JSON
+                    fd.append('positions_const', this.constellationMapPositionsJson);
+                    // File upload if selected
+                    const fileInput = form.querySelector('input[name="constellation_map_image"]');
+                    if (fileInput && fileInput.files.length > 0) {
+                        fd.append('constellation_map_image', fileInput.files[0]);
+                    }
+                    // URL si renseignée
+                    const urlInput = form.querySelector('input[name="constellation_map_image_url"]');
+                    if (urlInput && urlInput.value.trim()) {
+                        fd.append('constellation_map_image_url', urlInput.value.trim());
+                    }
+                    try {
+                        const resp = await fetch(data.saveConstellationMapUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': data.csrf, 'Accept': 'application/json' },
+                            body: fd,
+                        });
+                        const j = await resp.json();
+                        if (resp.ok && j.success) {
+                            if (j.image_url) {
+                                this.constellationMapImage = j.image_url + '?t=' + Date.now();
+                            }
+                            this.showToast('Carte constellation enregistrée', 'success');
+                        } else {
+                            const firstErr = Object.values(j?.errors || {})[0]?.[0] || 'Erreur sauvegarde';
+                            this.showToast(firstErr, 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('Erreur réseau', 'error');
                     }
                 },
                 async uploadImage(event, type) {
