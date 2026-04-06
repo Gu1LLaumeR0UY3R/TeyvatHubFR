@@ -816,6 +816,10 @@
                 'titre_apti'   => $a->titre_apti,
                 'descri_apti'  => $a->descri_apti ?? '',
                 'fid_TypeApti' => (int) $a->fid_TypeApti,
+                'image_url'    => $a->photos->first()?->source_url
+                               ?? ($a->photos->first()?->chemin_photo
+                                   ? asset('storage/' . $a->photos->first()->chemin_photo)
+                                   : null),
             ]);
 
         $typesAptiJson = $typesApti->map(fn($t) => [
@@ -860,6 +864,7 @@
          data-upload-constellation-url="{{ route('admin.personnage.block.constellations.upload', $personnage) }}"
          data-save-constellation-map-url="{{ route('admin.personnage.block.constellation-map.update', $personnage) }}"
          data-save-competences-url="{{ route('admin.personnage.block.competences.update', $personnage) }}"
+         data-upload-competences-url="{{ route('admin.personnage.block.competences.upload', $personnage) }}"
          data-aptitudes="{{ e(json_encode($aptitudesJson)) }}"
          data-types-apti="{{ e(json_encode($typesAptiJson)) }}"
          data-showcase-url="{{ route('personnages.show', $personnage) }}"
@@ -1450,6 +1455,30 @@
                                                 class="ml-auto shrink-0 flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
                                             &times;
                                         </button>
+                                    </div>
+
+                                    {{-- Photo --}}
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Icône <span class="font-normal text-slate-400">(optionnel)</span></label>
+                                        <div class="flex items-center gap-2">
+                                            <div class="h-12 w-12 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-100">
+                                                <template x-if="apt.image_url">
+                                                    <img :src="apt.image_url" class="h-full w-full object-contain" />
+                                                </template>
+                                                <template x-if="!apt.image_url">
+                                                    <div class="flex h-full w-full items-center justify-center text-slate-300 text-lg">∅</div>
+                                                </template>
+                                            </div>
+                                            <template x-if="apt.id_aptitude">
+                                                <label class="cursor-pointer rounded border border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100 transition-colors">
+                                                    Choisir
+                                                    <input type="file" accept="image/*" class="hidden" @change="uploadAptitudeImage($event, index)" />
+                                                </label>
+                                            </template>
+                                            <template x-if="!apt.id_aptitude">
+                                                <span class="text-[10px] text-slate-400 italic">Enregistrez d'abord</span>
+                                            </template>
+                                        </div>
                                     </div>
 
                                     {{-- Type (select) --}}
@@ -2444,6 +2473,42 @@
                     } catch (e) {
                         this.constellationsError = e?.message || 'Erreur sauvegarde constellations';
                         this.showToast(this.constellationsError, 'error');
+                    }
+                },
+                async uploadAptitudeImage(event, index) {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+
+                    const apt = this.aptitudes[index];
+                    if (!apt?.id_aptitude) {
+                        this.showToast('Enregistrez la compétence avant d\'uploader une image', 'error');
+                        event.target.value = '';
+                        return;
+                    }
+
+                    const form = new FormData();
+                    form.append('image', file);
+                    form.append('id_aptitude', String(apt.id_aptitude));
+
+                    try {
+                        const resp = await fetch(data.uploadCompetencesUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': data.csrf },
+                            body: form,
+                        });
+
+                        if (!resp.ok) {
+                            this.showToast('Erreur upload image compétence', 'error');
+                            return;
+                        }
+
+                        const j = await resp.json();
+                        this.aptitudes[index].image_url = j.url + '?t=' + Date.now();
+                        this.showToast('Image mise à jour', 'success');
+                    } catch (e) {
+                        this.showToast('Erreur upload image compétence', 'error');
+                    } finally {
+                        event.target.value = '';
                     }
                 },
                 addAptitude() {

@@ -123,6 +123,7 @@ Route::prefix('admin')->group(function () {
             Route::post('constellations/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadConstellationImage'])->name('admin.personnage.block.constellations.upload');
             Route::post('constellation-map', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellationMap'])->name('admin.personnage.block.constellation-map.update');
             Route::put('competences', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateCompetences'])->name('admin.personnage.block.competences.update');
+            Route::post('competences/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadAptitudeImage'])->name('admin.personnage.block.competences.upload');
             Route::patch('order', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateBlockOrder'])->name('admin.personnage.block.order');
         });
         Route::patch('/armes/bulk-update', [\App\Http\Controllers\Admin\ArmeController::class, 'bulkUpdate'])->name('admin.armes.bulk-update');

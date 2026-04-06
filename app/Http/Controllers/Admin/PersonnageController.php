@@ -115,6 +115,7 @@ class PersonnageController extends Controller
             'artefactsRecommandees.artefact2',
             'constellations.photo',
             'aptitudes.typeApti',
+            'aptitudes.photos',
         ]);
 
         $elements  = Elements::all();

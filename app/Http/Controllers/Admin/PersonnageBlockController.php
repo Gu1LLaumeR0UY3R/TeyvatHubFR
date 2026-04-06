@@ -620,6 +620,44 @@ class PersonnageBlockController extends Controller
         ]);
     }
 
+    public function uploadAptitudeImage(Request $request, Personnage $personnage): JsonResponse
+    {
+        $data = $request->validate([
+            'image'        => ['required', 'image', 'max:4096'],
+            'id_aptitude'  => ['required', 'integer', 'exists:aptitude,id_aptitude'],
+        ]);
+
+        $aptitude = Aptitude::query()
+            ->where('id_aptitude', (int) $data['id_aptitude'])
+            ->where('fid_perso', $personnage->id_perso)
+            ->firstOrFail();
+
+        $dir       = 'photos/personnages/aptitudes';
+        $extension = strtolower($request->file('image')->getClientOriginalExtension() ?: $request->file('image')->extension() ?: 'png');
+        $filename  = $personnage->slug . '-apt-' . $aptitude->id_aptitude . '.' . $extension;
+
+        if ($old = $aptitude->photos()->first()) {
+            if (!filter_var($old->chemin_photo, FILTER_VALIDATE_URL)) {
+                Storage::disk('public')->delete($old->chemin_photo);
+            }
+            $aptitude->photos()->delete();
+        }
+
+        $path = $request->file('image')->storeAs($dir, $filename, 'public');
+
+        $aptitude->photos()->create([
+            'chemin_photo' => $path,
+            'source_url'   => null,
+        ]);
+
+        return response()->json([
+            'success'      => true,
+            'path'         => $path,
+            'url'          => asset('storage/' . $path),
+            'id_aptitude'  => $aptitude->id_aptitude,
+        ]);
+    }
+
     public function updateBlockOrder(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([

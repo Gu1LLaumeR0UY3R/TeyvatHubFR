@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Aptitude extends Model
 {
@@ -21,5 +22,10 @@ class Aptitude extends Model
     public function personnage(): BelongsTo
     {
         return $this->belongsTo(Personnage::class, 'fid_perso', 'id_perso');
+    }
+
+    public function photos(): MorphMany
+    {
+        return $this->morphMany(Photo::class, 'photoable');
     }
 }
