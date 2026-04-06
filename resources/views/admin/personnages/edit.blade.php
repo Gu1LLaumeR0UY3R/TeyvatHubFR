@@ -395,6 +395,90 @@
         .th-armes-picker-icon { display: flex; justify-content: center; margin-bottom: 6px; }
         .th-armes-picker-item .name { font-size: 11px; font-weight: 600; color: #0f172a; line-height: 1.2; }
         .th-armes-picker-item .rarity { font-size: 10px; color: #64748b; }
+
+        /* ── Modal édition des 6 constellations ─────────────────────── */
+        .th-const-edit-overlay {
+            position: fixed; inset: 0;
+            background: rgba(2, 6, 23, 0.62);
+            z-index: 75;
+            display: flex; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .th-const-edit-modal {
+            width: min(1140px, 97vw);
+            max-height: 92vh;
+            overflow-y: auto;
+            border-radius: 16px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            box-shadow: 0 24px 70px rgba(2, 6, 23, 0.50);
+            padding: 1.25rem 1.5rem 1.5rem;
+        }
+        .th-const-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        @media (max-width: 800px) {
+            .th-const-edit-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .th-const-edit-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: #fff;
+            padding: .9rem;
+            display: flex; flex-direction: column; gap: .55rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
+        }
+        .th-const-edit-card-header {
+            display: flex; align-items: center; gap: .6rem;
+        }
+        .th-const-edit-badge {
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #0f172a;
+            color: #fff;
+            font-size: 11px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .th-const-edit-card input[type="text"],
+        .th-const-edit-card textarea {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: .35rem .55rem;
+            font-size: 11.5px;
+            color: #0f172a;
+            background: #f8fafc;
+            resize: vertical;
+        }
+        .th-const-edit-card input[type="text"]:focus,
+        .th-const-edit-card textarea:focus {
+            outline: none; border-color: #38bdf8; background: #fff;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.18);
+        }
+        .th-const-edit-img-row {
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .th-const-edit-img-row img {
+            width: 52px; height: 52px;
+            border-radius: 8px;
+            object-fit: contain;
+            border: 1px solid #e2e8f0;
+            background: #f1f5f9;
+        }
+        .th-const-edit-upload-btn {
+            flex: 1;
+            border: 1px dashed #94a3b8;
+            border-radius: 6px;
+            padding: .35rem .6rem;
+            font-size: 11px; font-weight: 600; color: #475569;
+            background: #f8fafc;
+            cursor: pointer; text-align: center;
+            transition: border-color .15s, background .15s;
+        }
+        .th-const-edit-upload-btn:hover { border-color: #38bdf8; background: #f0f9ff; color: #0369a1; }
         .th-weapon-card-inner { display:flex; align-items:center; gap:10px; padding:10px; }
         .th-weapon-rarity-1 {
             background: linear-gradient(145deg, #6d7685 0%, #98a3b5 45%, #c5cfdd 100%);
@@ -1051,9 +1135,9 @@
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Constellations</label>
-                        <button type="button" @click="saveConstellations()"
+                        <button type="button" @click="showConstellationsModal = true"
                                 class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
-                            Sauvegarder constellations
+                            Éditer les constellations
                         </button>
                     </div>
 
@@ -1062,47 +1146,15 @@
                     </template>
 
                     <template x-if="constellations.length">
-                        <div class="space-y-2">
-                            <div class="grid grid-cols-3 gap-1">
-                                <template x-for="(constellation, index) in constellations" :key="`sidebar-c-${constellation.id_const || index}`">
-                                    <button type="button"
-                                            class="rounded border px-2 py-1 text-[11px] font-semibold"
-                                            :class="selectedConstellationIndex === index ? 'border-sky-500 bg-sky-100 text-sky-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'"
-                                            @click="selectedConstellationIndex = index"
-                                            x-text="constellation.label || ('C' + (index + 1))"></button>
-                                </template>
-                            </div>
-
-                            <div class="rounded border border-slate-300 bg-slate-50 p-2 space-y-2" x-show="activeConstellation">
-                                <div>
-                                    <label class="block text-slate-700 text-[11px] font-semibold mb-1">Nom</label>
-                                    <input type="text" x-model="activeConstellation.titre_const"
-                                           class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-black" />
+                        <div class="grid grid-cols-3 gap-1">
+                            <template x-for="(constellation, index) in constellations" :key="`sidebar-c-badge-${constellation.id_const || index}`">
+                                <div class="flex flex-col items-center gap-1 rounded border border-slate-200 bg-white p-1.5 cursor-pointer hover:border-sky-400"
+                                     @click="selectedConstellationIndex = index; showConstellationsModal = true">
+                                    <img :src="constellation.image_url || '{{ asset('images/placeholder.svg') }}'"
+                                         class="w-9 h-9 rounded object-contain border border-slate-200 bg-slate-50" alt="">
+                                    <span class="text-[10px] font-semibold text-slate-600" x-text="'C' + (index + 1)"></span>
                                 </div>
-                                <div>
-                                    <label class="block text-slate-700 text-[11px] font-semibold mb-1">Description</label>
-                                    <textarea x-model="activeConstellation.descri_const" rows="4"
-                                              class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-black"></textarea>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <img :src="activeConstellation.image_url || '{{ asset('images/placeholder.svg') }}'"
-                                         class="w-11 h-11 rounded object-cover border border-slate-300" alt="">
-                                    <button type="button"
-                                            class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                                            @click="document.getElementById('constellation-upload-' + (selectedConstellationIndex + 1)).click()">
-                                        Upload image
-                                    </button>
-                                </div>
-
-                                <template x-for="(constellation, index) in constellations" :key="`upload-c-${constellation.id_const || index}`">
-                                    <input type="file"
-                                           class="hidden"
-                                           accept="image/*"
-                                           :id="'constellation-upload-' + (index + 1)"
-                                           @change="uploadConstellationImage($event, index)" />
-                                </template>
-                            </div>
+                            </template>
                         </div>
                     </template>
 
@@ -1263,6 +1315,74 @@
 
                 </div>
             </aside>
+
+            {{-- ============ MODAL ÉDITION DES 6 CONSTELLATIONS ============ --}}
+            <template x-if="showConstellationsModal">
+                <div class="th-const-edit-overlay" @click.self="showConstellationsModal = false">
+                    <div class="th-const-edit-modal">
+
+                        {{-- En-tête --}}
+                        <div class="flex items-center justify-between gap-4 pb-3 border-b border-slate-200">
+                            <div>
+                                <div class="text-base font-bold text-slate-900">Constellations</div>
+                                <div class="text-xs text-slate-500 mt-0.5">Modifiez le nom, la description et l'image de chaque constellation</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button"
+                                        @click="saveConstellations()"
+                                        class="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors">
+                                    Enregistrer
+                                </button>
+                                <button type="button"
+                                        @click="showConstellationsModal = false"
+                                        class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+
+                        <template x-if="constellationsError">
+                            <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" x-text="constellationsError"></div>
+                        </template>
+
+                        {{-- Grille des 6 constellations --}}
+                        <div class="th-const-edit-grid">
+                            <template x-for="(constellation, index) in constellations" :key="`cedit-${constellation.id_const || index}`">
+                                <div class="th-const-edit-card">
+
+                                    {{-- Badge + titre --}}
+                                    <div class="th-const-edit-card-header">
+                                        <div class="th-const-edit-badge" x-text="'C' + (index + 1)"></div>
+                                        <input type="text"
+                                               placeholder="Nom de la constellation"
+                                               x-model="constellation.titre_const" />
+                                    </div>
+
+                                    {{-- Description --}}
+                                    <textarea placeholder="Description de la constellation..."
+                                              rows="4"
+                                              x-model="constellation.descri_const"></textarea>
+
+                                    {{-- Image + upload --}}
+                                    <div class="th-const-edit-img-row">
+                                        <img :src="constellation.image_url || '{{ asset('images/placeholder.svg') }}'"
+                                             :alt="constellation.titre_const || 'C' + (index + 1)" />
+                                        <label class="th-const-edit-upload-btn">
+                                            📷 Changer l'image
+                                            <input type="file"
+                                                   class="hidden"
+                                                   accept="image/*"
+                                                   @change="uploadConstellationImage($event, index)" />
+                                        </label>
+                                    </div>
+
+                                </div>
+                            </template>
+                        </div>
+
+                    </div>
+                </div>
+            </template>
 
             <div class="w-0 relative shrink-0">
                 <button type="button"
@@ -1581,6 +1701,7 @@
                 selectedMapPoint: null,
                 mapEditorMode: 'point',
                 showConstellationMapModal: false,
+                showConstellationsModal: false,
                 lineDraftStart: null,
                 constellationMapNaturalWidth: 0,
                 constellationMapNaturalHeight: 0,
@@ -2177,6 +2298,7 @@
                         }
 
                         this.constellationsError = '';
+                        this.showConstellationsModal = false;
                         this.showToast('Constellations sauvegardées', 'success');
                     } catch (e) {
                         this.constellationsError = e?.message || 'Erreur sauvegarde constellations';
