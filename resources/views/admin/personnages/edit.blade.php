@@ -1438,12 +1438,18 @@
                             <template x-for="(apt, index) in aptitudes" :key="`apt-${apt.id_aptitude || index}`">
                                 <div class="th-const-edit-card">
 
-                                    {{-- Badge + titre --}}
+                                    {{-- Badge + titre + supprimer --}}
                                     <div class="th-const-edit-card-header">
                                         <div class="th-const-edit-badge" x-text="index + 1"></div>
                                         <input type="text"
                                                placeholder="Nom de la compétence"
                                                x-model="apt.titre_apti" />
+                                        <button type="button"
+                                                @click="removeAptitude(index)"
+                                                title="Supprimer"
+                                                class="ml-auto shrink-0 flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                                            &times;
+                                        </button>
                                     </div>
 
                                     {{-- Type (select) --}}
@@ -1469,11 +1475,25 @@
                             </template>
 
                             <template x-if="!aptitudes.length">
-                                <div class="col-span-2 rounded border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-                                    Aucune compétence enregistrée pour ce personnage.
+                                <div class="col-span-2 rounded border border-dashed border-slate-300 p-6 text-center">
+                                    <p class="mb-3 text-sm text-slate-500">Aucune compétence enregistrée pour ce personnage.</p>
+                                    <button type="button" @click="addAptitude()"
+                                            class="rounded-lg border border-indigo-400 bg-indigo-50 px-4 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors">
+                                        + Ajouter une compétence
+                                    </button>
                                 </div>
                             </template>
                         </div>
+
+                        {{-- Bouton ajouter (visible quand il y a déjà des compétences) --}}
+                        <template x-if="aptitudes.length">
+                            <div class="mt-3 flex justify-start">
+                                <button type="button" @click="addAptitude()"
+                                        class="rounded-lg border border-indigo-400 bg-indigo-50 px-4 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors">
+                                    + Ajouter une compétence
+                                </button>
+                            </div>
+                        </template>
 
                     </div>
                 </div>
@@ -2425,6 +2445,17 @@
                         this.constellationsError = e?.message || 'Erreur sauvegarde constellations';
                         this.showToast(this.constellationsError, 'error');
                     }
+                },
+                addAptitude() {
+                    this.aptitudes.push({
+                        id_aptitude: null,
+                        titre_apti: '',
+                        descri_apti: '',
+                        fid_TypeApti: this.typesApti[0]?.id || 1,
+                    });
+                },
+                removeAptitude(index) {
+                    this.aptitudes.splice(index, 1);
                 },
                 async saveCompetences() {
                     if (!this.aptitudes.length) {
