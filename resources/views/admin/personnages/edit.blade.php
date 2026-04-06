@@ -1144,23 +1144,6 @@
                     <template x-if="constellationsError">
                         <div class="mb-2 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700" x-text="constellationsError"></div>
                     </template>
-
-                    <template x-if="constellations.length">
-                        <div class="grid grid-cols-3 gap-1">
-                            <template x-for="(constellation, index) in constellations" :key="`sidebar-c-badge-${constellation.id_const || index}`">
-                                <div class="flex flex-col items-center gap-1 rounded border border-slate-200 bg-white p-1.5 cursor-pointer hover:border-sky-400"
-                                     @click="selectedConstellationIndex = index; showConstellationsModal = true">
-                                    <img :src="constellation.image_url || '{{ asset('images/placeholder.svg') }}'"
-                                         class="w-9 h-9 rounded object-contain border border-slate-200 bg-slate-50" alt="">
-                                    <span class="text-[10px] font-semibold text-slate-600" x-text="'C' + (index + 1)"></span>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-
-                    <template x-if="!constellations.length">
-                        <p class="text-xs text-slate-600 italic">Aucune constellation disponible.</p>
-                    </template>
                 </div>
 
                 <hr class="border-slate-300" />
@@ -1347,32 +1330,32 @@
 
                         {{-- Grille des 6 constellations --}}
                         <div class="th-const-edit-grid">
-                            <template x-for="(constellation, index) in constellations" :key="`cedit-${constellation.id_const || index}`">
+                            <template x-for="(slot, index) in constellationSlots" :key="`cedit-${slot.index}`">
                                 <div class="th-const-edit-card">
 
                                     {{-- Badge + titre --}}
                                     <div class="th-const-edit-card-header">
-                                        <div class="th-const-edit-badge" x-text="'C' + (index + 1)"></div>
+                                        <div class="th-const-edit-badge" x-text="slot.label"></div>
                                         <input type="text"
                                                placeholder="Nom de la constellation"
-                                               x-model="constellation.titre_const" />
+                                               x-model="slot.titre_const" />
                                     </div>
 
                                     {{-- Description --}}
                                     <textarea placeholder="Description de la constellation..."
                                               rows="4"
-                                              x-model="constellation.descri_const"></textarea>
+                                              x-model="slot.descri_const"></textarea>
 
                                     {{-- Image + upload --}}
                                     <div class="th-const-edit-img-row">
-                                        <img :src="constellation.image_url || '{{ asset('images/placeholder.svg') }}'"
-                                             :alt="constellation.titre_const || 'C' + (index + 1)" />
+                                        <img :src="slot.image_url || '{{ asset('images/placeholder.svg') }}'"
+                                             :alt="slot.titre_const || slot.label" />
                                         <label class="th-const-edit-upload-btn">
                                             📷 Changer l'image
                                             <input type="file"
                                                    class="hidden"
                                                    accept="image/*"
-                                                   @change="uploadConstellationImage($event, index)" />
+                                                   @change="uploadConstellationImageSlot($event, index)" />
                                         </label>
                                     </div>
 
@@ -1695,6 +1678,17 @@
                 armes:           existingArmes,
                 artefactBuilds:  existingArtefacts,
                 constellations:  existingConstellations,
+                constellationSlots: (() => {
+                    const slots = [];
+                    for (let i = 1; i <= 6; i++) {
+                        const found = existingConstellations.find(c => c.index === i) || existingConstellations[i - 1];
+                        slots.push(found ? { ...found, index: i, label: 'C' + i } : {
+                            id_const: null, index: i, label: 'C' + i,
+                            titre_const: '', descri_const: '', image_url: ''
+                        });
+                    }
+                    return slots;
+                })(),
                 selectedConstellationIndex: 0,
                 constellationMapPositions: existingConstellationMapPositions,
                 constellationMapLines: Array.isArray(existingConstellationMapLines) ? existingConstellationMapLines : [],
@@ -2269,11 +2263,20 @@
                     if (!this.constellations.length) return;
 
                     try {
-                        const payload = this.constellations.map(c => ({
-                            id_const: Number(c.id_const),
-                            titre_const: String(c.titre_const || '').trim(),
-                            descri_const: c.descri_const || '',
-                        }));
+                        // Envoie seulement les slots qui ont un id_const existant
+                        const payload = this.constellationSlots
+                            .filter(s => s.id_const)
+                            .map(s => ({
+                                id_const: Number(s.id_const),
+                                titre_const: String(s.titre_const || '').trim(),
+                                descri_const: s.descri_const || '',
+                            }));
+
+                        if (!payload.length) {
+                            this.showConstellationsModal = false;
+                            this.showToast('Aucune constellation à sauvegarder', 'success');
+                            return;
+                        }
 
                         const resp = await fetch(data.saveConstellationsUrl, {
                             method: 'PUT',
@@ -2333,6 +2336,38 @@
                         this.showToast(`Image C${index + 1} mise à jour`, 'success');
                     } catch (e) {
                         this.showToast('Erreur upload image constellation', 'error');
+                    } finally {
+                        event.target.value = '';
+                    }
+                },
+                async uploadConstellationImageSlot(event, slotIndex) {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+
+                    const slot = this.constellationSlots[slotIndex];
+                    const constIndex = slot ? slot.index : slotIndex + 1;
+
+                    const form = new FormData();
+                    form.append('image', file);
+                    form.append('constellation_index', String(constIndex));
+
+                    try {
+                        const resp = await fetch(data.uploadConstellationUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': data.csrf },
+                            body: form,
+                        });
+
+                        if (!resp.ok) {
+                            this.showToast('Erreur upload image C' + constIndex, 'error');
+                            return;
+                        }
+
+                        const j = await resp.json();
+                        this.constellationSlots[slotIndex].image_url = j.url + '?t=' + Date.now();
+                        this.showToast('Image C' + constIndex + ' mise à jour', 'success');
+                    } catch (e) {
+                        this.showToast('Erreur upload image C' + constIndex, 'error');
                     } finally {
                         event.target.value = '';
                     }
