@@ -11,6 +11,7 @@ use App\Models\Role;
 use App\Models\TypeArme;
 use App\Models\TypePerso;
 use App\Models\Nation;
+use App\Models\TypeApti;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
@@ -113,6 +114,7 @@ class PersonnageController extends Controller
             'artefactsRecommandees.artefact1',
             'artefactsRecommandees.artefact2',
             'constellations.photo',
+            'aptitudes.typeApti',
         ]);
 
         $elements  = Elements::all();
@@ -121,11 +123,12 @@ class PersonnageController extends Controller
         $typesPerso= TypePerso::all();
         $roles     = Role::all();
         $nations   = Nation::all();
+        $typesApti = TypeApti::orderBy('id_TypeApti')->get();
 
         $armesDisponibles = \App\Models\Arme::with('typeArme')->orderBy('nom_arme')->get();
         $allowedTypeId = $personnage->fid_TArmes;
 
-        return view('admin.personnages.edit', compact('personnage', 'elements', 'etoiles', 'typesArme', 'typesPerso', 'roles', 'nations', 'armesDisponibles', 'allowedTypeId'));
+        return view('admin.personnages.edit', compact('personnage', 'elements', 'etoiles', 'typesArme', 'typesPerso', 'roles', 'nations', 'armesDisponibles', 'allowedTypeId', 'typesApti'));
     }
 
     public function update(Request $request, Personnage $personnage): RedirectResponse
@@ -170,9 +173,13 @@ class PersonnageController extends Controller
                 $decodedPositions = json_decode((string) $request->input('positions_const'), true);
 
                 if (is_array($decodedPositions)) {
-                    $normalizedPositions = [];
+                    $rawPoints = is_array($decodedPositions['points'] ?? null)
+                        ? $decodedPositions['points']
+                        : $decodedPositions;
+
+                    $normalizedPoints = [];
                     for ($i = 1; $i <= 6; $i++) {
-                        $rawPoint = $decodedPositions[(string) $i] ?? $decodedPositions[$i] ?? null;
+                        $rawPoint = $rawPoints[(string) $i] ?? $rawPoints[$i] ?? null;
                         if (!is_array($rawPoint)) {
                             continue;
                         }
@@ -183,11 +190,45 @@ class PersonnageController extends Controller
 
                         $x = max(0, min(100, (float) $rawPoint['x']));
                         $y = max(0, min(100, (float) $rawPoint['y']));
-                        $normalizedPositions[(string) $i] = [
+                        $normalizedPoints[(string) $i] = [
                             'x' => round($x, 1),
                             'y' => round($y, 1),
                         ];
                     }
+
+                    $normalizedLines = [];
+                    $seenPairs = [];
+                    $rawLines = is_array($decodedPositions['lines'] ?? null) ? $decodedPositions['lines'] : [];
+                    foreach ($rawLines as $line) {
+                        if (!is_array($line)) {
+                            continue;
+                        }
+                        $from = isset($line['from']) ? (int) $line['from'] : null;
+                        $to = isset($line['to']) ? (int) $line['to'] : null;
+                        if (!$from || !$to || $from === $to) {
+                            continue;
+                        }
+                        if ($from < 1 || $from > 6 || $to < 1 || $to > 6) {
+                            continue;
+                        }
+                        if (!isset($normalizedPoints[(string) $from]) || !isset($normalizedPoints[(string) $to])) {
+                            continue;
+                        }
+
+                        $a = min($from, $to);
+                        $b = max($from, $to);
+                        $pair = $a . '-' . $b;
+                        if (isset($seenPairs[$pair])) {
+                            continue;
+                        }
+                        $seenPairs[$pair] = true;
+                        $normalizedLines[] = ['from' => $a, 'to' => $b];
+                    }
+
+                    $normalizedPositions = [
+                        'points' => $normalizedPoints,
+                        'lines' => $normalizedLines,
+                    ];
 
                     if ($constCarte->positions_const !== $normalizedPositions) {
                         $constCarte->positions_const = $normalizedPositions;

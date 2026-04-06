@@ -807,6 +807,21 @@
                 $constellationMapImage = asset('storage/' . ltrim((string) $constCarte->photo->chemin_photo, '/'));
             }
         }
+
+        $aptitudesJson = $personnage->aptitudes
+            ->sortBy('id_aptitude')
+            ->values()
+            ->map(fn($a) => [
+                'id_aptitude'  => (int) $a->id_aptitude,
+                'titre_apti'   => $a->titre_apti,
+                'descri_apti'  => $a->descri_apti ?? '',
+                'fid_TypeApti' => (int) $a->fid_TypeApti,
+            ]);
+
+        $typesAptiJson = $typesApti->map(fn($t) => [
+            'id'      => (int) $t->id_TypeApti,
+            'libelle' => $t->libelle_Apti,
+        ]);
     @endphp
 
     <div id="personnage-editor-config"
@@ -844,6 +859,9 @@
          data-save-constellations-url="{{ route('admin.personnage.block.constellations.update', $personnage) }}"
          data-upload-constellation-url="{{ route('admin.personnage.block.constellations.upload', $personnage) }}"
          data-save-constellation-map-url="{{ route('admin.personnage.block.constellation-map.update', $personnage) }}"
+         data-save-competences-url="{{ route('admin.personnage.block.competences.update', $personnage) }}"
+         data-aptitudes="{{ e(json_encode($aptitudesJson)) }}"
+         data-types-apti="{{ e(json_encode($typesAptiJson)) }}"
          data-showcase-url="{{ route('personnages.show', $personnage) }}"
          data-csrf="{{ csrf_token() }}"
          class="hidden"></div>
@@ -1296,6 +1314,25 @@
                     </template>
                 </div>
 
+                <hr class="border-slate-300" />
+
+                {{-- ── Aptitudes / Compétences ── --}}
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Compétences</label>
+                        <button type="button" @click="showAptitudesModal = true"
+                                class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
+                            Éditer les compétences
+                        </button>
+                    </div>
+                    <template x-if="aptitudes.length">
+                        <p class="text-[11px] text-slate-500 italic" x-text="aptitudes.length + ' compétence(s) enregistrée(s)'"></p>
+                    </template>
+                    <template x-if="!aptitudes.length">
+                        <p class="text-[11px] text-slate-500 italic">Aucune compétence.</p>
+                    </template>
+                </div>
+
                 </div>
             </aside>
 
@@ -1359,6 +1396,81 @@
                                         </label>
                                     </div>
 
+                                </div>
+                            </template>
+                        </div>
+
+                    </div>
+                </div>
+            </template>
+
+            {{-- ============ MODAL ÉDITION DES COMPÉTENCES ============ --}}
+            <template x-if="showAptitudesModal">
+                <div class="th-const-edit-overlay" @click.self="showAptitudesModal = false">
+                    <div class="th-const-edit-modal">
+
+                        {{-- En-tête --}}
+                        <div class="flex items-center justify-between gap-4 pb-3 border-b border-slate-200">
+                            <div>
+                                <div class="text-base font-bold text-slate-900">Compétences</div>
+                                <div class="text-xs text-slate-500 mt-0.5">Modifiez le nom, le type et la description de chaque compétence</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button"
+                                        @click="saveCompetences()"
+                                        class="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors">
+                                    Enregistrer
+                                </button>
+                                <button type="button"
+                                        @click="showAptitudesModal = false"
+                                        class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+
+                        <template x-if="aptitudesError">
+                            <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" x-text="aptitudesError"></div>
+                        </template>
+
+                        {{-- Grille des aptitudes --}}
+                        <div class="th-const-edit-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <template x-for="(apt, index) in aptitudes" :key="`apt-${apt.id_aptitude || index}`">
+                                <div class="th-const-edit-card">
+
+                                    {{-- Badge + titre --}}
+                                    <div class="th-const-edit-card-header">
+                                        <div class="th-const-edit-badge" x-text="index + 1"></div>
+                                        <input type="text"
+                                               placeholder="Nom de la compétence"
+                                               x-model="apt.titre_apti" />
+                                    </div>
+
+                                    {{-- Type (select) --}}
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Type</label>
+                                        <select x-model="apt.fid_TypeApti"
+                                                class="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-800">
+                                            <template x-for="type in typesApti" :key="type.id">
+                                                <option :value="type.id" x-text="type.libelle"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    {{-- Description (non obligatoire) --}}
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Description <span class="font-normal text-slate-400">(optionnel)</span></label>
+                                        <textarea placeholder="Description de la compétence..."
+                                                  rows="3"
+                                                  x-model="apt.descri_apti"></textarea>
+                                    </div>
+
+                                </div>
+                            </template>
+
+                            <template x-if="!aptitudes.length">
+                                <div class="col-span-2 rounded border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+                                    Aucune compétence enregistrée pour ce personnage.
                                 </div>
                             </template>
                         </div>
@@ -1647,6 +1759,8 @@
             const existingArmes  = safeJsonParse(data.existingArmes, []);
             const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
             const existingConstellations = safeJsonParse(data.constellations, []);
+            const existingAptitudes = safeJsonParse(data.aptitudes, []);
+            const existingTypesApti = safeJsonParse(data.typesApti, []);
             const existingConstellationMapPositions = safeJsonParse(data.constMapPositions, {});
             const existingConstellationMapLines = safeJsonParse(data.constMapLines, []);
             const elementIcons   = safeJsonParse(data.elementIcons, {});
@@ -1696,6 +1810,10 @@
                 mapEditorMode: 'point',
                 showConstellationMapModal: false,
                 showConstellationsModal: false,
+                showAptitudesModal: false,
+                aptitudes: existingAptitudes,
+                typesApti: existingTypesApti,
+                aptitudesError: '',
                 lineDraftStart: null,
                 constellationMapNaturalWidth: 0,
                 constellationMapNaturalHeight: 0,
@@ -2306,6 +2424,52 @@
                     } catch (e) {
                         this.constellationsError = e?.message || 'Erreur sauvegarde constellations';
                         this.showToast(this.constellationsError, 'error');
+                    }
+                },
+                async saveCompetences() {
+                    if (!this.aptitudes.length) {
+                        this.showAptitudesModal = false;
+                        return;
+                    }
+                    try {
+                        const payload = this.aptitudes.map(a => ({
+                            id_aptitude: a.id_aptitude || null,
+                            titre_apti: String(a.titre_apti || '').trim(),
+                            descri_apti: a.descri_apti || null,
+                            fid_TypeApti: Number(a.fid_TypeApti),
+                            lvl_apt: a.lvl_apt || 1,
+                            sub_Apt: a.sub_Apt || null,
+                        })).filter(a => a.titre_apti && a.fid_TypeApti);
+
+                        if (!payload.length) {
+                            this.showToast('Aucune compétence valide à enregistrer', 'error');
+                            return;
+                        }
+
+                        const resp = await fetch(data.saveCompetencesUrl, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': data.csrf },
+                            body: JSON.stringify({ competences: payload }),
+                        });
+
+                        if (!resp.ok) {
+                            let msg = 'Erreur sauvegarde compétences';
+                            try {
+                                const j = await resp.json();
+                                const firstKey = Object.keys(j?.errors || {})[0];
+                                if (firstKey && j.errors[firstKey]?.[0]) msg = j.errors[firstKey][0];
+                            } catch (_) {}
+                            this.aptitudesError = msg;
+                            this.showToast(msg, 'error');
+                            return;
+                        }
+
+                        this.aptitudesError = '';
+                        this.showAptitudesModal = false;
+                        this.showToast('Compétences sauvegardées', 'success');
+                    } catch (e) {
+                        this.aptitudesError = e?.message || 'Erreur sauvegarde compétences';
+                        this.showToast(this.aptitudesError, 'error');
                     }
                 },
                 async uploadConstellationImage(event, index) {
