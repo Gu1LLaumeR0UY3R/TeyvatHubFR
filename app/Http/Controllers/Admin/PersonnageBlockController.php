@@ -615,8 +615,9 @@ class PersonnageBlockController extends Controller
             ->delete();
 
         return response()->json([
-            'success' => true,
-            'competences_count' => count($keptIds),
+            'success'          => true,
+            'competences_ids'  => $keptIds,
+            'competences_count'=> count($keptIds),
         ]);
     }
 

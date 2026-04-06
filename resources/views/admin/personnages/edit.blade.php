@@ -273,8 +273,6 @@
         }
         .th-apt-dropzone:hover { border-color: #6366f1; background: #eef2ff; }
         .th-apt-dropzone--over { border-color: #6366f1; background: #eef2ff; border-style: solid; }
-        .th-apt-dropzone--disabled { cursor: not-allowed; opacity: .55; }
-        .th-apt-dropzone--disabled:hover { border-color: #94a3b8; background: #f8fafc; }
         .th-const-map-canvas {
             position: relative;
             width: min(100%, 240px);
@@ -1478,29 +1476,21 @@
                                     {{-- Photo --}}
                                     <div>
                                         <label class="block text-[11px] font-semibold text-slate-500 mb-1">Icône</label>
-                                        <template x-if="apt.id_aptitude">
-                                            <label
-                                                class="th-apt-dropzone"
-                                                :class="apt._dragging ? 'th-apt-dropzone--over' : ''"
-                                                @dragover.prevent="apt._dragging = true"
-                                                @dragleave.prevent="apt._dragging = false"
-                                                @drop.prevent="apt._dragging = false; uploadAptitudeImage($event, index, true)">
-                                                <template x-if="apt.image_url">
-                                                    <img :src="apt.image_url" class="mx-auto mb-1 h-12 w-12 object-contain rounded" />
-                                                </template>
-                                                <template x-if="!apt.image_url">
-                                                    <div class="text-2xl text-slate-300 mb-1">🖼</div>
-                                                </template>
-                                                <span class="text-[10px] text-slate-400" x-text="apt.image_url ? 'Changer (drop ou clic)' : 'Drop ou clic pour uploader'"></span>
-                                                <input type="file" accept="image/*" class="hidden" @change="uploadAptitudeImage($event, index, false)" />
-                                            </label>
-                                        </template>
-                                        <template x-if="!apt.id_aptitude">
-                                            <div class="th-apt-dropzone th-apt-dropzone--disabled">
-                                                <div class="text-2xl text-slate-200 mb-1">🖼</div>
-                                                <span class="text-[10px] text-slate-400 italic">Enregistrez d'abord</span>
-                                            </div>
-                                        </template>
+                                        <label
+                                            class="th-apt-dropzone"
+                                            :class="apt._dragging ? 'th-apt-dropzone--over' : ''"
+                                            @dragover.prevent="apt._dragging = true"
+                                            @dragleave.prevent="apt._dragging = false"
+                                            @drop.prevent="apt._dragging = false; uploadAptitudeImage($event, index, true)">
+                                            <template x-if="apt.image_url">
+                                                <img :src="apt.image_url" class="mx-auto mb-1 h-12 w-12 object-contain rounded" />
+                                            </template>
+                                            <template x-if="!apt.image_url">
+                                                <div class="text-2xl text-slate-300 mb-1">🖼</div>
+                                            </template>
+                                            <span class="text-[10px] text-slate-400" x-text="apt.image_url ? 'Changer (drop ou clic)' : 'Drop ou clic pour uploader'"></span>
+                                            <input type="file" accept="image/*" class="hidden" @change="uploadAptitudeImage($event, index, false)" />
+                                        </label>
                                     </div>
 
                                     {{-- Type (select) --}}
@@ -2504,15 +2494,22 @@
                     if (!file) return;
 
                     const apt = this.aptitudes[index];
+
+                    // Pas encore en base : stocker le fichier en attente + preview locale
                     if (!apt?.id_aptitude) {
-                        this.showToast('Enregistrez la compétence avant d\'uploader une image', 'error');
-                        event.target.value = '';
+                        apt._pendingFile = file;
+                        apt.image_url = URL.createObjectURL(file);
+                        if (!isDrop && event.target) event.target.value = '';
                         return;
                     }
 
+                    await this._doUploadAptitudeFile(file, apt.id_aptitude, index);
+                    if (!isDrop && event.target) event.target.value = '';
+                },
+                async _doUploadAptitudeFile(file, id_aptitude, index) {
                     const form = new FormData();
                     form.append('image', file);
-                    form.append('id_aptitude', String(apt.id_aptitude));
+                    form.append('id_aptitude', String(id_aptitude));
 
                     try {
                         const resp = await fetch(data.uploadCompetencesUrl, {
@@ -2527,12 +2524,12 @@
                         }
 
                         const j = await resp.json();
-                        this.aptitudes[index].image_url = j.url + '?t=' + Date.now();
-                        this.showToast('Image mise à jour', 'success');
+                        if (this.aptitudes[index]) {
+                            this.aptitudes[index].image_url = j.url + '?t=' + Date.now();
+                            this.aptitudes[index]._pendingFile = null;
+                        }
                     } catch (e) {
                         this.showToast('Erreur upload image compétence', 'error');
-                    } finally {
-                        if (!isDrop && event.target) event.target.value = '';
                     }
                 },
                 addAptitude() {
@@ -2572,13 +2569,12 @@
                             body: JSON.stringify({ competences: payload }),
                         });
 
+                        const respJson = await resp.json().catch(() => ({}));
+
                         if (!resp.ok) {
                             let msg = 'Erreur sauvegarde compétences';
-                            try {
-                                const j = await resp.json();
-                                const firstKey = Object.keys(j?.errors || {})[0];
-                                if (firstKey && j.errors[firstKey]?.[0]) msg = j.errors[firstKey][0];
-                            } catch (_) {}
+                            const firstKey = Object.keys(respJson?.errors || {})[0];
+                            if (firstKey && respJson.errors[firstKey]?.[0]) msg = respJson.errors[firstKey][0];
                             this.aptitudesError = msg;
                             this.showToast(msg, 'error');
                             return;
@@ -2586,6 +2582,19 @@
 
                         this.aptitudesError = '';
                         this.showAptitudesModal = false;
+
+                        // Upload des images en attente (nouvelles compétences)
+                        const ids = respJson.competences_ids || [];
+                        const pendingUploads = [];
+                        for (let i = 0; i < this.aptitudes.length; i++) {
+                            const apt = this.aptitudes[i];
+                            if (apt._pendingFile && ids[i]) {
+                                apt.id_aptitude = ids[i];
+                                pendingUploads.push(this._doUploadAptitudeFile(apt._pendingFile, ids[i], i));
+                            }
+                        }
+                        if (pendingUploads.length) await Promise.all(pendingUploads);
+
                         this.showToast('Compétences sauvegardées', 'success');
                     } catch (e) {
                         this.aptitudesError = e?.message || 'Erreur sauvegarde compétences';
