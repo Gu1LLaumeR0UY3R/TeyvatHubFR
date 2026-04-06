@@ -257,6 +257,24 @@
             font-size: 11px;
             color: #334155;
         }
+        .th-apt-dropzone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px dashed #94a3b8;
+            border-radius: 10px;
+            background: #f8fafc;
+            padding: .6rem;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+            min-height: 80px;
+            text-align: center;
+        }
+        .th-apt-dropzone:hover { border-color: #6366f1; background: #eef2ff; }
+        .th-apt-dropzone--over { border-color: #6366f1; background: #eef2ff; border-style: solid; }
+        .th-apt-dropzone--disabled { cursor: not-allowed; opacity: .55; }
+        .th-apt-dropzone--disabled:hover { border-color: #94a3b8; background: #f8fafc; }
         .th-const-map-canvas {
             position: relative;
             width: min(100%, 240px);
@@ -1459,26 +1477,30 @@
 
                                     {{-- Photo --}}
                                     <div>
-                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Icône <span class="font-normal text-slate-400">(optionnel)</span></label>
-                                        <div class="flex items-center gap-2">
-                                            <div class="h-12 w-12 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-100">
+                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Icône</label>
+                                        <template x-if="apt.id_aptitude">
+                                            <label
+                                                class="th-apt-dropzone"
+                                                :class="apt._dragging ? 'th-apt-dropzone--over' : ''"
+                                                @dragover.prevent="apt._dragging = true"
+                                                @dragleave.prevent="apt._dragging = false"
+                                                @drop.prevent="apt._dragging = false; uploadAptitudeImage($event, index, true)">
                                                 <template x-if="apt.image_url">
-                                                    <img :src="apt.image_url" class="h-full w-full object-contain" />
+                                                    <img :src="apt.image_url" class="mx-auto mb-1 h-12 w-12 object-contain rounded" />
                                                 </template>
                                                 <template x-if="!apt.image_url">
-                                                    <div class="flex h-full w-full items-center justify-center text-slate-300 text-lg">∅</div>
+                                                    <div class="text-2xl text-slate-300 mb-1">🖼</div>
                                                 </template>
-                                            </div>
-                                            <template x-if="apt.id_aptitude">
-                                                <label class="cursor-pointer rounded border border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100 transition-colors">
-                                                    Choisir
-                                                    <input type="file" accept="image/*" class="hidden" @change="uploadAptitudeImage($event, index)" />
-                                                </label>
-                                            </template>
-                                            <template x-if="!apt.id_aptitude">
+                                                <span class="text-[10px] text-slate-400" x-text="apt.image_url ? 'Changer (drop ou clic)' : 'Drop ou clic pour uploader'"></span>
+                                                <input type="file" accept="image/*" class="hidden" @change="uploadAptitudeImage($event, index, false)" />
+                                            </label>
+                                        </template>
+                                        <template x-if="!apt.id_aptitude">
+                                            <div class="th-apt-dropzone th-apt-dropzone--disabled">
+                                                <div class="text-2xl text-slate-200 mb-1">🖼</div>
                                                 <span class="text-[10px] text-slate-400 italic">Enregistrez d'abord</span>
-                                            </template>
-                                        </div>
+                                            </div>
+                                        </template>
                                     </div>
 
                                     {{-- Type (select) --}}
@@ -2475,8 +2497,10 @@
                         this.showToast(this.constellationsError, 'error');
                     }
                 },
-                async uploadAptitudeImage(event, index) {
-                    const file = event.target.files?.[0];
+                async uploadAptitudeImage(event, index, isDrop = false) {
+                    const file = isDrop
+                        ? event.dataTransfer?.files?.[0]
+                        : event.target?.files?.[0];
                     if (!file) return;
 
                     const apt = this.aptitudes[index];
@@ -2508,7 +2532,7 @@
                     } catch (e) {
                         this.showToast('Erreur upload image compétence', 'error');
                     } finally {
-                        event.target.value = '';
+                        if (!isDrop && event.target) event.target.value = '';
                     }
                 },
                 addAptitude() {
