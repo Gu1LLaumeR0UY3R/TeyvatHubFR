@@ -10,6 +10,7 @@ use App\Http\Controllers\PlatController;
 use App\Http\Controllers\AnimalController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\HistoireController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\NationController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ImportController;
@@ -20,11 +21,15 @@ use App\Http\Controllers\RouletteTeamController;
 use App\Http\Controllers\MotusController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\BlogArticleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Routes publiques encyclopédie
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{article:slug}', [BlogController::class, 'show'])->name('blog.show');
+
 Route::get('/personnages', [PersonnageController::class, 'index'])->name('personnages.index');
 Route::get('/personnages/{personnage}', [PersonnageController::class, 'show'])->name('personnages.show');
 Route::get('/armes', [ArmeController::class, 'index'])->name('armes.index');
@@ -208,6 +213,14 @@ Route::prefix('admin')->group(function () {
             'edit'    => 'admin.evenements.edit',
             'update'  => 'admin.evenements.update',
             'destroy' => 'admin.evenements.destroy',
+        ]);
+        Route::resource('/blog', BlogArticleController::class)->except(['show'])->names([
+            'index'   => 'admin.blog.index',
+            'create'  => 'admin.blog.create',
+            'store'   => 'admin.blog.store',
+            'edit'    => 'admin.blog.edit',
+            'update'  => 'admin.blog.update',
+            'destroy' => 'admin.blog.destroy',
         ]);
         Route::patch('/chronologie/bulk-update', [\App\Http\Controllers\Admin\ChronologieController::class, 'bulkUpdate'])->name('admin.chronologie.bulk-update');
         Route::resource('/chronologie', \App\Http\Controllers\Admin\ChronologieController::class)->names([

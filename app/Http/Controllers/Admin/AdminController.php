@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Animal;
 use App\Models\Artefact;
 use App\Models\Arme;
+use App\Models\BlogArticle;
 use App\Models\Ennemi;
 use App\Models\Ingredient;
 use App\Models\Nation;
@@ -32,6 +33,7 @@ class AdminController extends Controller
             'plats'        => Plat::count(),
             'ingredients'  => Ingredient::count(),
             'nations'      => Nation::count(),
+            'blog'         => BlogArticle::count(),
             'utilisateurs' => User::count(),
         ];
 
