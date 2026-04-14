@@ -61,9 +61,35 @@
             width: min(100%, 860px);
             aspect-ratio: 16 / 9;
             grid-area:video;
+            justify-self:center;
+            margin-inline:auto;
         }
         .csh-portrait img, .csh-full img { width: 100%; height: 100%; object-fit: cover; object-position: center; transform: scale(1); transition: transform .4s ease; pointer-events: none; -webkit-user-drag: none; user-select: none; }
         .csh-portrait:hover img, .csh-full:hover img { transform: scale(1.02); }
+
+        .csh-video-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            z-index: 20; width: 44px; height: 44px; border-radius: 50%;
+            background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.22);
+            color: #fff; font-size: 1.4rem; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; opacity: 0; transition: opacity 0.2s, background 0.2s, transform 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .csh-full:hover .csh-video-nav { opacity: 1; }
+        .csh-video-nav:hover { background: rgba(0,0,0,0.85); transform: translateY(-50%) scale(1.1); }
+        .csh-video-nav--prev { left: 14px; }
+        .csh-video-nav--next { right: 14px; }
+
+        .csh-video-counter {
+            position: absolute; bottom: 12px; right: 14px; z-index: 20;
+            background: rgba(0,0,0,0.58); border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 999px; padding: 3px 11px;
+            color: #fff; font-size: 0.72rem; font-weight: 600; letter-spacing: .04em;
+            opacity: 0; transition: opacity 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .csh-full:hover .csh-video-counter { opacity: 1; }
 
         .csh-hero { grid-area:hero; padding-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.08); }
         .csh-hero-head { display:flex; align-items:center; gap:.8rem; }
@@ -224,6 +250,111 @@
             transition: .15s ease;
         }
         .csh-constellation-tab:hover { border-color: rgba(125,211,252,.7); color:#e2e8f0; }
+        .csh-aptitudes-shell {
+            margin: 0 1.5rem 1.5rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(10,15,30,0.95), rgba(5,10,24,0.92));
+            box-shadow: 0 18px 40px rgba(2,6,23,0.32);
+            overflow: hidden;
+        }
+        .csh-aptitudes-list { display:flex; flex-direction:column; gap:.65rem; padding:1rem 1.15rem 1.15rem; }
+        .csh-aptitude-item {
+            display:grid;
+            grid-template-columns: 52px minmax(0,1fr);
+            gap:.75rem;
+            align-items:flex-start;
+            border:1px solid rgba(148,163,184,0.18);
+            border-radius:14px;
+            padding:.7rem .85rem;
+            background: linear-gradient(180deg, rgba(18,28,55,0.86), rgba(10,16,34,0.88));
+        }
+        .csh-aptitude-icon {
+            width:52px; height:52px; border-radius:12px; flex-shrink:0;
+            object-fit:cover; border:1px solid rgba(255,255,255,.15);
+            background: rgba(255,255,255,.04);
+        }
+        .csh-aptitude-icon-placeholder {
+            width:52px; height:52px; border-radius:12px;
+            border:1px dashed rgba(255,255,255,.18);
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.4rem; color:rgba(255,255,255,.2);
+        }
+        .csh-aptitude-body { min-width:0; }
+        .csh-aptitude-type { font-size:.62rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#7dd3fc; margin-bottom:.2rem; }
+        .csh-aptitude-title { font-size:.9rem; font-weight:700; color:#e2e8f0; margin-bottom:.25rem; }
+        .csh-aptitude-desc { font-size:.75rem; color:#94a3b8; line-height:1.5; display:-webkit-box; line-clamp:3; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+        .csh-aptitudes-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
+        .csh-team-shell {
+            margin: 0 1.5rem 1.5rem;
+            border: 1px solid rgba(200,169,110,0.25);
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(26,26,46,0.95), rgba(16,18,38,0.95));
+            box-shadow: 0 18px 40px rgba(2, 6, 23, 0.4);
+            overflow: hidden;
+        }
+        .csh-team-group { padding: 1rem 1.15rem 1.15rem; display:grid; gap:.75rem; }
+        .csh-team-group-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
+        .csh-team-group-title { color:#f3ead9; font-size:.9rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .csh-team-group-sub { color:#9fb0dc; font-size:.72rem; }
+        .csh-team-card {
+            border:1px solid rgba(148,163,184,.28);
+            border-radius:14px;
+            background: linear-gradient(180deg, rgba(31,35,56,.9), rgba(26,30,50,.92));
+            padding:.7rem .75rem .8rem;
+            display:grid;
+            gap:.6rem;
+        }
+        .csh-team-card.recommended { border-color: rgba(200,169,110,.42); background: linear-gradient(180deg, rgba(50,40,30,.92), rgba(37,31,42,.95)); }
+        .csh-team-card.f2p { border-color: rgba(81,199,137,.45); }
+        .csh-team-card-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; }
+        .csh-team-card-tags { display:flex; align-items:center; gap:.35rem; flex-wrap:wrap; }
+        .csh-team-tag { border-radius:999px; padding:.14rem .5rem; font-size:.62rem; font-weight:800; letter-spacing:.04em; border:1px solid rgba(255,255,255,.12); }
+        .csh-team-tag-rec { background:rgba(200,169,110,.22); color:#f3ddaf; border-color:rgba(200,169,110,.45); }
+        .csh-team-tag-f2p { background:rgba(81,199,137,.2); color:#baf3d2; border-color:rgba(81,199,137,.45); }
+        .csh-team-remplacants-btn {
+            border:1px solid rgba(200,169,110,.38);
+            background: rgba(20,22,36,.5);
+            color:#f3ddaf;
+            border-radius:999px;
+            padding:.18rem .5rem;
+            font-size:.72rem;
+            font-weight:700;
+            transition: .2s ease;
+        }
+        .csh-team-remplacants-btn:hover { background: rgba(50,40,30,.7); }
+        .csh-team-slots { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.55rem; }
+        .csh-team-slot { border:1px solid rgba(148,163,184,.22); border-radius:10px; background:rgba(11,16,31,.5); padding:.45rem; transition:.2s ease; }
+        .csh-team-slot:hover { background:rgba(28,37,65,.62); border-color:rgba(96,165,250,.45); }
+        .csh-team-slot img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; border:2px solid rgba(255,255,255,.2); }
+        .csh-team-slot-name { margin-top:.3rem; font-size:.7rem; font-weight:700; color:#eff3ff; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .csh-team-slot-role { margin:.18rem auto 0; width:fit-content; border-radius:999px; padding:.12rem .42rem; font-size:.58rem; font-weight:700; color:#d8e4ff; background:rgba(43,52,91,.8); border:1px solid rgba(73,90,149,.5); }
+        .csh-team-remplacants { margin-top:.45rem; display:grid; gap:.35rem; }
+        .csh-team-remplacant-row { border:1px dashed rgba(148,163,184,.3); border-radius:10px; padding:.35rem; }
+        .csh-team-remplacant-head { color:#94a3b8; font-size:.62rem; font-weight:700; margin-bottom:.28rem; }
+        .csh-team-remplacant-list { display:flex; flex-wrap:wrap; gap:.35rem; }
+        .csh-team-remplacant-item { width:48px; }
+        .csh-team-remplacant-item img { width:48px; height:48px; border-radius:8px; object-fit:cover; border:1px solid rgba(125,211,252,.32); }
+        .csh-team-drawer-btn {
+            width:100%;
+            border:1px dashed rgba(125,211,252,.36);
+            border-radius:10px;
+            padding:.45rem .65rem;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:.45rem;
+            color:#d9e4ff;
+            background: rgba(20,27,50,.45);
+            font-size:.72rem;
+            font-weight:700;
+        }
+        .csh-team-drawer-btn:hover { background: rgba(31,44,79,.65); }
+        .csh-team-drawer-chevron { display:inline-block; transition:transform .22s ease; animation: csh-team-chevron-pulse 1s ease-in-out infinite; }
+        .csh-team-drawer-chevron.is-open { transform:rotate(180deg); animation:none; }
+        .csh-team-drawer-count { border-radius:999px; padding:.08rem .45rem; font-size:.62rem; background:rgba(125,211,252,.25); border:1px solid rgba(125,211,252,.44); color:#eaf4ff; }
+        .csh-team-others { display:grid; gap:.6rem; }
+        @keyframes csh-team-chevron-pulse { 0%,100%{transform:translateY(0);} 50%{transform:translateY(2px);} }
         .csh-constellation-tab.is-active {
             border-color:#7dd3fc;
             box-shadow: 0 0 0 1px rgba(125,211,252,0.35) inset;
@@ -429,6 +560,16 @@
             box-shadow: 0 24px 70px rgba(2, 6, 23, 0.50);
             padding: 1.25rem 1.5rem 1.5rem;
         }
+        .th-apt-single-modal {
+            width: min(480px, 97vw);
+            max-height: 92vh;
+            overflow-y: auto;
+            border-radius: 16px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            box-shadow: 0 24px 70px rgba(2, 6, 23, 0.50);
+            padding: 1.25rem 1.5rem 1.5rem;
+        }
         .th-const-edit-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -444,8 +585,20 @@
             background: #fff;
             padding: .9rem;
             display: flex; flex-direction: column; gap: .55rem;
+            overflow: visible;
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
         }
+        .th-apt-type-radio { display: flex; flex-wrap: wrap; gap: .3rem; }
+        .th-apt-type-radio button {
+            padding: .22rem .55rem;
+            font-size: 11px; font-weight: 600;
+            border: 1px solid #cbd5e1; border-radius: 999px;
+            background: #f1f5f9; color: #475569;
+            cursor: pointer; transition: all .12s;
+            white-space: nowrap;
+        }
+        .th-apt-type-radio button:hover { border-color: #38bdf8; background: #f0f9ff; color: #0369a1; }
+        .th-apt-type-radio button.is-active { border-color: #0284c7; background: #0284c7; color: #fff; }
         .th-const-edit-card-header {
             display: flex; align-items: center; gap: .6rem;
         }
@@ -684,6 +837,7 @@
             'fid_TP' => $personnage->fid_TP ? (string)$personnage->fid_TP : '',
             'fid_nation' => $personnage->nations->first()?->id_region ? (string) $personnage->nations->first()->id_region : '',
             'arme_icon' => $personnage->arme_icon ?? null,
+            'background_actif' => $personnage->background_actif ?? '',
             'videos' => $personnage->videos->map(fn($v)=>['url_video'=>$v->url_video])->values(),
         ]);
 
@@ -708,6 +862,30 @@
                 'icon' => $fileExists ? $localIcon : ($a->icone_url ?? asset('images/placeholder.svg')),
             ];
         });
+
+        $availableArtefactsJson = $artefactsDisponibles->map(function ($artefact) {
+            $photo = $artefact->photos->first();
+            $icon = $photo?->source_url
+                ?? ($photo?->chemin_photo
+                    ? (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)
+                        ? $photo->chemin_photo
+                        : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                    : asset('images/placeholder.svg'));
+
+            $rarityLabel = $artefact->rareté?->libelle_rareté ?? '';
+            $rarityStars = (int) preg_replace('/\D+/', '', (string) $rarityLabel);
+
+            return [
+                'id' => (int) $artefact->id_artefact,
+                'nom' => $artefact->nom_artefact,
+                'slug' => $artefact->slug,
+                'bonus_2p' => $artefact->bonus_2p,
+                'bonus_4p' => $artefact->bonus_4p,
+                'rarete' => $rarityLabel,
+                'stars' => $rarityStars,
+                'icon' => $icon,
+            ];
+        })->values();
 
         $existingArmesJson = $personnage->armesRecommandees->map(function ($w) {
             $type = $w->arme?->typeArme?->libelle_TArme ?? '';
@@ -738,12 +916,28 @@
         $existingArtefactsJson = $personnage->artefactsRecommandees->map(function ($build) {
             $artefact1 = $build->artefact1?->nom_artefact;
             $artefact2 = $build->artefact2?->nom_artefact;
+            $artefact1Photo = $build->artefact1?->photos->first();
+            $artefact2Photo = $build->artefact2?->photos->first();
 
             return [
                 'id_build' => $build->id_build,
+                'artefact1_id' => $build->artefact1?->id_artefact,
                 'artefact1_nom' => $artefact1,
+                'artefact1_icon' => $artefact1Photo?->source_url
+                    ?? ($artefact1Photo?->chemin_photo
+                        ? (filter_var((string) $artefact1Photo->chemin_photo, FILTER_VALIDATE_URL)
+                            ? $artefact1Photo->chemin_photo
+                            : asset('storage/' . ltrim((string) $artefact1Photo->chemin_photo, '/')))
+                        : asset('images/placeholder.svg')),
                 'pieces_1' => (int) $build->pieces_1,
+                'artefact2_id' => $build->artefact2?->id_artefact,
                 'artefact2_nom' => $artefact2,
+                'artefact2_icon' => $artefact2Photo?->source_url
+                    ?? ($artefact2Photo?->chemin_photo
+                        ? (filter_var((string) $artefact2Photo->chemin_photo, FILTER_VALIDATE_URL)
+                            ? $artefact2Photo->chemin_photo
+                            : asset('storage/' . ltrim((string) $artefact2Photo->chemin_photo, '/')))
+                        : asset('images/placeholder.svg')),
                 'pieces_2' => (int) ($build->pieces_2 ?? 0),
                 'position' => (int) $build->position,
             ];
@@ -842,6 +1036,99 @@
             'id'      => (int) $t->id_TypeApti,
             'libelle' => $t->libelle_Apti,
         ]);
+
+        $teamsJson = $personnage->teamCompositions()
+            ->with([
+                'membres.personnage.element',
+                'membres.personnage.photos',
+                'membres.personnage.roles',
+                'alternatives.personnage.element',
+                'alternatives.personnage.photos',
+                'alternatives.personnage.roles',
+            ])
+            ->get()
+            ->map(function ($team) {
+                return [
+                    'id_team' => (int) $team->id_team,
+                    'type_reaction' => $team->type_reaction,
+                    'tag' => $team->tag,
+                    'membres' => $team->membres->sortBy('slot')->values()->map(function ($m) {
+                        $photo = $m->personnage?->photos->first();
+                        $defaultRole = $m->personnage?->roles->first()?->libelle_role;
+
+                        return [
+                            'slot' => (int) $m->slot,
+                            'id_perso' => (int) $m->fid_perso,
+                            'nom' => $m->personnage?->nom_perso ?? '',
+                            'element' => $m->personnage?->element?->libelle_element ?? '',
+                            'default_role' => $defaultRole,
+                            'role_override' => $m->role_override,
+                            'role' => $m->role_override ?: $defaultRole,
+                            'icon' => $photo?->source_url
+                                ?? ($photo?->chemin_photo
+                                    ? (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)
+                                        ? $photo->chemin_photo
+                                        : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                                    : null),
+                        ];
+                    })->all(),
+                    'remplacants' => $team->alternatives->values()->map(function ($r) {
+                        $photo = $r->personnage?->photos->first();
+                        $defaultRole = $r->personnage?->roles->first()?->libelle_role;
+
+                        return [
+                            'id' => (int) $r->id,
+                            'slot' => (int) $r->slot,
+                            'id_perso' => (int) $r->fid_perso_remplacant,
+                            'nom' => $r->personnage?->nom_perso ?? '',
+                            'element' => $r->personnage?->element?->libelle_element ?? '',
+                            'default_role' => $defaultRole,
+                            'role_override' => $r->role_override,
+                            'role' => $r->role_override ?: $defaultRole,
+                            'icon' => $photo?->source_url
+                                ?? ($photo?->chemin_photo
+                                    ? (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)
+                                        ? $photo->chemin_photo
+                                        : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                                    : null),
+                        ];
+                    })->all(),
+                ];
+            })->values();
+
+        $teamPersonnagesPoolJson = \App\Models\Personnage::with(['element', 'photos', 'roles'])
+            ->orderBy('nom_perso')
+            ->get()
+            ->map(function ($p) {
+                $photo = $p->photos->first();
+                return [
+                    'id_perso' => (int) $p->id_perso,
+                    'nom' => $p->nom_perso,
+                    'element' => $p->element?->libelle_element ?? '',
+                    'default_role' => $p->roles->first()?->libelle_role,
+                    'icon' => $photo?->source_url
+                        ?? ($photo?->chemin_photo
+                            ? (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)
+                                ? $photo->chemin_photo
+                                : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                            : null),
+                ];
+            })->values();
+
+        $reactionsJson = $reactions->map(fn($r) => [
+            'id_reaction'  => (int) $r->id_reaction,
+            'nom_reaction' => $r->nom_reaction,
+            'slug'         => $r->slug,
+            'icon'         => (function ($r) {
+                $photo = $r->photos->first();
+                return $photo?->source_url
+                    ?? ($photo?->chemin_photo
+                        ? (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)
+                            ? $photo->chemin_photo
+                            : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                        : null);
+            })($r),
+        ])->values();
     @endphp
 
     <div id="personnage-editor-config"
@@ -854,6 +1141,7 @@
          data-fid-nation="{{ e($personnage->nations->first()?->id_region ?? '') }}"
          data-arme-icon="{{ e($personnage->arme_icon ?? '') }}"
          data-available-armes="{{ e(json_encode($availableArmesJson)) }}"
+         data-available-artefacts="{{ e(json_encode($availableArtefactsJson)) }}"
          data-existing-armes="{{ e(json_encode($existingArmesJson)) }}"
          data-existing-artefacts="{{ e(json_encode($existingArtefactsJson)) }}"
          data-constellations="{{ e(json_encode($constellationsJson)) }}"
@@ -883,7 +1171,19 @@
          data-upload-competences-url="{{ route('admin.personnage.block.competences.upload', $personnage) }}"
          data-aptitudes="{{ e(json_encode($aptitudesJson)) }}"
          data-types-apti="{{ e(json_encode($typesAptiJson)) }}"
+         data-teams="{{ e(json_encode($teamsJson)) }}"
+         data-team-pool="{{ e(json_encode($teamPersonnagesPoolJson)) }}"
+         data-reactions="{{ e(json_encode($reactionsJson)) }}"
+         data-store-team-url="{{ route('admin.personnage.block.teams.store', $personnage) }}"
+         data-update-team-url-base="{{ route('admin.personnage.block.teams.store', $personnage) }}"
+         data-delete-team-url-base="{{ route('admin.personnage.block.teams.store', $personnage) }}"
          data-showcase-url="{{ route('personnages.show', $personnage) }}"
+         data-google-drive-api-key="{{ e((string) config('services.google_drive.api_key', '')) }}"
+         data-google-drive-client-id="{{ e((string) config('services.google_drive.client_id', '')) }}"
+         data-google-drive-app-id="{{ e((string) config('services.google_drive.app_id', '')) }}"
+         data-google-drive-folder-id="{{ e((string) config('services.google_drive.folder_id', '')) }}"
+         data-google-drive-folder-url="{{ e((string) config('services.google_drive.folder_url', 'https://drive.google.com/drive/folders/1rHi1v6620v3H_gEOhpgwBQnm2a0cTWNn?usp=drive_link')) }}"
+         data-google-drive-browse-url="{{ route('admin.google-drive.browse') }}"
          data-csrf="{{ csrf_token() }}"
          class="hidden"></div>
 
@@ -976,6 +1276,31 @@
                                 <option value="{{ $nation->id_region }}">{{ $nation->nom_region }}</option>
                             @endforeach
                         </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide mb-1">Fond personnage</label>
+                    <div class="space-y-2 rounded border border-slate-300 bg-white p-2.5">
+                        <input type="url"
+                               x-model="driveBackgroundUrlInput"
+                               @blur="applyBackgroundUrlInput()"
+                               class="w-full rounded border border-slate-300 bg-white px-2 py-2 text-black text-xs placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                               placeholder="https://drive.google.com/file/d/..." />
+
+                        <div class="flex gap-2">
+                            <button type="button"
+                                    @click="openGoogleDriveBrowser()"
+                                    class="w-full rounded border border-blue-300 bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">
+                                Parcourir Drive
+                            </button>
+                        </div>
+
+                        <template x-if="mainZone.background_actif">
+                            <div class="overflow-hidden rounded border border-slate-200">
+                                <img :src="mainZone.background_actif" alt="Background" class="h-16 w-full object-cover" />
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -1165,8 +1490,33 @@
                 </div>
 
                 <div class="rounded border border-slate-300 bg-slate-50 p-3">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-700 mb-2">Artefacts</div>
-                    <p class="text-xs text-slate-600">Section prête. L'éditeur artefacts sera branché dans ce sous-menu.</p>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-700">Artefacts</div>
+                        <button type="button" @click="showArtefactManager = true"
+                                class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
+                            Gérer
+                        </button>
+                    </div>
+                    <template x-if="artefactsError">
+                        <div class="mb-2 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700" x-text="artefactsError"></div>
+                    </template>
+                    <template x-if="!artefactBuilds.length">
+                        <p class="text-xs text-slate-600 italic">Aucun build artefact recommandé.</p>
+                    </template>
+                    <div class="space-y-2" x-show="artefactBuilds.length">
+                        <template x-for="(build, index) in artefactBuilds" :key="`artefact-side-${build.id_build || index}`">
+                            <div class="rounded-lg border border-slate-200 bg-white px-2 py-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-[11px] font-semibold text-slate-700" x-text="`Build ${index + 1}`"></span>
+                                    <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800" x-text="artefactBuildLabel(build)"></span>
+                                </div>
+                                <div class="mt-1 text-[11px] text-slate-600" x-text="build.artefact1_nom || 'Set principal manquant'"></div>
+                                <template x-if="build.pieces_1 === 2 && build.artefact2_nom">
+                                    <div class="text-[11px] text-slate-500" x-text="build.artefact2_nom"></div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
                 <hr class="border-slate-300" />
@@ -1174,7 +1524,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Constellations</label>
-                        <button type="button" @click="showConstellationsModal = true"
+                        <button type="button" @click="constellationWizardStep = 0; showConstellationsModal = true"
                                 class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
                             Éditer les constellations
                         </button>
@@ -1341,42 +1691,349 @@
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Compétences</label>
-                        <button type="button" @click="showAptitudesModal = true"
-                                class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
-                            Éditer les compétences
+                        <button type="button" @click="openAptitudeForm(null)"
+                                class="flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100">
+                            <span>+</span> Ajouter
                         </button>
                     </div>
-                    <template x-if="aptitudes.length">
-                        <p class="text-[11px] text-slate-500 italic" x-text="aptitudes.length + ' compétence(s) enregistrée(s)'"></p>
-                    </template>
                     <template x-if="!aptitudes.length">
-                        <p class="text-[11px] text-slate-500 italic">Aucune compétence.</p>
+                        <p class="text-[11px] text-slate-400 italic">Aucune compétence.</p>
                     </template>
+                    <div class="mt-1 space-y-1">
+                        <template x-for="(apt, idx) in aptitudes" :key="`apt-sb-${idx}`">
+                            <div class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                <span class="flex-1 truncate text-[11px] font-semibold text-slate-700" x-text="apt.titre_apti || 'Sans titre'"></span>
+                                <button type="button" @click="openAptitudeForm(idx)" title="Modifier"
+                                        class="shrink-0 rounded px-1 text-slate-400 hover:text-slate-700 transition-colors text-xs">✎</button>
+                                <button type="button" @click="removeAptitude(idx)" title="Supprimer"
+                                        class="shrink-0 rounded px-1 text-slate-400 hover:text-red-500 transition-colors text-xs">&times;</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <hr class="border-slate-300" />
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Compositions d'équipe</label>
+                        <button type="button" @click="openTeamManager()"
+                                class="flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100">
+                            <span>◎</span> Gérer
+                        </button>
+                    </div>
+                    <template x-if="!teams.length">
+                        <p class="text-[11px] text-slate-400 italic">Aucune team. Ouvre le gestionnaire pour créer un slot de réaction.</p>
+                    </template>
+                    <div class="mt-1 space-y-1" x-show="teams.length">
+                        <template x-for="group in teamGroups" :key="`team-sb-group-${group.key}`">
+                            <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                <span class="flex-1 truncate text-[11px] font-semibold text-slate-700"
+                                      x-text="`${group.reaction} · ${group.teams.length} team(s)`"></span>
+                                <button type="button" @click="openTeamManager()" title="Gérer"
+                                        class="shrink-0 rounded px-1 text-slate-400 hover:text-slate-700 transition-colors text-xs">✎</button>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
                 </div>
             </aside>
 
-            {{-- ============ MODAL ÉDITION DES 6 CONSTELLATIONS ============ --}}
-            <template x-if="showConstellationsModal">
-                <div class="th-const-edit-overlay" @click.self="showConstellationsModal = false">
-                    <div class="th-const-edit-modal">
-
-                        {{-- En-tête --}}
-                        <div class="flex items-center justify-between gap-4 pb-3 border-b border-slate-200">
+            <template x-if="teamManagerOpen">
+                <div class="th-const-edit-overlay" @click.self="teamManagerOpen = false">
+                    <div class="th-apt-single-modal" style="width:min(980px,98vw)">
+                        <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
                             <div>
-                                <div class="text-base font-bold text-slate-900">Constellations</div>
-                                <div class="text-xs text-slate-500 mt-0.5">Modifiez le nom, la description et l'image de chaque constellation</div>
+                                <div class="text-base font-bold text-slate-900">Gestion des compositions d'equipe</div>
+                                <div class="text-[11px] text-slate-400">D'abord les slots de reaction, puis les teams a l'interieur.</div>
                             </div>
                             <div class="flex items-center gap-2">
+                                <button type="button" @click="openReactionSlotPicker()"
+                                        class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400">+ Slot reaction</button>
+                                <button type="button" @click="teamManagerOpen = false"
+                                        class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
+                            </div>
+                        </div>
+
+                        <template x-if="!teamReactionSlots.length">
+                            <div class="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+                                <div class="text-sm font-semibold text-slate-700">Aucun slot de reaction</div>
+                                <div class="mt-1 text-xs text-slate-400">Ajoute un slot de reaction pour pouvoir y mettre des teams.</div>
+                                <button type="button" @click="openReactionSlotPicker()"
+                                        class="mt-4 rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400">+ Ajouter un slot</button>
+                            </div>
+                        </template>
+
+                        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2" x-show="teamReactionSlots.length">
+                            <template x-for="slot in teamReactionSlots" :key="`reaction-slot-${slot.nom_reaction}`">
+                                <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                                            <img :src="slot.icon || '{{ asset('images/placeholder.svg') }}'" :alt="slot.nom_reaction" class="h-10 w-10 object-contain" />
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-sm font-bold text-slate-900" x-text="slot.nom_reaction"></div>
+                                            <div class="mt-0.5 text-[11px] text-slate-400" x-text="`${teamsForReaction(slot.nom_reaction).length} team(s)`"></div>
+                                        </div>
+                                        <button type="button" @click="removeReactionSlot(slot.nom_reaction)"
+                                                class="rounded px-1 text-slate-300 hover:text-red-500">&times;</button>
+                                    </div>
+
+                                    <div class="mt-3 flex items-center gap-2">
+                                        <button type="button" @click="openTeamForm(null, slot.nom_reaction)"
+                                                class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100">+ Ajouter une team</button>
+                                    </div>
+
+                                    <div class="mt-3 space-y-2">
+                                        <template x-if="!teamsForReaction(slot.nom_reaction).length">
+                                            <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-[11px] italic text-slate-400">Aucune team dans ce slot.</div>
+                                        </template>
+                                        <template x-for="team in teamsForReaction(slot.nom_reaction)" :key="`reaction-team-${slot.nom_reaction}-${team.id_team}`">
+                                            <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                          :class="team.tag === 'recommended' ? 'bg-emerald-100 text-emerald-700' : (team.tag === 'f2p' ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600')"
+                                                          x-text="team.tag === 'recommended' ? 'Recommended' : (team.tag === 'f2p' ? 'F2P' : 'Normal')"></span>
+                                                    <div class="flex -space-x-2">
+                                                        <template x-for="member in sortedMembers(team)" :key="`reaction-team-member-${team.id_team}-${member.slot}`">
+                                                            <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'" :alt="member.nom" class="h-7 w-7 rounded-full border-2 border-white object-cover shadow-sm" />
+                                                        </template>
+                                                    </div>
+                                                    <div class="ml-auto flex items-center gap-2">
+                                                        <button type="button" @click="openTeamForm(team, slot.nom_reaction)" class="text-xs text-slate-400 hover:text-slate-700">✎</button>
+                                                        <button type="button" @click="deleteTeam(team.id_team)" class="text-xs text-slate-400 hover:text-red-500">×</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="reactionSlotPickerOpen">
+                <div class="th-const-edit-overlay" @click.self="closeReactionSlotPicker()">
+                    <div class="th-apt-single-modal" style="width:min(560px,96vw)">
+                        <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                            <div class="text-base font-bold text-slate-900">Ajouter un slot de reaction</div>
+                            <button type="button" @click="closeReactionSlotPicker()"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
+                        </div>
+                        <template x-if="!availableReactionSlots.length">
+                            <div class="mt-6 py-6 text-center text-sm italic text-slate-400">Toutes les reactions sont deja ajoutees.</div>
+                        </template>
+                        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3" x-show="availableReactionSlots.length">
+                            <template x-for="reaction in availableReactionSlots" :key="`reaction-slot-pick-${reaction.id_reaction}`">
+                                <button type="button" @click="addReactionSlot(reaction.nom_reaction)"
+                                        class="rounded-2xl border border-slate-200 bg-white p-3 text-center transition hover:border-indigo-400 hover:bg-indigo-50">
+                                    <div class="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                                        <img :src="reaction.icon || '{{ asset('images/placeholder.svg') }}'" :alt="reaction.nom_reaction" class="h-10 w-10 object-contain" />
+                                    </div>
+                                    <div class="mt-2 text-[11px] font-semibold text-slate-700" x-text="reaction.nom_reaction"></div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="teamFormOpen">
+                <div class="th-const-edit-overlay" @click.self="teamFormOpen = false">
+                    <div class="th-apt-single-modal" style="width:min(900px,98vw)">
+                        <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                            <div class="text-base font-bold text-slate-900" x-text="teamEditingId ? 'Modifier composition' : 'Nouvelle composition'"></div>
+                            <button type="button" @click="teamFormOpen = false"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
+                        </div>
+
+                        <template x-if="teamError">
+                            <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" x-text="teamError"></div>
+                        </template>
+
+                        <div class="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2">
+                            <div class="text-[10px] font-bold uppercase tracking-wide text-indigo-500">Reaction</div>
+                            <div class="mt-0.5 flex items-center gap-2">
+                                <img :src="reactionMeta(teamForm.type_reaction)?.icon || '{{ asset('images/placeholder.svg') }}'"
+                                     :alt="teamForm.type_reaction || 'Reaction'"
+                                     class="h-8 w-8 rounded-xl border border-indigo-100 bg-white object-contain" />
+                                <div class="text-sm font-bold text-slate-800" x-text="teamForm.type_reaction || 'Aucune reaction' "></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-5">
+                            <div class="mb-3 flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-700">Type de team</span>
+                                <div class="ml-auto flex items-center gap-2">
+                                    <button type="button" @click="teamForm.tag = ''"
+                                            :class="teamForm.tag === '' ? 'border-slate-700 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-600'"
+                                            class="rounded-full border px-3 py-1 text-[11px] font-semibold">Normal</button>
+                                    <button type="button" @click="teamForm.tag = 'recommended'"
+                                            :class="teamForm.tag === 'recommended' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-emerald-200 bg-white text-emerald-700'"
+                                            class="rounded-full border px-3 py-1 text-[11px] font-semibold">Recommended</button>
+                                    <button type="button" @click="teamForm.tag = 'f2p'"
+                                            :class="teamForm.tag === 'f2p' ? 'border-sky-600 bg-sky-600 text-white' : 'border-sky-200 bg-white text-sky-700'"
+                                            class="rounded-full border px-3 py-1 text-[11px] font-semibold">F2P</button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+                                <template x-for="slot in [1,2,3,4]" :key="`slot-col-${slot}`">
+                                    <div class="flex flex-col gap-1.5">
+                                        <div class="text-[10px] font-bold uppercase tracking-wide text-slate-400" x-text="`Slot ${slot}`"></div>
+
+                                        {{-- Slot principal --}}
+                                        <div class="group relative">
+                                            <template x-if="!teamMemberForSlot(slot)">
+                                                <button type="button" @click="openSlotPicker(slot, false)"
+                                                        class="flex h-24 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 text-slate-400 transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-500">
+                                                    <svg class="mb-1 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                    <span class="text-[10px] font-semibold">Ajouter</span>
+                                                </button>
+                                            </template>
+                                            <template x-if="teamMemberForSlot(slot)">
+                                                <div class="relative rounded-xl border-2 border-indigo-300 bg-white p-2 text-center">
+                                                    <button type="button" @click="clearTeamMember(slot)"
+                                                            class="absolute -right-1.5 -top-1.5 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow group-hover:flex">×</button>
+                                                    <button type="button" @click="openSlotPicker(slot, false)" class="w-full">
+                                                        <img :src="teamMemberForSlot(slot)?.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                             :alt="teamMemberForSlot(slot)?.nom"
+                                                             class="mx-auto h-12 w-12 rounded-full border border-slate-200 object-cover" />
+                                                        <div class="mt-1 truncate text-[10px] font-bold text-slate-800" x-text="teamMemberForSlot(slot)?.nom"></div>
+                                                        <div class="truncate text-[9px] text-slate-400" x-text="teamMemberForSlot(slot)?.element"></div>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        {{-- Rôle override --}}
+                                        <template x-if="teamMemberForSlot(slot)">
+                                            <input type="text"
+                                                   :value="teamForm.membres[slot-1]?.role_override || ''"
+                                                   @input="setTeamMemberRole(slot, $event.target.value)"
+                                                   class="rounded border border-slate-200 bg-white px-2 py-1 text-[10px] text-slate-600 placeholder-slate-300 focus:border-indigo-300 focus:outline-none"
+                                                   placeholder="Rôle (optionnel)" />
+                                        </template>
+
+                                        {{-- Alts --}}
+                                        <div class="mt-0.5 space-y-1">
+                                            <template x-for="r in teamRemplacantsBySlot(slot)" :key="`alt-chip-${slot}-${r.id_perso}`">
+                                                <div class="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-1.5 py-1">
+                                                    <img :src="r.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                         class="h-5 w-5 shrink-0 rounded-full border border-amber-200 object-cover" />
+                                                    <span class="min-w-0 flex-1 truncate text-[10px] font-semibold text-amber-800" x-text="r.nom"></span>
+                                                    <input type="text" :value="r.role_override || ''"
+                                                           @input="setRemplacantRole(slot, r.id_perso, $event.target.value)"
+                                                           class="min-w-0 w-20 rounded border border-amber-200 bg-white px-1 py-0.5 text-[9px] text-amber-700 placeholder-amber-300 focus:border-amber-300 focus:outline-none"
+                                                           placeholder="Role" />
+                                                    <button type="button" @click="removeRemplacant(slot, r.id_perso)"
+                                                            class="shrink-0 leading-none text-[12px] text-red-400 hover:text-red-600">×</button>
+                                                </div>
+                                            </template>
+                                            <button type="button" @click="openSlotPicker(slot, true)"
+                                                    :disabled="!teamMemberForSlot(slot)"
+                                                    class="w-full rounded-lg border border-dashed border-amber-300 bg-amber-50 py-0.5 text-[10px] font-semibold text-amber-600 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-40">
+                                                + Alt
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
+                            <button type="button" @click="teamFormOpen = false"
+                                    class="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Annuler</button>
+                            <button type="button" @click="saveTeam()" :disabled="teamSaving"
+                                    class="rounded border border-indigo-500 bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-60">
+                                <span x-show="!teamSaving">Enregistrer</span>
+                                <span x-show="teamSaving">Enregistrement...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+
+            {{-- ============ MODAL WIZARD CONSTELLATIONS ============ --}}
+
+                {{-- ============ MODAL PICKER PERSONNAGE TEAM ============ --}}
+                <template x-if="teamSlotPickerOpen !== null">
+                    <div class="th-const-edit-overlay" @click.self="closeSlotPicker()">
+                        <div class="th-apt-single-modal" style="width:min(640px,98vw)">
+                            <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                                <div class="text-sm font-bold text-slate-900"
+                                     x-text="teamSlotPickerOpen?.isAlt
+                                         ? `Choisir un alt — Slot ${teamSlotPickerOpen.slot}`
+                                         : `Choisir un personnage — Slot ${teamSlotPickerOpen.slot}`"></div>
+                                <button type="button" @click="closeSlotPicker()"
+                                        class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
+                            </div>
+                            <div class="mt-3">
+                                <input x-model="teamSlotPickerSearch"
+                                       type="text"
+                                       placeholder="Rechercher un personnage..."
+                                       class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-indigo-400 focus:outline-none"
+                                       @keydown.escape="closeSlotPicker()" />
+                            </div>
+                            <template x-if="filteredPickerPool.length === 0">
+                                <div class="mt-6 py-6 text-center text-sm italic text-slate-400">Aucun personnage trouvé</div>
+                            </template>
+                            <div class="mt-3 grid grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-5 md:grid-cols-6" style="max-height:55vh">
+                                <template x-for="p in filteredPickerPool" :key="`picker-card-${p.id_perso}`">
+                                    <button type="button" @click="selectFromPicker(p)"
+                                            class="flex flex-col items-center rounded-xl border border-slate-200 bg-white p-2 transition hover:border-indigo-400 hover:bg-indigo-50">
+                                        <img :src="p.icon || '{{ asset('images/placeholder.svg') }}'"
+                                             :alt="p.nom"
+                                             class="h-11 w-11 rounded-full border border-slate-200 object-cover" />
+                                        <span class="mt-1 w-full truncate text-center text-[9px] font-bold text-slate-700" x-text="p.nom"></span>
+                                        <span class="w-full truncate text-center text-[8px] text-slate-400" x-text="p.element"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+            <template x-if="showConstellationsModal">
+                <div class="th-const-edit-overlay" @click.self="showConstellationsModal = false">
+                    <div class="th-apt-single-modal" style="width:min(560px,97vw)">
+
+                        {{-- En-tête --}}
+                        <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                            <div class="flex items-center gap-3">
+                                {{-- Dots de progression --}}
+                                <div class="flex items-center gap-1.5">
+                                    <template x-for="i in 6" :key="i">
+                                        <button type="button"
+                                                @click="constellationWizardStep = i - 1"
+                                                :title="`Aller à C${i}`"
+                                                class="w-2.5 h-2.5 rounded-full transition-all"
+                                                :class="constellationWizardStep === i - 1
+                                                    ? 'bg-slate-800 scale-125'
+                                                    : (constellationSlots[i-1]?.titre_const ? 'bg-emerald-400' : 'bg-slate-300 hover:bg-slate-400')">
+                                        </button>
+                                    </template>
+                                </div>
+                                <div>
+                                    <div class="text-base font-bold text-slate-900"
+                                         x-text="`Constellation C${constellationWizardStep + 1} / 6`"></div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5"
+                                         x-text="constellationSlots[constellationWizardStep]?.titre_const || 'Aucun titre'"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
                                 <button type="button"
                                         @click="saveConstellations()"
-                                        class="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors">
-                                    Enregistrer
+                                        class="rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-400 transition-colors">
+                                    Enregistrer tout
                                 </button>
                                 <button type="button"
                                         @click="showConstellationsModal = false"
-                                        class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                        class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
                                     Fermer
                                 </button>
                             </div>
@@ -1386,38 +2043,149 @@
                             <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" x-text="constellationsError"></div>
                         </template>
 
-                        {{-- Grille des 6 constellations --}}
-                        <div class="th-const-edit-grid">
-                            <template x-for="(slot, index) in constellationSlots" :key="`cedit-${slot.index}`">
-                                <div class="th-const-edit-card">
+                        {{-- Carte unique pour la constellation courante --}}
+                        <template x-if="constellationSlots[constellationWizardStep]">
+                        <div class="mt-4 space-y-4">
 
-                                    {{-- Badge + titre --}}
-                                    <div class="th-const-edit-card-header">
-                                        <div class="th-const-edit-badge" x-text="slot.label"></div>
-                                        <input type="text"
-                                               placeholder="Nom de la constellation"
-                                               x-model="slot.titre_const" />
-                                    </div>
+                            {{-- Nom --}}
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">
+                                    Nom <span class="text-red-400">*</span>
+                                </label>
+                                <input type="text"
+                                       :placeholder="`Nom de C${constellationWizardStep + 1}`"
+                                       x-model="constellationSlots[constellationWizardStep].titre_const"
+                                       class="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none" />
+                            </div>
 
-                                    {{-- Description --}}
-                                    <textarea placeholder="Description de la constellation..."
-                                              rows="4"
-                                              x-model="slot.descri_const"></textarea>
+                            {{-- Description --}}
+                            <div class="relative">
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Description</label>
+                                <textarea :placeholder="`Description de C${constellationWizardStep + 1}...`"
+                                          rows="4"
+                                          x-model="constellationSlots[constellationWizardStep].descri_const"
+                                          :class="showAptitudePicker && aptitudePickerSlotIndex === constellationWizardStep ? 'border-indigo-400 ring-1 ring-indigo-300' : ''"
+                                          @input="handleConstellationDescInput($event, constellationWizardStep)"
+                                          @keydown="handleConstellationDescKeydown($event, constellationWizardStep)"
+                                          class="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none resize-none"></textarea>
 
-                                    {{-- Image + upload --}}
-                                    <div class="th-const-edit-img-row">
-                                        <img :src="slot.image_url || '{{ asset('images/placeholder.svg') }}'"
-                                             :alt="slot.titre_const || slot.label" />
-                                        <label class="th-const-edit-upload-btn">
-                                            📷 Changer l'image
-                                            <input type="file"
-                                                   class="hidden"
-                                                   accept="image/*"
-                                                   @change="uploadConstellationImageSlot($event, index)" />
-                                        </label>
-                                    </div>
-
+                                {{-- Menu autocomplete slash commandes --}}
+                                <div x-show="slashMenuOpen && slashMenuSlotIndex === constellationWizardStep"
+                                     class="mt-1 rounded-lg border border-indigo-500 bg-slate-800 shadow-xl overflow-hidden">
+                                    <template x-for="(cmd, cmdIdx) in getSlashCommands()" :key="cmd.value">
+                                        <button type="button"
+                                                @mousedown.prevent="confirmSlashCommand(cmd, constellationWizardStep)"
+                                                :class="cmdIdx === slashMenuSelectedIndex ? 'bg-indigo-600' : 'hover:bg-slate-700'"
+                                                class="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors">
+                                            <span class="font-mono text-xs flex-shrink-0 w-5 h-5 flex items-center justify-center rounded text-indigo-200"
+                                                  :class="cmdIdx === slashMenuSelectedIndex ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-indigo-300'">/</span>
+                                            <span class="font-mono text-xs font-semibold flex-shrink-0"
+                                                  :class="cmdIdx === slashMenuSelectedIndex ? 'text-white' : 'text-indigo-300'"
+                                                  x-text="cmd.label"></span>
+                                            <span class="text-xs truncate"
+                                                  :class="cmdIdx === slashMenuSelectedIndex ? 'text-indigo-100' : 'text-slate-400'"
+                                                  x-text="cmd.description"></span>
+                                            <span x-show="cmdIdx === slashMenuSelectedIndex"
+                                                  class="ml-auto text-[10px] text-indigo-200 flex-shrink-0 opacity-80 border border-indigo-400 rounded px-1">↵</span>
+                                        </button>
+                                    </template>
+                                    <div x-show="getSlashCommands().length === 0"
+                                         class="px-3 py-2 text-xs text-slate-500 italic">Aucune commande trouvée</div>
                                 </div>
+
+                                <div class="mt-1 flex items-center gap-1.5"
+                                     x-show="!(showAptitudePicker && aptitudePickerSlotIndex === constellationWizardStep) && !(slashMenuOpen && slashMenuSlotIndex === constellationWizardStep)">
+                                    <kbd class="inline-flex items-center rounded border border-slate-300 bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-600 shadow-sm">/aptitudes</kbd>
+                                    <span class="text-[10px] text-slate-400">pour insérer une compétence</span>
+                                </div>
+                            </div>
+
+                            {{-- Picker /aptitudes --}}
+                            <template x-if="showAptitudePicker && aptitudePickerSlotIndex === constellationWizardStep">
+                                <div class="rounded-lg border border-indigo-400 bg-slate-800 p-2 shadow-lg">
+                                    <div class="mb-2 flex items-center justify-between">
+                                        <div class="flex items-center gap-1.5">
+                                            <kbd class="rounded border border-indigo-500 bg-indigo-900 px-1 py-0.5 font-mono text-[10px] text-indigo-300">/aptitudes</kbd>
+                                            <span class="text-[11px] font-semibold text-slate-300">Cliquez sur une compétence pour l'insérer</span>
+                                        </div>
+                                        <button type="button"
+                                                @click="showAptitudePicker = false; aptitudePickerSlotIndex = null"
+                                                title="Fermer (Échap)"
+                                                class="flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-slate-700 hover:text-slate-200 transition-colors text-xs font-bold">✕</button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="(apt, aptIdx) in aptitudes" :key="apt.id_aptitude">
+                                            <button type="button"
+                                                    @click="insertAptitudeTag(aptIdx, constellationWizardStep)"
+                                                    class="flex flex-col items-center rounded-md border border-transparent p-1.5 transition hover:border-indigo-400 hover:bg-slate-700"
+                                                    :title="apt.titre_apti">
+                                                <img :src="apt.image_url || '{{ asset('images/placeholder.svg') }}'"
+                                                     :alt="apt.titre_apti"
+                                                    class="h-10 w-10 object-contain" />
+                                                <span class="mt-0.5 line-clamp-2 max-w-[64px] text-center text-[10px] leading-tight text-slate-300"
+                                                      x-text="apt.titre_apti"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                    <p class="mt-2 text-[10px] text-slate-500">Effacez <span class="font-mono text-slate-400">/aptitudes</span> dans le texte pour fermer le picker</p>
+                                </div>
+                            </template>
+
+                            {{-- Aperçu rendu de la description --}}
+                            <template x-if="constellationSlots[constellationWizardStep].descri_const">
+                                <div class="mt-1 rounded border border-slate-700 bg-slate-900/60 px-3 py-2">
+                                    <div class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Aperçu</div>
+                                    <div class="text-sm text-slate-300 leading-relaxed"
+                                         x-html="renderDescriConst(constellationSlots[constellationWizardStep].descri_const)"></div>
+                                </div>
+                            </template>
+
+                            {{-- Image --}}
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Image</label>
+                                <div class="th-const-edit-img-row">
+                                    <img :src="constellationSlots[constellationWizardStep].image_url || '{{ asset('images/placeholder.svg') }}'"
+                                         :alt="constellationSlots[constellationWizardStep].titre_const || `C${constellationWizardStep + 1}`" />
+                                    <label class="th-const-edit-upload-btn">
+                                        📷 Changer l'image
+                                        <input type="file" class="hidden" accept="image/*"
+                                               @change="uploadConstellationImageSlot($event, constellationWizardStep)" />
+                                    </label>
+                                </div>
+                            </div>
+
+                        </div>
+                        </template>
+
+                        {{-- Navigation --}}
+                        <div class="mt-5 flex items-center justify-between">
+                            {{-- Précédent --}}
+                            <button type="button"
+                                    @click="constellationWizardStep--"
+                                    x-show="constellationWizardStep > 0"
+                                    class="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                ← Précédent
+                            </button>
+                            <div x-show="constellationWizardStep === 0" class="w-1"></div>
+
+                            {{-- Indicateur textuel --}}
+                            <span class="text-xs text-slate-400"
+                                  x-text="`${constellationSlots.filter(s => s.titre_const).length} / 6 renseignée(s)`"></span>
+
+                            {{-- Suivant / Terminer --}}
+                            <template x-if="constellationWizardStep < 5">
+                                <button type="button"
+                                        @click="constellationWizardStep++"
+                                        class="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 transition-colors">
+                                    Suivant →
+                                </button>
+                            </template>
+                            <template x-if="constellationWizardStep === 5">
+                                <button type="button"
+                                        @click="saveConstellations()"
+                                        class="flex items-center gap-1 rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors">
+                                    ✓ Enregistrer tout
+                                </button>
                             </template>
                         </div>
 
@@ -1425,121 +2193,99 @@
                 </div>
             </template>
 
-            {{-- ============ MODAL ÉDITION DES COMPÉTENCES ============ --}}
-            <template x-if="showAptitudesModal">
-                <div class="th-const-edit-overlay" @click.self="showAptitudesModal = false">
-                    <div class="th-const-edit-modal">
+            {{-- ============ MODAL AJOUT / ÉDITION COMPÉTENCE ============ --}}
+            <template x-if="aptitudeFormOpen">
+                <div class="th-const-edit-overlay" @click.self="aptitudeFormOpen = false">
+                    <div class="th-apt-single-modal">
 
                         {{-- En-tête --}}
                         <div class="flex items-center justify-between gap-4 pb-3 border-b border-slate-200">
+                            <div class="text-base font-bold text-slate-900"
+                                 x-text="aptitudeFormIdx === null ? 'Ajouter une compétence' : 'Modifier la compétence'"></div>
+                            <button type="button" @click="aptitudeFormOpen = false"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                Annuler
+                            </button>
+                        </div>
+
+                        <template x-if="aptitudeFormError">
+                            <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
+                                 x-text="aptitudeFormError"></div>
+                        </template>
+
+                        <div class="mt-4 space-y-4">
+
+                            {{-- Nom --}}
                             <div>
-                                <div class="text-base font-bold text-slate-900">Compétences</div>
-                                <div class="text-xs text-slate-500 mt-0.5">Modifiez le nom, le type et la description de chaque compétence</div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">
+                                    Nom de la compétence <span class="text-red-400">*</span>
+                                </label>
+                                <input type="text" x-model="aptitudeFormData.titre_apti"
+                                       placeholder="Nom de la compétence"
+                                       class="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none">
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button type="button"
-                                        @click="saveCompetences()"
-                                        class="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-400 transition-colors">
-                                    Enregistrer
-                                </button>
-                                <button type="button"
-                                        @click="showAptitudesModal = false"
-                                        class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
-                                    Fermer
-                                </button>
-                            </div>
-                        </div>
 
-                        <template x-if="aptitudesError">
-                            <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" x-text="aptitudesError"></div>
-                        </template>
-
-                        {{-- Grille des aptitudes --}}
-                        <div class="th-const-edit-grid" style="grid-template-columns: repeat(2, 1fr);">
-                            <template x-for="(apt, index) in aptitudes" :key="`apt-${apt.id_aptitude || index}`">
-                                <div class="th-const-edit-card">
-
-                                    {{-- Badge + titre + supprimer --}}
-                                    <div class="th-const-edit-card-header">
-                                        <div class="th-const-edit-badge" x-text="index + 1"></div>
-                                        <input type="text"
-                                               placeholder="Nom de la compétence"
-                                               x-model="apt.titre_apti" />
+                            {{-- Type --}}
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">
+                                    Type <span class="text-red-400">*</span>
+                                </label>
+                                <div class="th-apt-type-radio">
+                                    <template x-for="type in typesApti" :key="type.id">
                                         <button type="button"
-                                                @click="removeAptitude(index)"
-                                                title="Supprimer"
-                                                class="ml-auto shrink-0 flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                                            &times;
-                                        </button>
-                                    </div>
-
-                                    {{-- Photo --}}
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Icône</label>
-                                        <label
-                                            class="th-apt-dropzone"
-                                            :class="apt._dragging ? 'th-apt-dropzone--over' : ''"
-                                            @dragover.prevent="apt._dragging = true"
-                                            @dragleave.prevent="apt._dragging = false"
-                                            @drop.prevent="apt._dragging = false; uploadAptitudeImage($event, index, true)">
-                                            <template x-if="apt.image_url">
-                                                <img :src="apt.image_url" class="mx-auto mb-1 h-12 w-12 object-contain rounded" />
-                                            </template>
-                                            <template x-if="!apt.image_url">
-                                                <div class="text-2xl text-slate-300 mb-1">🖼</div>
-                                            </template>
-                                            <span class="text-[10px] text-slate-400" x-text="apt.image_url ? 'Changer (drop ou clic)' : 'Drop ou clic pour uploader'"></span>
-                                            <input type="file" accept="image/*" class="hidden" @change="uploadAptitudeImage($event, index, false)" />
-                                        </label>
-                                    </div>
-
-                                    {{-- Type (select) --}}
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Type</label>
-                                        <select x-model="apt.fid_TypeApti"
-                                                class="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-800">
-                                            <template x-for="type in typesApti" :key="type.id">
-                                                <option :value="type.id" x-text="type.libelle"></option>
-                                            </template>
-                                        </select>
-                                    </div>
-
-                                    {{-- Description (non obligatoire) --}}
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Description <span class="font-normal text-slate-400">(optionnel)</span></label>
-                                        <textarea placeholder="Description de la compétence..."
-                                                  rows="3"
-                                                  x-model="apt.descri_apti"></textarea>
-                                    </div>
-
+                                                :class="aptitudeFormData.fid_TypeApti == type.id ? 'is-active' : ''"
+                                                @click="aptitudeFormData.fid_TypeApti = type.id"
+                                                x-text="type.libelle"></button>
+                                    </template>
                                 </div>
-                            </template>
+                            </div>
 
-                            <template x-if="!aptitudes.length">
-                                <div class="col-span-2 rounded border border-dashed border-slate-300 p-6 text-center">
-                                    <p class="mb-3 text-sm text-slate-500">Aucune compétence enregistrée pour ce personnage.</p>
-                                    <button type="button" @click="addAptitude()"
-                                            class="rounded-lg border border-indigo-400 bg-indigo-50 px-4 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors">
-                                        + Ajouter une compétence
-                                    </button>
-                                </div>
-                            </template>
+                            {{-- Icône --}}
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Icône</label>
+                                <label class="th-apt-dropzone"
+                                       :class="aptitudeFormData._dragging ? 'th-apt-dropzone--over' : ''"
+                                       @dragover.prevent="aptitudeFormData._dragging = true"
+                                       @dragleave.prevent="aptitudeFormData._dragging = false"
+                                       @drop.prevent="aptitudeFormData._dragging = false; handleAptitudeFormImageDrop($event)">
+                                    <template x-if="aptitudeFormData.image_url">
+                                        <img :src="aptitudeFormData.image_url" class="mx-auto mb-1 h-12 w-12 object-contain rounded" />
+                                    </template>
+                                    <template x-if="!aptitudeFormData.image_url">
+                                        <div class="text-2xl text-slate-300 mb-1">🖼</div>
+                                    </template>
+                                    <span class="text-[10px] text-slate-400"
+                                          x-text="aptitudeFormData.image_url ? 'Changer (drop ou clic)' : 'Drop ou clic pour uploader'"></span>
+                                    <input type="file" accept="image/*" class="hidden"
+                                           @change="handleAptitudeFormImageFile($event)" />
+                                </label>
+                            </div>
+
+                            {{-- Description --}}
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">
+                                    Description <span class="font-normal text-slate-400">(optionnel)</span>
+                                </label>
+                                <textarea x-model="aptitudeFormData.descri_apti"
+                                          placeholder="Description de la compétence..."
+                                          rows="4"
+                                          class="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none resize-none"></textarea>
+                            </div>
+
                         </div>
 
-                        {{-- Bouton ajouter (visible quand il y a déjà des compétences) --}}
-                        <template x-if="aptitudes.length">
-                            <div class="mt-3 flex justify-start">
-                                <button type="button" @click="addAptitude()"
-                                        class="rounded-lg border border-indigo-400 bg-indigo-50 px-4 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors">
-                                    + Ajouter une compétence
-                                </button>
-                            </div>
-                        </template>
+                        <div class="mt-5 flex justify-end">
+                            <button type="button" @click="saveAptitudeForm()"
+                                    :disabled="aptitudeFormSaving"
+                                    class="rounded-lg border border-emerald-500 bg-emerald-500 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-400 disabled:opacity-60 transition-colors">
+                                <span x-show="!aptitudeFormSaving">Enregistrer</span>
+                                <span x-show="aptitudeFormSaving">Enregistrement...</span>
+                            </button>
+                        </div>
 
                     </div>
                 </div>
             </template>
-
             <div class="w-0 relative shrink-0">
                 <button type="button"
                         class="absolute left-0 top-3 z-20 flex h-10 w-7 -translate-x-px items-center justify-center rounded-r-md border border-l-0 border-slate-300 bg-white text-sm font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-100"
@@ -1556,9 +2302,11 @@
                 Aperçu en temps réel — cliquez sur Sauvegarder pour enregistrer et voir la page publique
             </div>
 
-            <div class="character-show-hero mx-6 mb-6" data-element="{{ strtolower($personnage->element?->libelle_element ?? 'geo') }}">
+              <div class="character-show-hero mx-6 mb-6"
+                  data-element="{{ strtolower($personnage->element?->libelle_element ?? 'geo') }}"
+                  :style="heroBackgroundStyle">
 
-                <section class="csh-full relative flex items-center justify-center text-center p-4">
+                <section class="csh-full relative mx-auto flex items-center justify-center text-center p-4">
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05),rgba(0,0,0,0.55))]"></div>
                     <template x-if="activeEmbedUrl">
                         <iframe :src="activeEmbedUrl"
@@ -1569,6 +2317,11 @@
                     <template x-if="!activeEmbedUrl">
                         <div class="z-10 text-white/60 text-sm">Aucune vidéo</div>
                     </template>
+                    <button x-show="mainZone.videos.length > 1" type="button" @click="prevVideo()" class="csh-video-nav csh-video-nav--prev">&#8249;</button>
+                    <button x-show="mainZone.videos.length > 1" type="button" @click="nextVideo()" class="csh-video-nav csh-video-nav--next">&#8250;</button>
+                    <div x-show="mainZone.videos.length > 1" class="csh-video-counter">
+                        <span x-text="selectedVideoIndex + 1"></span>&thinsp;/&thinsp;<span x-text="mainZone.videos.length"></span>
+                    </div>
                 </section>
 
                 <section class="csh-portrait overflow-hidden rounded-lg border border-white/20">
@@ -1612,14 +2365,6 @@
                             <span class="csh-pill-value" x-text="selectedNationLabel"></span>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="mx-6 -mt-2 mb-6 flex justify-end" x-show="mainZone.videos.length > 1">
-                <div class="flex items-center gap-2 rounded bg-slate-900/80 border border-slate-700 px-2 py-1 text-xs text-white">
-                    <span>Vidéo <span x-text="selectedVideoIndex + 1"></span>/<span x-text="mainZone.videos.length"></span></span>
-                    <button type="button" @click="prevVideo()" class="rounded bg-slate-700 px-2 py-0.5 hover:bg-slate-600">◀</button>
-                    <button type="button" @click="nextVideo()" class="rounded bg-slate-700 px-2 py-0.5 hover:bg-slate-600">▶</button>
                 </div>
             </div>
 
@@ -1696,6 +2441,42 @@
                 </div>
             </section>
 
+            {{-- ── Compétences preview ── --}}
+            <section class="csh-aptitudes-shell mx-6 mb-6">
+                <div class="csh-preview-panel-head">
+                    <div>
+                        <div class="csh-preview-panel-title">Compétences</div>
+                        <div class="csh-preview-panel-subtitle">Aptitudes actives et passives</div>
+                    </div>
+                    <div class="text-xs text-slate-400" x-text="aptitudes.length ? `${aptitudes.length} compétence(s)` : 'Aucune'"></div>
+                </div>
+
+                <template x-if="!aptitudes.length">
+                    <div class="csh-aptitudes-empty">Aucune compétence enregistrée.</div>
+                </template>
+
+                <template x-if="aptitudes.length">
+                    <div class="csh-aptitudes-list">
+                        <template x-for="(apt, idx) in aptitudes" :key="`prev-apt-${apt.id_aptitude || idx}`">
+                            <div class="csh-aptitude-item">
+                                <template x-if="apt.image_url">
+                                    <img :src="apt.image_url" :alt="apt.titre_apti" class="csh-aptitude-icon" />
+                                </template>
+                                <template x-if="!apt.image_url">
+                                    <div class="csh-aptitude-icon-placeholder">?</div>
+                                </template>
+                                <div class="csh-aptitude-body">
+                                    <div class="csh-aptitude-type"
+                                         x-text="typesApti.find(t => t.id === apt.fid_TypeApti)?.libelle || ''"></div>
+                                    <div class="csh-aptitude-title" x-text="apt.titre_apti || 'Sans titre'"></div>
+                                    <div class="csh-aptitude-desc" x-text="apt.descri_apti || ''"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </section>
+
             <section class="csh-constellation-shell mx-6">
                 <div class="csh-preview-panel-head">
                     <div>
@@ -1738,7 +2519,7 @@
                         <template x-if="activeConstellation">
                             <div class="csh-constellation-detail">
                                 <div class="csh-constellation-title" x-text="activeConstellation.titre_const || 'Constellation sans nom'"></div>
-                                <div class="csh-constellation-desc" x-text="activeConstellation.descri_const || 'Aucune description.'"></div>
+                                <div class="csh-constellation-desc" x-html="renderDescriConst(activeConstellation.descri_const) || 'Aucune description.'"></div>
                             </div>
                         </template>
 
@@ -1748,6 +2529,125 @@
                     </div>
                 </div>
             </section>
+
+            <section class="csh-team-shell">
+                <div class="csh-preview-panel-head">
+                    <div>
+                        <div class="csh-preview-panel-title">Compositions d'équipe</div>
+                        <div class="csh-preview-panel-subtitle">Groupées par réaction, with Recommended / F2P / autres teams</div>
+                    </div>
+                    <div class="text-xs text-slate-400" x-text="teams.length ? `${teams.length} team(s)` : 'Aucune'"></div>
+                </div>
+
+                <template x-if="!teams.length">
+                    <div class="csh-aptitudes-empty">Aucune team enregistrée pour ce personnage.</div>
+                </template>
+
+                <template x-for="group in teamGroups" :key="`team-group-${group.key}`">
+                    <div class="csh-team-group">
+                        <div class="csh-team-group-head">
+                            <div>
+                                <div class="csh-team-group-title" x-text="`${teamReactionEmoji(group.reaction)} ${group.reaction}`"></div>
+                                <div class="csh-team-group-sub" x-text="`${group.teams.length} team(s)`"></div>
+                            </div>
+                        </div>
+
+                        <template x-if="group.recommended">
+                            <article class="csh-team-card recommended">
+                                <div class="csh-team-card-head">
+                                    <div class="csh-team-card-tags">
+                                        <span class="csh-team-tag csh-team-tag-rec">Recommended</span>
+                                        <span class="text-xs text-slate-300" x-text="group.recommended.type_reaction"></span>
+                                    </div>
+                                    <button type="button" class="csh-team-remplacants-btn"
+                                            @click="toggleRecommendedReplacements(group.recommended.id_team)">⇄ remplaçants</button>
+                                </div>
+                                <div class="csh-team-slots">
+                                    <template x-for="member in sortedMembers(group.recommended)" :key="`team-rec-member-${group.recommended.id_team}-${member.slot}`">
+                                        <div class="csh-team-slot">
+                                            <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                 :alt="member.nom"
+                                                 :style="`border-color:${teamElementColor(member.element)}`" />
+                                            <div class="csh-team-slot-name" x-text="member.nom"></div>
+                                            <div class="csh-team-slot-role" x-text="member.role || 'Rôle' "></div>
+
+                                            <template x-if="recommendedReplacementsOpen(group.recommended.id_team)">
+                                                <div class="csh-team-remplacants">
+                                                    <template x-if="slotRemplacants(group.recommended, member.slot).length">
+                                                        <div class="csh-team-remplacant-row">
+                                                            <div class="csh-team-remplacant-head" x-text="`Slot ${member.slot} - remplaçants`"></div>
+                                                            <div class="csh-team-remplacant-list">
+                                                                <template x-for="alt in slotRemplacants(group.recommended, member.slot)" :key="`team-rec-alt-${group.recommended.id_team}-${member.slot}-${alt.id_perso}`">
+                                                                    <div class="csh-team-remplacant-item" :title="alt.role || 'Rôle non défini'">
+                                                                        <img :src="alt.icon || '{{ asset('images/placeholder.svg') }}'" :alt="alt.nom" />
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </article>
+                        </template>
+
+                        <template x-if="group.f2p">
+                            <article class="csh-team-card f2p">
+                                <div class="csh-team-card-head">
+                                    <div class="csh-team-card-tags">
+                                        <span class="csh-team-tag csh-team-tag-f2p">F2P</span>
+                                        <span class="text-xs text-slate-300" x-text="group.f2p.type_reaction"></span>
+                                    </div>
+                                </div>
+                                <div class="csh-team-slots">
+                                    <template x-for="member in sortedMembers(group.f2p)" :key="`team-f2p-member-${group.f2p.id_team}-${member.slot}`">
+                                        <div class="csh-team-slot">
+                                            <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                 :alt="member.nom"
+                                                 :style="`border-color:${teamElementColor(member.element)}`" />
+                                            <div class="csh-team-slot-name" x-text="member.nom"></div>
+                                            <div class="csh-team-slot-role" x-text="member.role || 'Rôle'"></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </article>
+                        </template>
+
+                        <template x-if="group.others.length">
+                            <div>
+                                <button type="button" class="csh-team-drawer-btn" @click="toggleGroupDrawer(group.key)">
+                                    <span class="csh-team-drawer-chevron" :class="groupDrawerOpen(group.key) ? 'is-open' : ''">▼</span>
+                                    <span>Autres teams</span>
+                                    <span class="csh-team-drawer-count" x-text="`${group.others.length} autres teams`"></span>
+                                </button>
+                                <div class="csh-team-others" x-show="groupDrawerOpen(group.key)">
+                                    <template x-for="team in group.others" :key="`team-other-${team.id_team}`">
+                                        <article class="csh-team-card">
+                                            <div class="csh-team-card-head">
+                                                <div class="text-xs text-slate-300" x-text="team.type_reaction"></div>
+                                            </div>
+                                            <div class="csh-team-slots">
+                                                <template x-for="member in sortedMembers(team)" :key="`team-other-member-${team.id_team}-${member.slot}`">
+                                                    <div class="csh-team-slot">
+                                                        <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                             :alt="member.nom"
+                                                             :style="`border-color:${teamElementColor(member.element)}`" />
+                                                        <div class="csh-team-slot-name" x-text="member.nom"></div>
+                                                        <div class="csh-team-slot-role" x-text="member.role || 'Rôle'"></div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </article>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </section>
+
         </div>
 
         {{-- ===================== MODAL AJOUT ARMES ===================== --}}
@@ -1799,6 +2699,214 @@
             </template>
         </div>
 
+        <template x-if="showArtefactManager">
+            <div class="th-const-edit-overlay" @click.self="showArtefactManager = false">
+                <div class="th-apt-single-modal" style="width:min(920px,98vw)">
+                    <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                        <div>
+                            <div class="text-base font-bold text-slate-900">Builds artefacts</div>
+                            <div class="text-[11px] text-slate-400">Chaque build doit être soit 4P, soit 2P + 2P.</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="addArtefactBuild()"
+                                    class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400">+ Ajouter</button>
+                            <button type="button" @click="showArtefactManager = false"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
+                        </div>
+                    </div>
+
+                    <template x-if="artefactsError">
+                        <div class="mt-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" x-text="artefactsError"></div>
+                    </template>
+
+                    <template x-if="!artefactBuilds.length">
+                        <div class="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+                            <div class="text-sm font-semibold text-slate-700">Aucun build artefact</div>
+                            <div class="mt-1 text-xs text-slate-400">Ajoute un build puis choisis un set 4P ou deux sets 2P.</div>
+                        </div>
+                    </template>
+
+                    <div class="mt-4 space-y-4" x-show="artefactBuilds.length">
+                        <template x-for="(build, index) in artefactBuilds" :key="`artefact-build-${build.id_build || index}`">
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div class="text-sm font-bold text-slate-900" x-text="`Build ${index + 1}`"></div>
+                                        <div class="mt-1 flex items-center gap-2">
+                                            <button type="button" @click="setArtefactPieces(index, 4)"
+                                                    class="rounded-full px-2.5 py-1 text-[11px] font-bold border"
+                                                    :class="build.pieces_1 === 4 ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white text-slate-600 border-slate-300'">4P</button>
+                                            <button type="button" @click="setArtefactPieces(index, 2)"
+                                                    class="rounded-full px-2.5 py-1 text-[11px] font-bold border"
+                                                    :class="build.pieces_1 === 2 ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white text-slate-600 border-slate-300'">2P + 2P</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="removeArtefactBuild(index)"
+                                            class="rounded px-1 text-slate-300 hover:text-red-500">×</button>
+                                </div>
+
+                                <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                        <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Set principal</div>
+                                        <button type="button" @click="openArtefactPicker(index, 1)"
+                                                class="flex w-full items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2 text-left hover:bg-slate-50">
+                                            <img :src="build.artefact1_icon || '{{ asset('images/placeholder.svg') }}'" alt="" class="h-11 w-11 rounded-lg object-cover border border-slate-200" />
+                                            <div class="min-w-0 flex-1">
+                                                <div class="truncate text-sm font-semibold text-slate-900" x-text="build.artefact1_nom || 'Choisir un set'" ></div>
+                                                <div class="text-[11px] text-slate-500" x-text="build.pieces_1 === 4 ? 'Set en 4 pièces' : 'Première moitié du 2P + 2P'"></div>
+                                            </div>
+                                        </button>
+                                        <button type="button" @click="clearArtefactSlot(index, 1)" x-show="build.artefact1_id"
+                                                class="mt-2 text-[11px] text-red-500 hover:text-red-600">Retirer</button>
+                                    </div>
+
+                                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-3" :class="build.pieces_1 === 4 ? 'opacity-50' : ''">
+                                        <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Set secondaire</div>
+                                        <button type="button" @click="build.pieces_1 === 2 && openArtefactPicker(index, 2)"
+                                                :disabled="build.pieces_1 === 4"
+                                                class="flex w-full items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2 text-left hover:bg-slate-50 disabled:cursor-not-allowed">
+                                            <img :src="build.artefact2_icon || '{{ asset('images/placeholder.svg') }}'" alt="" class="h-11 w-11 rounded-lg object-cover border border-slate-200" />
+                                            <div class="min-w-0 flex-1">
+                                                <div class="truncate text-sm font-semibold text-slate-900" x-text="build.artefact2_nom || (build.pieces_1 === 4 ? 'Non utilisé en 4P' : 'Choisir un second 2P')"></div>
+                                                <div class="text-[11px] text-slate-500">Obligatoire si le build est en 2P + 2P</div>
+                                            </div>
+                                        </button>
+                                        <button type="button" @click="clearArtefactSlot(index, 2)" x-show="build.artefact2_id && build.pieces_1 === 2"
+                                                class="mt-2 text-[11px] text-red-500 hover:text-red-600">Retirer</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="mt-4 flex justify-end gap-2 border-t border-slate-200 pt-4">
+                        <button type="button" @click="showArtefactManager = false"
+                                class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Annuler</button>
+                        <button type="button" @click="saveArtefacts()"
+                                class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <div x-show="artefactPicker.open" x-cloak @click.outside="closeArtefactPicker()"
+             class="th-armes-picker-modal"
+             :style="`left: ${ (window.innerWidth * 0.33) + 100 }px; top: 120px;`">
+
+            <div class="sticky top-0 border-b border-slate-300 bg-white p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-slate-900 text-sm">Sélectionner un artefact</h3>
+                    <button type="button" @click="closeArtefactPicker()" class="text-2xl text-slate-500 hover:text-slate-700">×</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <select x-model="artefactRarityFilter" class="flex-1 rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-black">
+                        <option value="">Rareté: toutes</option>
+                        <option value="1">1★</option>
+                        <option value="2">2★</option>
+                        <option value="3">3★</option>
+                        <option value="4">4★</option>
+                        <option value="5">5★</option>
+                    </select>
+                    <button type="button" @click="artefactRarityFilter = ''" class="rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <template x-if="!filteredAvailableArtefacts.length">
+                <div class="p-4 text-center text-xs text-slate-500">
+                    Aucun artefact disponible pour ce filtre.
+                </div>
+            </template>
+
+            <template x-if="filteredAvailableArtefacts.length">
+                <div class="th-armes-picker-grid">
+                    <template x-for="artefact in filteredAvailableArtefacts" :key="'picker-art-' + artefact.id">
+                        <button type="button" @click="selectArtefactForBuild(artefact)"
+                                class="th-armes-picker-item">
+                            <div class="th-armes-picker-icon">
+                                <div class="th-weapon-icon-wrap" :class="rarityClass(artefact.stars)">
+                                    <img :src="artefact.icon" :alt="artefact.nom">
+                                </div>
+                            </div>
+                            <div class="name" x-text="artefact.nom"></div>
+                            <div class="rarity" x-text="artefact.rarete || '?'"></div>
+                        </button>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <template x-if="driveBrowser.open">
+            <div class="th-const-edit-overlay" @click.self="closeDriveBrowser()">
+                <div class="th-apt-single-modal" style="width:min(1400px,99vw);max-height:95vh;">
+                    <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                        <div>
+                            <div class="text-base font-bold text-slate-900">Google Drive — Lecteur d'images</div>
+                            <div class="text-[11px] text-slate-400">Parcours les dossiers et clique sur une image pour l'appliquer en background.</div>
+                        </div>
+                        <button type="button" @click="closeDriveBrowser()"
+                                class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <template x-for="(crumb, idx) in driveBrowser.breadcrumbs" :key="`crumb-${crumb.id}-${idx}`">
+                            <button type="button"
+                                    @click="goToDriveBreadcrumb(idx)"
+                                    class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
+                                    x-text="crumb.name || 'Dossier'"></button>
+                        </template>
+                    </div>
+
+                    <template x-if="driveBrowser.error">
+                        <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" x-text="driveBrowser.error"></div>
+                    </template>
+
+                    <template x-if="driveBrowser.loading">
+                        <div class="mt-4 rounded border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600">Chargement du dossier...</div>
+                    </template>
+
+                    <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3" x-show="!driveBrowser.loading">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 xl:col-span-1">
+                            <div class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">Dossiers</div>
+                            <template x-if="!driveBrowser.folders.length">
+                                <div class="rounded border border-dashed border-slate-300 px-3 py-5 text-center text-xs text-slate-500">Aucun sous-dossier.</div>
+                            </template>
+                            <div class="space-y-2 max-h-[420px] overflow-y-auto">
+                                <template x-for="folder in driveBrowser.folders" :key="folder.id">
+                                    <button type="button"
+                                            @click="openDriveSubFolder(folder)"
+                                            class="flex w-full items-center gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 hover:border-blue-300 hover:bg-blue-50">
+                                        <span class="text-base">📁</span>
+                                        <span class="truncate" x-text="folder.name"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 xl:col-span-2">
+                            <div class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">Images</div>
+                            <template x-if="!driveBrowser.images.length">
+                                <div class="rounded border border-dashed border-slate-300 px-3 py-5 text-center text-xs text-slate-500">Aucune image dans ce dossier.</div>
+                            </template>
+                            <div class="grid grid-cols-2 gap-2 max-h-[70vh] overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                                <template x-for="image in driveBrowser.images" :key="image.id">
+                                    <button type="button"
+                                            @click="selectDriveBackground(image)"
+                                            class="rounded border border-slate-200 bg-white p-2 text-left hover:border-blue-300 hover:bg-blue-50">
+                                        <img :src="image.thumbnail_url || image.direct_url"
+                                             :alt="image.name"
+                                             class="h-24 w-full rounded object-cover border border-slate-200" />
+                                        <div class="mt-1 truncate text-[11px] font-semibold text-slate-700" x-text="image.name"></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
     </div>
 
     <script>
@@ -1817,11 +2925,15 @@
 
             const parsedMain    = safeJsonParse(data.mainZone, {});
             const availableArmes = safeJsonParse(data.availableArmes, []);
+            const availableArtefacts = safeJsonParse(data.availableArtefacts, []);
             const existingArmes  = safeJsonParse(data.existingArmes, []);
             const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
             const existingConstellations = safeJsonParse(data.constellations, []);
             const existingAptitudes = safeJsonParse(data.aptitudes, []);
             const existingTypesApti = safeJsonParse(data.typesApti, []);
+            const existingTeams = safeJsonParse(data.teams, []);
+            const existingTeamPool = safeJsonParse(data.teamPool, []);
+            const existingReactions = safeJsonParse(data.reactions, []);
             const existingConstellationMapPositions = safeJsonParse(data.constMapPositions, {});
             const existingConstellationMapLines = safeJsonParse(data.constMapLines, []);
             const elementIcons   = safeJsonParse(data.elementIcons, {});
@@ -1834,6 +2946,7 @@
             const defaultPortrait = data.defaultPortrait || '{{ asset("images/placeholder.svg") }}';
             const defaultIcone    = data.defaultIcone    || '{{ asset("images/placeholder.svg") }}';
             const defaultWeapon   = data.defaultWeapon   || '{{ asset("images/placeholder.svg") }}';
+            const defaultArtefact = '{{ asset("images/placeholder.svg") }}';
 
             return {
                 mainZone: {
@@ -1844,7 +2957,30 @@
                     fid_TP:     parsedMain.fid_TP     || data.fidTp || '',
                     fid_nation: parsedMain.fid_nation || data.fidNation || '',
                     arme_icon:  parsedMain.arme_icon  || data.armeIcon || '',
+                    background_actif: parsedMain.background_actif || '',
                     videos:     parsedMain.videos     || [],
+                },
+                driveBackgroundUrlInput: parsedMain.background_actif || '',
+                googleDrive: {
+                    apiKey: data.googleDriveApiKey || '',
+                    clientId: data.googleDriveClientId || '',
+                    appId: data.googleDriveAppId || '',
+                    folderId: data.googleDriveFolderId || '',
+                    folderUrl: data.googleDriveFolderUrl || '',
+                    browseUrl: data.googleDriveBrowseUrl || '',
+                    tokenClient: null,
+                    accessToken: '',
+                    gapiLoaded: false,
+                    gisLoaded: false,
+                },
+                driveBrowser: {
+                    open: false,
+                    loading: false,
+                    error: '',
+                    currentFolderId: '',
+                    folders: [],
+                    images: [],
+                    breadcrumbs: [],
                 },
                 portraitPreview: data.portraitPreview || defaultPortrait,
                 fullPreview:     data.fullPreview     || defaultPortrait,
@@ -1871,10 +3007,45 @@
                 mapEditorMode: 'point',
                 showConstellationMapModal: false,
                 showConstellationsModal: false,
-                showAptitudesModal: false,
+                constellationWizardStep: 0,
+                aptitudeFormOpen: false,
+                aptitudeFormIdx: null,
+                aptitudeFormData: { titre_apti: '', descri_apti: '', fid_TypeApti: '', image_url: '', _pendingFile: null, _dragging: false },
+                aptitudeFormError: '',
+                aptitudeFormSaving: false,
+                showAptitudePicker: false,
+                aptitudePickerSlotIndex: null,
+                slashMenuOpen: false,
+                slashMenuQuery: '',
+                slashMenuSelectedIndex: 0,
+                slashMenuSlotIndex: null,
                 aptitudes: existingAptitudes,
                 typesApti: existingTypesApti,
-                aptitudesError: '',
+                teams: existingTeams,
+                teamPool: existingTeamPool,
+                teamReactions: existingReactions,
+                teamManagerOpen: false,
+                reactionSlotPickerOpen: false,
+                teamReactionSlotDrafts: [],
+                teamFormOpen: false,
+                teamEditingId: null,
+                teamForm: {
+                    type_reaction: '',
+                    tag: '',
+                    membres: [
+                        { slot: 1, id_perso: null, role_override: null },
+                        { slot: 2, id_perso: null, role_override: null },
+                        { slot: 3, id_perso: null, role_override: null },
+                        { slot: 4, id_perso: null, role_override: null },
+                    ],
+                    remplacants: [],
+                },
+                teamError: '',
+                teamSaving: false,
+                teamSlotPickerOpen: null,
+                teamSlotPickerSearch: '',
+                teamDrawerState: {},
+                teamRecommendedOpen: {},
                 lineDraftStart: null,
                 constellationMapNaturalWidth: 0,
                 constellationMapNaturalHeight: 0,
@@ -1882,9 +3053,14 @@
                 constellationMapImageUrlInput: '',
                 sidebarCollapsed: false,
                 availableArmes:  availableArmes,
+                availableArtefacts: availableArtefacts,
                 showArmesPicker: false,
+                showArtefactManager: false,
+                artefactPicker: { open: false, buildIndex: null, slot: 1 },
+                artefactRarityFilter: '',
                 weaponRarityFilter: '',
                 armesError: '',
+                artefactsError: '',
                 constellationsError: '',
                 elementIcons,
                 nationIcons,
@@ -1905,6 +3081,56 @@
 
                 get draggedArme() {
                     return this.dragArmeIndex === null ? null : (this.armes[this.dragArmeIndex] || null);
+                },
+                get teamReactionSlots() {
+                    const existing = (this.teams || []).map(team => String(team.type_reaction || '').trim()).filter(Boolean);
+                    const merged = [...existing, ...(this.teamReactionSlotDrafts || [])]
+                        .map(name => String(name || '').trim())
+                        .filter(Boolean)
+                        .filter((value, index, arr) => arr.findIndex(item => item.toLowerCase() === value.toLowerCase()) === index);
+
+                    return merged
+                        .map(name => this.reactionMeta(name) || { id_reaction: name, nom_reaction: name, icon: null })
+                        .sort((a, b) => a.nom_reaction.localeCompare(b.nom_reaction, 'fr', { sensitivity: 'base' }));
+                },
+                get availableReactionSlots() {
+                    const used = new Set(this.teamReactionSlots.map(slot => String(slot.nom_reaction).toLowerCase()));
+                    return (this.teamReactions || []).filter(reaction => !used.has(String(reaction.nom_reaction).toLowerCase()));
+                },
+                get filteredPickerPool() {
+                    const state = this.teamSlotPickerOpen;
+                    if (!state) return [];
+                    const search = String(this.teamSlotPickerSearch || '').toLowerCase().trim();
+                    const slot = Number(state.slot);
+                    const isAlt = !!state.isAlt;
+                    return (this.teamPool || []).filter(p => {
+                        if (search && !p.nom.toLowerCase().includes(search)) return false;
+                        if (isAlt) {
+                            const mainId = this.teamForm.membres[slot - 1]?.id_perso;
+                            if (mainId && Number(p.id_perso) === Number(mainId)) return false;
+                            if ((this.teamForm.remplacants || []).some(r => Number(r.slot) === slot && Number(r.id_perso) === Number(p.id_perso))) return false;
+                        } else {
+                            if (this.isTeamMemberTakenByOtherSlot(slot, p.id_perso)) return false;
+                        }
+                        return true;
+                    });
+                },
+                get teamGroups() {
+                    const grouped = {};
+                    (this.teams || []).forEach(team => {
+                        const reaction = String(team.type_reaction || 'Sans réaction').trim() || 'Sans réaction';
+                        if (!grouped[reaction]) grouped[reaction] = [];
+                        grouped[reaction].push(team);
+                    });
+
+                    return Object.entries(grouped)
+                        .map(([reaction, teams]) => {
+                            const recommended = teams.find(t => t.tag === 'recommended') || null;
+                            const f2p = teams.find(t => t.tag === 'f2p') || null;
+                            const others = teams.filter(t => t.id_team !== recommended?.id_team && t.id_team !== f2p?.id_team);
+                            return { key: reaction.toLowerCase(), reaction, teams, recommended, f2p, others };
+                        })
+                        .sort((a, b) => a.reaction.localeCompare(b.reaction, 'fr', { sensitivity: 'base' }));
                 },
                 get activeConstellation() {
                     if (!this.constellations.length) return null;
@@ -1984,11 +3210,36 @@
                         return true;
                     });
                 },
+                get heroBackgroundStyle() {
+                    if (!this.mainZone.background_actif) return '';
+
+                    const bg = String(this.mainZone.background_actif)
+                        .replace(/"/g, '%22')
+                        .replace(/\)/g, '%29')
+                        .trim();
+
+                    if (!bg) return '';
+
+                    return `background-image: linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.015)), linear-gradient(180deg, rgba(10,15,35,0.82), rgba(10,15,35,0.62)), url("${bg}"); background-size: auto, auto, cover; background-position: center;`;
+                },
+                get filteredAvailableArtefacts() {
+                    if (!this.artefactPicker.open || this.artefactPicker.buildIndex === null) return [];
+
+                    const build = this.artefactBuilds[this.artefactPicker.buildIndex];
+                    if (!build) return [];
+
+                    return this.availableArtefacts.filter(artefact => {
+                        if (this.artefactRarityFilter && String(artefact.stars || '') !== this.artefactRarityFilter) return false;
+                        if (this.artefactPicker.slot === 1 && build.pieces_1 === 2 && build.artefact2_id && Number(build.artefact2_id) === Number(artefact.id)) return false;
+                        if (this.artefactPicker.slot === 2 && build.artefact1_id && Number(build.artefact1_id) === Number(artefact.id)) return false;
+                        return true;
+                    });
+                },
                 get activeEmbedUrl() {
                     const vid = this.mainZone.videos[this.selectedVideoIndex]?.url_video || '';
                     if (!vid) return '';
                     const m = vid.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([A-Za-z0-9_-]{11})/);
-                    if (m) return 'https://www.youtube.com/embed/' + m[1];
+                    if (m) return 'https://www.youtube-nocookie.com/embed/' + m[1];
                     return vid.startsWith('http') ? vid : '';
                 },
                 nextVideo() {
@@ -1999,7 +3250,120 @@
                     if (!this.mainZone.videos.length) return;
                     this.selectedVideoIndex = (this.selectedVideoIndex - 1 + this.mainZone.videos.length) % this.mainZone.videos.length;
                 },
-                init() {},
+                init() {
+                },
+                extractGoogleDriveFileId(rawUrl) {
+                    if (!rawUrl) return null;
+                    const source = String(rawUrl).trim();
+
+                    const filePathMatch = source.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                    if (filePathMatch?.[1]) return filePathMatch[1];
+
+                    try {
+                        const parsed = new URL(source);
+                        const fileIdFromParam = parsed.searchParams.get('id');
+                        if (fileIdFromParam) return fileIdFromParam;
+
+                        if (parsed.pathname.includes('/d/')) {
+                            const parts = parsed.pathname.split('/d/')[1]?.split('/') || [];
+                            if (parts[0]) return parts[0];
+                        }
+                    } catch (e) {
+                        // Laisse tomber: ce n'est peut-être pas une URL complète.
+                    }
+
+                    if (/^[a-zA-Z0-9_-]{20,}$/.test(source)) return source;
+
+                    return null;
+                },
+                normalizeBackgroundUrl(rawUrl) {
+                    const raw = String(rawUrl || '').trim();
+                    if (!raw) return '';
+
+                    const driveId = this.extractGoogleDriveFileId(raw);
+                    if (driveId) {
+                        return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
+                    }
+
+                    return raw;
+                },
+                applyBackgroundUrlInput() {
+                    const normalized = this.normalizeBackgroundUrl(this.driveBackgroundUrlInput);
+                    this.mainZone.background_actif = normalized;
+                    this.driveBackgroundUrlInput = normalized;
+                },
+                openDriveFolder() {
+                    if (!this.googleDrive.folderUrl) return;
+                    window.open(this.googleDrive.folderUrl, '_blank', 'noopener');
+                },
+                async openGoogleDriveBrowser() {
+                    const rootFolderId = this.extractGoogleDriveFileId(this.googleDrive.folderId || this.googleDrive.folderUrl);
+
+                    if (!this.googleDrive.browseUrl || !rootFolderId) {
+                        this.showToast('Configuration Drive incomplète: GOOGLE_DRIVE_FOLDER_ID (ou ROOT_FOLDER_ID) requis.', 'error');
+                        return;
+                    }
+
+                    this.driveBrowser.open = true;
+                    this.driveBrowser.error = '';
+                    await this.loadDriveFolder(rootFolderId, [{ id: rootFolderId, name: 'Racine Drive' }]);
+                },
+                closeDriveBrowser() {
+                    this.driveBrowser.open = false;
+                    this.driveBrowser.error = '';
+                },
+                async loadDriveFolder(folderId, breadcrumbs = null) {
+                    if (!this.googleDrive.browseUrl || !folderId) return;
+
+                    this.driveBrowser.loading = true;
+                    this.driveBrowser.error = '';
+
+                    try {
+                        const url = `${this.googleDrive.browseUrl}?folder_id=${encodeURIComponent(folderId)}`;
+                        const resp = await fetch(url, {
+                            headers: { 'Accept': 'application/json' },
+                        });
+
+                        const payload = await resp.json();
+                        if (!resp.ok || !payload?.ok) {
+                            this.driveBrowser.error = payload?.message || 'Impossible de lire ce dossier Drive.';
+                            return;
+                        }
+
+                        this.driveBrowser.currentFolderId = payload.folder_id;
+                        this.driveBrowser.folders = Array.isArray(payload.folders) ? payload.folders : [];
+                        this.driveBrowser.images = Array.isArray(payload.images) ? payload.images : [];
+                        if (Array.isArray(breadcrumbs)) {
+                            this.driveBrowser.breadcrumbs = breadcrumbs;
+                        }
+                    } catch (error) {
+                        this.driveBrowser.error = 'Erreur réseau en lisant Google Drive.';
+                    } finally {
+                        this.driveBrowser.loading = false;
+                    }
+                },
+                async openDriveSubFolder(folder) {
+                    if (!folder?.id) return;
+                    const crumbs = Array.isArray(this.driveBrowser.breadcrumbs)
+                        ? [...this.driveBrowser.breadcrumbs, { id: folder.id, name: folder.name || 'Dossier' }]
+                        : [{ id: folder.id, name: folder.name || 'Dossier' }];
+                    await this.loadDriveFolder(folder.id, crumbs);
+                },
+                async goToDriveBreadcrumb(index) {
+                    const crumbs = this.driveBrowser.breadcrumbs || [];
+                    if (index < 0 || index >= crumbs.length) return;
+                    const target = crumbs[index];
+                    await this.loadDriveFolder(target.id, crumbs.slice(0, index + 1));
+                },
+                selectDriveBackground(image) {
+                    const source = image?.background_url || image?.direct_url || image?.thumbnail_url;
+                    if (!source) return;
+                    const url = this.normalizeBackgroundUrl(source);
+                    this.mainZone.background_actif = url;
+                    this.driveBackgroundUrlInput = url;
+                    this.closeDriveBrowser();
+                    this.showToast('Background sélectionné depuis Google Drive.', 'success');
+                },
                 showToast(text, type = 'success') {
                     if (this.toastTimer) {
                         clearTimeout(this.toastTimer);
@@ -2053,6 +3417,145 @@
                 },
                 removeArme(index) {
                     this.armes.splice(index, 1);
+                },
+                artefactBuildLabel(build) {
+                    return Number(build?.pieces_1) === 2 ? '2P + 2P' : '4P';
+                },
+                addArtefactBuild() {
+                    this.artefactBuilds.push({
+                        id_build: null,
+                        artefact1_id: null,
+                        artefact1_nom: '',
+                        artefact1_icon: defaultArtefact,
+                        pieces_1: 4,
+                        artefact2_id: null,
+                        artefact2_nom: '',
+                        artefact2_icon: defaultArtefact,
+                        pieces_2: 0,
+                        position: this.artefactBuilds.length + 1,
+                    });
+                    this.artefactsError = '';
+                },
+                removeArtefactBuild(index) {
+                    this.artefactBuilds.splice(index, 1);
+                    this.normalizeArtefactBuilds();
+                    if (this.artefactPicker.buildIndex === index) {
+                        this.closeArtefactPicker();
+                    }
+                },
+                normalizeArtefactBuilds() {
+                    this.artefactBuilds = this.artefactBuilds.map((build, index) => ({ ...build, position: index + 1 }));
+                },
+                setArtefactPieces(index, pieces) {
+                    const build = this.artefactBuilds[index];
+                    if (!build) return;
+                    build.pieces_1 = Number(pieces) === 2 ? 2 : 4;
+                    if (build.pieces_1 === 4) {
+                        build.artefact2_id = null;
+                        build.artefact2_nom = '';
+                        build.artefact2_icon = defaultArtefact;
+                        build.pieces_2 = 0;
+                    } else {
+                        build.pieces_2 = 2;
+                    }
+                    this.artefactsError = '';
+                },
+                openArtefactPicker(buildIndex, slot) {
+                    this.artefactPicker = { open: true, buildIndex: Number(buildIndex), slot: Number(slot) };
+                    this.artefactRarityFilter = '';
+                },
+                closeArtefactPicker() {
+                    this.artefactPicker = { open: false, buildIndex: null, slot: 1 };
+                },
+                selectArtefactForBuild(artefact) {
+                    const build = this.artefactBuilds[this.artefactPicker.buildIndex];
+                    if (!build) return;
+                    if (this.artefactPicker.slot === 1) {
+                        build.artefact1_id = artefact.id;
+                        build.artefact1_nom = artefact.nom;
+                        build.artefact1_icon = artefact.icon;
+                    } else {
+                        build.artefact2_id = artefact.id;
+                        build.artefact2_nom = artefact.nom;
+                        build.artefact2_icon = artefact.icon;
+                        build.pieces_2 = 2;
+                    }
+                    this.artefactsError = '';
+                    this.closeArtefactPicker();
+                },
+                clearArtefactSlot(index, slot) {
+                    const build = this.artefactBuilds[index];
+                    if (!build) return;
+                    if (Number(slot) === 1) {
+                        build.artefact1_id = null;
+                        build.artefact1_nom = '';
+                        build.artefact1_icon = defaultArtefact;
+                    } else {
+                        build.artefact2_id = null;
+                        build.artefact2_nom = '';
+                        build.artefact2_icon = defaultArtefact;
+                        build.pieces_2 = 0;
+                    }
+                },
+                async saveArtefacts() {
+                    if (!this.artefactBuilds.length) {
+                        this.artefactsError = 'Ajoute au moins un build artefact.';
+                        return;
+                    }
+
+                    const payload = [];
+                    for (let index = 0; index < this.artefactBuilds.length; index += 1) {
+                        const build = this.artefactBuilds[index];
+                        const pieces1 = Number(build.pieces_1) === 2 ? 2 : 4;
+                        if (!build.artefact1_id) {
+                            this.artefactsError = `Le build ${index + 1} doit avoir un set principal.`;
+                            return;
+                        }
+                        if (pieces1 === 2) {
+                            if (!build.artefact2_id) {
+                                this.artefactsError = `Le build ${index + 1} en 2P + 2P doit avoir un second set.`;
+                                return;
+                            }
+                            if (Number(build.artefact1_id) === Number(build.artefact2_id)) {
+                                this.artefactsError = `Le build ${index + 1} doit utiliser deux sets 2P différents.`;
+                                return;
+                            }
+                        }
+
+                        payload.push({
+                            artefact1_id: Number(build.artefact1_id),
+                            pieces_1: pieces1,
+                            artefact2_id: pieces1 === 2 ? Number(build.artefact2_id) : null,
+                            pieces_2: pieces1 === 2 ? 2 : null,
+                        });
+                    }
+
+                    const resp = await fetch(data.saveArtefactsUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': data.csrf },
+                        body: JSON.stringify({ builds: payload }),
+                    });
+
+                    if (!resp.ok) {
+                        let msg = 'Erreur sauvegarde artefacts';
+                        try {
+                            const j = await resp.json();
+                            const firstKey = Object.keys(j?.errors || {})[0];
+                            if (firstKey && j.errors[firstKey]?.[0]) {
+                                msg = j.errors[firstKey][0];
+                            }
+                        } catch (e) {
+                            // Keep fallback message.
+                        }
+                        this.artefactsError = msg;
+                        this.showToast(msg, 'error');
+                        return;
+                    }
+
+                    this.normalizeArtefactBuilds();
+                    this.artefactsError = '';
+                    this.showArtefactManager = false;
+                    this.showToast('Artefacts sauvegardés', 'success');
                 },
                 roundPercent(value) {
                     const num = Number(value);
@@ -2389,6 +3892,8 @@
                 },
                 async saveMainZone() {
                     try {
+                        this.applyBackgroundUrlInput();
+
                         const videosPayload = this.mainZone.videos
                             .filter(v => (v?.url_video || '').trim() !== '')
                             .map(v => ({ url_video: String(v.url_video).trim() }));
@@ -2403,6 +3908,7 @@
                                 fid_TArmes:  this.mainZone.fid_TArmes,
                                 fid_TP:      this.mainZone.fid_TP,
                                 fid_nations: this.mainZone.fid_nation ? [this.mainZone.fid_nation] : [],
+                                background_actif: this.mainZone.background_actif || null,
                                 videos:      videosPayload,
                             }),
                         });
@@ -2438,15 +3944,122 @@
                         this.selectedVideoIndex = Math.max(0, this.mainZone.videos.length - 1);
                     }
                 },
-                async saveConstellations() {
-                    if (!this.constellations.length) return;
+                    handleConstellationDescInput(event, index) {
+                        const val = event.target.value;
+                        const cursor = event.target.selectionStart;
+                        const textBeforeCursor = val.slice(0, cursor);
 
+                        // Slash menu : détection de /mot en cours de frappe
+                        if (!this.showAptitudePicker) {
+                            const slashMatch = textBeforeCursor.match(/\/(\w*)$/);
+                            if (slashMatch) {
+                                this.slashMenuQuery = slashMatch[1];
+                                this.slashMenuOpen = true;
+                                this.slashMenuSelectedIndex = 0;
+                                this.slashMenuSlotIndex = index;
+                            } else {
+                                this.slashMenuOpen = false;
+                                this.slashMenuQuery = '';
+                                this.slashMenuSlotIndex = null;
+                            }
+                        }
+
+                        // Ouvrir le picker quand /aptitudes vient d'être tapé (fallback)
+                        if (textBeforeCursor.endsWith('/aptitudes') && this.aptitudes.length > 0) {
+                            this.aptitudePickerSlotIndex = index;
+                            this.showAptitudePicker = true;
+                            this.slashMenuOpen = false;
+                            this.slashMenuQuery = '';
+                            this.slashMenuSlotIndex = null;
+                            return;
+                        }
+
+                        // Fermer le picker si /aptitudes n'est plus présent dans le texte
+                        if (this.showAptitudePicker && this.aptitudePickerSlotIndex === index) {
+                            if (!val.includes('/aptitudes')) {
+                                this.showAptitudePicker = false;
+                                this.aptitudePickerSlotIndex = null;
+                            }
+                        }
+                    },
+                    handleConstellationDescKeydown(event, index) {
+                        if (this.slashMenuOpen && this.slashMenuSlotIndex === index) {
+                            const cmds = this.getSlashCommands();
+                            if (event.key === 'ArrowDown') {
+                                event.preventDefault();
+                                this.slashMenuSelectedIndex = (this.slashMenuSelectedIndex + 1) % Math.max(1, cmds.length);
+                            } else if (event.key === 'ArrowUp') {
+                                event.preventDefault();
+                                this.slashMenuSelectedIndex = (this.slashMenuSelectedIndex - 1 + Math.max(1, cmds.length)) % Math.max(1, cmds.length);
+                            } else if (event.key === 'Enter' || event.key === 'Tab') {
+                                if (cmds.length > 0) {
+                                    event.preventDefault();
+                                    this.confirmSlashCommand(cmds[this.slashMenuSelectedIndex], index);
+                                }
+                            } else if (event.key === 'Escape') {
+                                event.preventDefault();
+                                this.slashMenuOpen = false;
+                                this.slashMenuQuery = '';
+                                this.slashMenuSlotIndex = null;
+                            }
+                        } else if (event.key === 'Escape') {
+                            this.showAptitudePicker = false;
+                            this.aptitudePickerSlotIndex = null;
+                        }
+                    },
+                    getSlashCommands() {
+                        const all = [
+                            { value: '/aptitudes', label: 'aptitudes', description: 'Insérer une icône de compétence' },
+                        ];
+                        if (!this.slashMenuQuery) return all;
+                        const q = this.slashMenuQuery.toLowerCase();
+                        return all.filter(c => c.label.toLowerCase().startsWith(q));
+                    },
+                    confirmSlashCommand(cmd, slotIndex) {
+                        const slot = this.constellationSlots[slotIndex];
+                        const val = slot.descri_const || '';
+                        const slashPos = val.lastIndexOf('/');
+                        if (slashPos !== -1) {
+                            slot.descri_const = val.slice(0, slashPos) + cmd.value;
+                        }
+                        this.slashMenuOpen = false;
+                        this.slashMenuQuery = '';
+                        this.slashMenuSelectedIndex = 0;
+                        this.slashMenuSlotIndex = null;
+                        if (cmd.value === '/aptitudes' && this.aptitudes.length > 0) {
+                            this.aptitudePickerSlotIndex = slotIndex;
+                            this.showAptitudePicker = true;
+                        }
+                    },
+                    insertAptitudeTag(aptitudeIndex, slotIndex) {
+                        const slot = this.constellationSlots[slotIndex];
+                        const tag = `[aptitude:${aptitudeIndex + 1}]`;
+                        slot.descri_const = (slot.descri_const || '').replace('/aptitudes', tag);
+                        this.showAptitudePicker = false;
+                        this.aptitudePickerSlotIndex = null;
+                    },
+                    renderDescriConst(text) {
+                        if (!text) return '';
+                        return String(text)
+                            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                            .replace(/\[aptitude:(\d+)\]/g, (match, n) => {
+                                const apt = this.aptitudes[parseInt(n) - 1];
+                                if (!apt) return match;
+                                const title = (apt.titre_apti || '').replace(/"/g, '&quot;');
+                                return `<span class="inline-flex items-center gap-1 rounded bg-indigo-900/60 border border-indigo-500/50 px-1.5 py-0.5 text-xs font-semibold text-indigo-300">${title}</span>`;
+                            });
+                    },
+                async saveConstellations() {
                     try {
-                        // Envoie seulement les slots qui ont un id_const existant
+                        // Envoie les constellations existantes + les nouveaux slots remplis
                         const payload = this.constellationSlots
-                            .filter(s => s.id_const)
+                            .filter(s => {
+                                if (s.id_const) return true;
+                                return String(s.titre_const || '').trim() !== '' || String(s.descri_const || '').trim() !== '';
+                            })
                             .map(s => ({
-                                id_const: Number(s.id_const),
+                                id_const: s.id_const ? Number(s.id_const) : null,
+                                index: Number(s.index),
                                 titre_const: String(s.titre_const || '').trim(),
                                 descri_const: s.descri_const || '',
                             }));
@@ -2477,6 +4090,22 @@
                             this.constellationsError = msg;
                             this.showToast(msg, 'error');
                             return;
+                        }
+
+                        const json = await resp.json();
+                        if (Array.isArray(json?.constellations)) {
+                            this.constellations = json.constellations;
+                            this.constellationSlots = (() => {
+                                const slots = [];
+                                for (let i = 1; i <= 6; i++) {
+                                    const found = this.constellations.find(c => c.index === i) || this.constellations[i - 1];
+                                    slots.push(found ? { ...found, index: i, label: 'C' + i } : {
+                                        id_const: null, index: i, label: 'C' + i,
+                                        titre_const: '', descri_const: '', image_url: ''
+                                    });
+                                }
+                                return slots;
+                            })();
                         }
 
                         this.constellationsError = '';
@@ -2532,22 +4161,385 @@
                         this.showToast('Erreur upload image compétence', 'error');
                     }
                 },
-                addAptitude() {
-                    this.aptitudes.push({
-                        id_aptitude: null,
-                        titre_apti: '',
-                        descri_apti: '',
-                        fid_TypeApti: this.typesApti[0]?.id || 1,
-                    });
+                openAptitudeForm(index) {
+                    this.aptitudeFormIdx = index;
+                    if (index === null) {
+                        this.aptitudeFormData = {
+                            titre_apti: '', descri_apti: '',
+                            fid_TypeApti: this.typesApti[0]?.id || '',
+                            image_url: '', _pendingFile: null, _dragging: false,
+                        };
+                    } else {
+                        const a = this.aptitudes[index];
+                        this.aptitudeFormData = { ...a, _pendingFile: null, _dragging: false };
+                    }
+                    this.aptitudeFormError = '';
+                    this.aptitudeFormOpen = true;
+                },
+                async saveAptitudeForm() {
+                    const d = this.aptitudeFormData;
+                    if (!String(d.titre_apti || '').trim()) {
+                        this.aptitudeFormError = 'Le nom est obligatoire.';
+                        return;
+                    }
+                    if (!d.fid_TypeApti) {
+                        this.aptitudeFormError = 'Veuillez sélectionner un type.';
+                        return;
+                    }
+                    this.aptitudeFormSaving = true;
+                    if (this.aptitudeFormIdx === null) {
+                        this.aptitudes.push({ ...d });
+                    } else {
+                        Object.assign(this.aptitudes[this.aptitudeFormIdx], d);
+                    }
+                    this.aptitudeFormOpen = false;
+                    await this.saveCompetences();
+                    this.aptitudeFormSaving = false;
+                },
+                handleAptitudeFormImageFile(event) {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    this.aptitudeFormData._pendingFile = file;
+                    this.aptitudeFormData.image_url = URL.createObjectURL(file);
+                    event.target.value = '';
+                },
+                handleAptitudeFormImageDrop(event) {
+                    const file = event.dataTransfer?.files?.[0];
+                    if (!file) return;
+                    this.aptitudeFormData._pendingFile = file;
+                    this.aptitudeFormData.image_url = URL.createObjectURL(file);
                 },
                 removeAptitude(index) {
                     this.aptitudes.splice(index, 1);
                 },
-                async saveCompetences() {
-                    if (!this.aptitudes.length) {
-                        this.showAptitudesModal = false;
+
+                openTeamManager() {
+                    this.teamManagerOpen = true;
+                },
+
+                openReactionSlotPicker() {
+                    this.reactionSlotPickerOpen = true;
+                },
+
+                closeReactionSlotPicker() {
+                    this.reactionSlotPickerOpen = false;
+                },
+
+                addReactionSlot(reactionName) {
+                    const value = String(reactionName || '').trim();
+                    if (!value) return;
+                    const exists = this.teamReactionSlots.some(slot => String(slot.nom_reaction).toLowerCase() === value.toLowerCase());
+                    if (!exists) {
+                        this.teamReactionSlotDrafts = [...this.teamReactionSlotDrafts, value];
+                    }
+                    // Ne pas fermer le picker — l'utilisateur peut ajouter plusieurs slots en une passe.
+                    // Le picker se met à jour automatiquement (reaction disparaît de availableReactionSlots).
+                },
+
+                removeReactionSlot(reactionName) {
+                    const value = String(reactionName || '').trim();
+                    if (!value) return;
+                    if (this.teamsForReaction(value).length) {
+                        this.showToast('Supprime d\'abord les teams de cette reaction', 'error');
                         return;
                     }
+                    this.teamReactionSlotDrafts = (this.teamReactionSlotDrafts || []).filter(item => String(item).toLowerCase() !== value.toLowerCase());
+                },
+
+                teamsForReaction(reactionName) {
+                    return (this.teams || []).filter(team => String(team.type_reaction || '').toLowerCase() === String(reactionName || '').toLowerCase());
+                },
+
+                reactionMeta(reactionName) {
+                    return (this.teamReactions || []).find(reaction => String(reaction.nom_reaction || '').toLowerCase() === String(reactionName || '').toLowerCase()) || null;
+                },
+
+                openSlotPicker(slot, isAlt = false) {
+                    this.teamSlotPickerSearch = '';
+                    this.teamSlotPickerOpen = { slot: Number(slot), isAlt: !!isAlt };
+                },
+
+                closeSlotPicker() {
+                    this.teamSlotPickerOpen = null;
+                    this.teamSlotPickerSearch = '';
+                },
+
+                selectFromPicker(person) {
+                    const state = this.teamSlotPickerOpen;
+                    if (!state) return;
+                    const slot = Number(state.slot);
+                    if (state.isAlt) {
+                        if (!(this.teamForm.remplacants || []).find(r => Number(r.slot) === slot && Number(r.id_perso) === Number(person.id_perso))) {
+                            this.teamForm.remplacants = [...(this.teamForm.remplacants || []), {
+                                slot,
+                                id_perso: Number(person.id_perso),
+                                nom: person.nom,
+                                icon: person.icon || null,
+                                role_override: null,
+                            }];
+                        }
+                    } else {
+                        this.setTeamMember(slot, person.id_perso);
+                    }
+                    this.closeSlotPicker();
+                },
+
+                openTeamForm(team = null, reactionName = null) {
+                    this.teamError = '';
+                    if (!team) {
+                        const reaction = String(reactionName || '').trim();
+                        if (!reaction) {
+                            this.showToast('Cree d\'abord un slot de reaction', 'error');
+                            return;
+                        }
+                        this.teamEditingId = null;
+                        this.teamForm = {
+                            type_reaction: reaction,
+                            tag: '',
+                            membres: [
+                                { slot: 1, id_perso: null, role_override: null },
+                                { slot: 2, id_perso: null, role_override: null },
+                                { slot: 3, id_perso: null, role_override: null },
+                                { slot: 4, id_perso: null, role_override: null },
+                            ],
+                            remplacants: [],
+                        };
+                    } else {
+                        this.teamEditingId = team.id_team;
+                        const members = [1, 2, 3, 4].map(slot => {
+                            const found = (team.membres || []).find(m => Number(m.slot) === slot);
+                            return {
+                                slot,
+                                id_perso: found?.id_perso || null,
+                                role_override: found?.role_override || null,
+                            };
+                        });
+                        this.teamForm = {
+                            type_reaction: team.type_reaction || '',
+                            tag: team.tag || '',
+                            membres: members,
+                            remplacants: (team.remplacants || []).map(r => ({
+                                slot: Number(r.slot),
+                                id_perso: Number(r.id_perso),
+                                nom: r.nom,
+                                icon: r.icon || null,
+                                role_override: r.role_override || null,
+                            })),
+                        };
+                    }
+                    this.teamFormOpen = true;
+                },
+
+                setTeamMember(slot, idPerso) {
+                    const idx = Number(slot) - 1;
+                    if (idx < 0 || idx > 3) return;
+                    const member = this.teamPool.find(p => Number(p.id_perso) === Number(idPerso));
+                    this.teamForm.membres[idx] = {
+                        slot: Number(slot),
+                        id_perso: member ? Number(member.id_perso) : null,
+                        role_override: this.teamForm.membres[idx]?.role_override || null,
+                    };
+                },
+
+                clearTeamMember(slot) {
+                    const idx = Number(slot) - 1;
+                    if (idx < 0 || idx > 3) return;
+                    this.teamForm.membres[idx] = {
+                        slot: Number(slot),
+                        id_perso: null,
+                        role_override: this.teamForm.membres[idx]?.role_override || null,
+                    };
+                },
+
+                isTeamMemberTakenByOtherSlot(slot, idPerso) {
+                    const targetSlot = Number(slot);
+                    const targetId = Number(idPerso);
+                    return (this.teamForm.membres || []).some(m => Number(m.slot) !== targetSlot && Number(m.id_perso) === targetId);
+                },
+
+                teamMemberForSlot(slot) {
+                    const member = (this.teamForm.membres || []).find(m => Number(m.slot) === Number(slot));
+                    if (!member?.id_perso) return null;
+                    return this.teamPool.find(p => Number(p.id_perso) === Number(member.id_perso)) || null;
+                },
+
+                setTeamMemberRole(slot, role) {
+                    const idx = Number(slot) - 1;
+                    if (idx < 0 || idx > 3) return;
+                    this.teamForm.membres[idx] = {
+                        ...this.teamForm.membres[idx],
+                        role_override: String(role || '').trim() || null,
+                    };
+                },
+
+                teamRemplacantsBySlot(slot) {
+                    return (this.teamForm.remplacants || []).filter(r => Number(r.slot) === Number(slot));
+                },
+
+                pushRemplacant(slot) {
+                    const picker = document.getElementById(`team-rpl-picker-${slot}`);
+                    if (!picker || !picker.value) return;
+                    const idPerso = Number(picker.value);
+                    const member = this.teamPool.find(p => Number(p.id_perso) === idPerso);
+                    if (!member) return;
+                    if (this.teamForm.remplacants.find(r => Number(r.slot) === Number(slot) && Number(r.id_perso) === idPerso)) return;
+
+                    this.teamForm.remplacants.push({
+                        slot: Number(slot),
+                        id_perso: idPerso,
+                        nom: member.nom,
+                        role_override: null,
+                    });
+                    picker.value = '';
+                },
+
+                removeRemplacant(slot, idPerso) {
+                    this.teamForm.remplacants = this.teamForm.remplacants.filter(
+                        r => !(Number(r.slot) === Number(slot) && Number(r.id_perso) === Number(idPerso))
+                    );
+                },
+
+                setRemplacantRole(slot, idPerso, role) {
+                    this.teamForm.remplacants = this.teamForm.remplacants.map(r => {
+                        if (Number(r.slot) !== Number(slot) || Number(r.id_perso) !== Number(idPerso)) return r;
+                        return { ...r, role_override: String(role || '').trim() || null };
+                    });
+                },
+
+                async saveTeam() {
+                    this.teamError = '';
+                    const payload = {
+                        type_reaction: String(this.teamForm.type_reaction || '').trim(),
+                        tag: this.teamForm.tag || null,
+                        membres: this.teamForm.membres.map(m => ({
+                            slot: Number(m.slot),
+                            id_perso: m.id_perso ? Number(m.id_perso) : null,
+                            role_override: m.role_override || null,
+                        })),
+                        remplacants: (this.teamForm.remplacants || []).map(r => ({
+                            slot: Number(r.slot),
+                            id_perso: Number(r.id_perso),
+                            role_override: r.role_override || null,
+                        })),
+                    };
+
+                    if (!payload.type_reaction) {
+                        this.teamError = 'Selectionne d\'abord un slot de reaction.';
+                        return;
+                    }
+                    if (payload.membres.some(m => !m.id_perso)) {
+                        this.teamError = 'Les 4 slots membres doivent être remplis.';
+                        return;
+                    }
+
+                    this.teamSaving = true;
+                    try {
+                        const isEdit = !!this.teamEditingId;
+                        const url = isEdit ? `${data.updateTeamUrlBase}/${this.teamEditingId}` : data.storeTeamUrl;
+                        const resp = await fetch(url, {
+                            method: isEdit ? 'PUT' : 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': data.csrf,
+                            },
+                            body: JSON.stringify(payload),
+                        });
+
+                        const json = await resp.json().catch(() => ({}));
+                        if (!resp.ok) {
+                            this.teamError = json.message || Object.values(json.errors || {})[0]?.[0] || 'Erreur lors de la sauvegarde de la team.';
+                            return;
+                        }
+
+                        const savedTeam = json.team;
+                        const index = this.teams.findIndex(t => Number(t.id_team) === Number(savedTeam.id_team));
+                        if (index === -1) this.teams.push(savedTeam);
+                        else this.teams.splice(index, 1, savedTeam);
+
+                        this.teamFormOpen = false;
+                        this.showToast(isEdit ? 'Team mise à jour' : 'Team créée', 'success');
+                    } catch (e) {
+                        this.teamError = e?.message || 'Erreur réseau.';
+                    } finally {
+                        this.teamSaving = false;
+                    }
+                },
+
+                async deleteTeam(idTeam) {
+                    if (!confirm('Supprimer cette team ?')) return;
+                    try {
+                        const resp = await fetch(`${data.deleteTeamUrlBase}/${idTeam}`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': data.csrf },
+                        });
+                        if (!resp.ok) {
+                            this.showToast('Erreur suppression team', 'error');
+                            return;
+                        }
+                        this.teams = this.teams.filter(t => Number(t.id_team) !== Number(idTeam));
+                        this.showToast('Team supprimée', 'success');
+                    } catch (e) {
+                        this.showToast('Erreur réseau', 'error');
+                    }
+                },
+
+                sortedMembers(team) {
+                    return [...(team?.membres || [])].sort((a, b) => Number(a.slot) - Number(b.slot));
+                },
+
+                slotRemplacants(team, slot) {
+                    return (team?.remplacants || []).filter(r => Number(r.slot) === Number(slot));
+                },
+
+                teamReactionEmoji(reaction) {
+                    const key = String(reaction || '').toLowerCase();
+                    if (key.includes('vaporize')) return '🔥';
+                    if (key.includes('melt')) return '❄️';
+                    if (key.includes('freeze')) return '🧊';
+                    if (key.includes('hyperbloom') || key.includes('bloom')) return '🌸';
+                    if (key.includes('aggravate') || key.includes('spread')) return '⚡';
+                    return '✨';
+                },
+
+                teamElementColor(element) {
+                    const key = String(element || '').toLowerCase();
+                    const map = {
+                        pyro: '#ff8a5b',
+                        hydro: '#5ba2ff',
+                        anemo: '#58d0ad',
+                        electro: '#af88ff',
+                        cryo: '#90d7ff',
+                        geo: '#e0bc6d',
+                        dendro: '#7ccf62',
+                    };
+                    return map[key] || 'rgba(255,255,255,.2)';
+                },
+
+                groupDrawerOpen(groupKey) {
+                    return !!this.teamDrawerState[groupKey];
+                },
+
+                toggleGroupDrawer(groupKey) {
+                    this.teamDrawerState = {
+                        ...this.teamDrawerState,
+                        [groupKey]: !this.groupDrawerOpen(groupKey),
+                    };
+                },
+
+                recommendedReplacementsOpen(teamId) {
+                    return !!this.teamRecommendedOpen[String(teamId)];
+                },
+
+                toggleRecommendedReplacements(teamId) {
+                    const key = String(teamId);
+                    this.teamRecommendedOpen = {
+                        ...this.teamRecommendedOpen,
+                        [key]: !this.recommendedReplacementsOpen(teamId),
+                    };
+                },
+
+
+                async saveCompetences() {
                     try {
                         const payload = this.aptitudes.map(a => ({
                             id_aptitude: a.id_aptitude || null,
@@ -2575,13 +4567,12 @@
                             let msg = 'Erreur sauvegarde compétences';
                             const firstKey = Object.keys(respJson?.errors || {})[0];
                             if (firstKey && respJson.errors[firstKey]?.[0]) msg = respJson.errors[firstKey][0];
-                            this.aptitudesError = msg;
+                            this.aptitudeFormError = msg;
                             this.showToast(msg, 'error');
                             return;
                         }
 
-                        this.aptitudesError = '';
-                        this.showAptitudesModal = false;
+                        this.aptitudeFormError = '';
 
                         // Upload des images en attente (nouvelles compétences)
                         const ids = respJson.competences_ids || [];
@@ -2597,8 +4588,8 @@
 
                         this.showToast('Compétences sauvegardées', 'success');
                     } catch (e) {
-                        this.aptitudesError = e?.message || 'Erreur sauvegarde compétences';
-                        this.showToast(this.aptitudesError, 'error');
+                        this.aptitudeFormError = e?.message || 'Erreur sauvegarde compétences';
+                        this.showToast(this.aptitudeFormError, 'error');
                     }
                 },
                 async uploadConstellationImage(event, index) {

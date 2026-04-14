@@ -81,6 +81,22 @@
 
     $videoUrls = $personnage->videos->pluck('url_video')->filter()->values();
 
+    $heroBackgroundUrl = null;
+    if (!empty($personnage->background_actif)) {
+        $rawBackground = (string) $personnage->background_actif;
+        $heroBackgroundUrl = filter_var($rawBackground, FILTER_VALIDATE_URL)
+            ? $rawBackground
+            : asset('storage/' . ltrim($rawBackground, '/'));
+    }
+
+    $heroInlineStyle = null;
+    if ($heroBackgroundUrl) {
+        $safeHeroBackgroundUrl = str_replace("'", "\\'", $heroBackgroundUrl);
+        $heroInlineStyle = "background-image: linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.015)), linear-gradient(180deg, rgba(10,15,35,0.82), rgba(10,15,35,0.62)), url('"
+            . $safeHeroBackgroundUrl
+            . "'); background-size: auto, auto, cover; background-position: center;";
+    }
+
     $constellationImageFor = function (string $slug, int $index): string {
         $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
         foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
@@ -118,7 +134,7 @@
     .character-show-hero[data-element="cryo"] { --csh-accent:#91d8ee; }
 
     .csh-portrait { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background: linear-gradient(180deg, rgba(8,12,30,.4), rgba(8,12,30,.18)); width: 100%; max-width: 1024px; height: 768px; grid-area:portrait; }
-    .csh-full { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background: linear-gradient(180deg, rgba(8,12,30,.4), rgba(8,12,30,.18)); width: min(100%, 860px); aspect-ratio: 16 / 9; grid-area:video; position:relative; }
+    .csh-full { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background: linear-gradient(180deg, rgba(8,12,30,.4), rgba(8,12,30,.18)); width: min(100%, 860px); aspect-ratio: 16 / 9; grid-area:video; position:relative; justify-self:center; margin-inline:auto; }
     .csh-portrait img { width:100%; height:100%; object-fit:cover; }
     .csh-hero { grid-area:hero; padding-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.08); }
     .csh-hero-head { display:flex; align-items:center; gap:.8rem; }
@@ -176,18 +192,44 @@
         .csh-constellation-grid { grid-template-columns: 1fr; }
         .csh-constellation-media { border-right:0; border-bottom:1px solid rgba(255,255,255,0.08); }
     }
+
+    .csh-video-nav {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        z-index: 20; width: 44px; height: 44px; border-radius: 50%;
+        background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.22);
+        color: #fff; font-size: 1.4rem; line-height: 1;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; opacity: 0; transition: opacity 0.2s, background 0.2s, transform 0.2s;
+        backdrop-filter: blur(4px);
+    }
+    .csh-full:hover .csh-video-nav { opacity: 1; }
+    .csh-video-nav:hover { background: rgba(0,0,0,0.85); transform: translateY(-50%) scale(1.1); }
+    .csh-video-nav--prev { left: 14px; }
+    .csh-video-nav--next { right: 14px; }
+
+    .csh-video-counter {
+        position: absolute; bottom: 12px; right: 14px; z-index: 20;
+        background: rgba(0,0,0,0.58); border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 999px; padding: 3px 11px;
+        color: #fff; font-size: 0.72rem; font-weight: 600; letter-spacing: .04em;
+        opacity: 0; transition: opacity 0.2s;
+        backdrop-filter: blur(4px);
+    }
+    .csh-full:hover .csh-video-counter { opacity: 1; }
 </style>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-     x-data="{
-        videos: {{ \Illuminate\Support\Js::from($videoUrls) }},
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('personnageShowData', () => ({
+        videos: @json($videoUrls->values()),
         selectedVideoIndex: 0,
-        constellations: {{ \Illuminate\Support\Js::from($constellations) }},
+        constellations: @json($constellations->values()),
         selectedConstellationIndex: 0,
+        aptitudes: @json($aptitudesJson->values()),
         toEmbed(url) {
             if (!url) return '';
             const m = String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([A-Za-z0-9_-]{11})/);
-            if (m) return 'https://www.youtube.com/embed/' + m[1];
+            if (m) return 'https://www.youtube-nocookie.com/embed/' + m[1];
             return String(url).startsWith('http') ? String(url) : '';
         },
         get activeEmbedUrl() {
@@ -207,7 +249,24 @@
             const idx = Math.max(0, Math.min(this.selectedConstellationIndex, this.constellations.length - 1));
             return this.constellations[idx] || null;
         },
-     }">
+        renderDescriConst(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\[aptitude:(\d+)\]/g, (match, n) => {
+                    const apt = this.aptitudes[parseInt(n) - 1];
+                    if (!apt) return match;
+                    const title = (apt.titre_apti || '').replace(/"/g, '&quot;');
+                    const anchor = `#aptitude-${apt.id_aptitude}`;
+                    return `<a href="${anchor}" class="inline-flex items-center gap-1 rounded bg-indigo-900/60 border border-indigo-500/50 px-1.5 py-0.5 text-xs font-semibold text-indigo-300 hover:text-indigo-100 hover:border-indigo-400 transition-colors">${title}</a>`;
+                });
+        },
+    }));
+});
+</script>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     x-data="personnageShowData()">
 
     <nav class="mb-6 text-sm text-hub-text-sec">
         <a href="{{ route('personnages.index') }}" class="hover:text-hub-primary">Personnages</a>
@@ -215,8 +274,10 @@
         <span class="text-hub-text">{{ $personnage->nom_perso }}</span>
     </nav>
 
-    <div class="character-show-hero" data-element="{{ strtolower($personnage->element?->libelle_element ?? 'geo') }}">
-        <section class="csh-full flex items-center justify-center text-center p-4">
+            <div class="character-show-hero"
+                data-element="{{ strtolower($personnage->element?->libelle_element ?? 'geo') }}"
+                @if($heroInlineStyle) style="{{ $heroInlineStyle }}" @endif>
+        <section class="csh-full mx-auto flex items-center justify-center text-center p-4">
             <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05),rgba(0,0,0,0.55))]"></div>
             <template x-if="activeEmbedUrl">
                 <iframe :src="activeEmbedUrl" frameborder="0" allowfullscreen class="absolute inset-0 z-10 w-full h-full rounded-[16px]"></iframe>
@@ -224,6 +285,11 @@
             <template x-if="!activeEmbedUrl">
                 <div class="z-10 text-white/60 text-sm">Aucune vidéo</div>
             </template>
+            <button x-show="videos.length > 1" type="button" @click="prevVideo()" class="csh-video-nav csh-video-nav--prev">&#8249;</button>
+            <button x-show="videos.length > 1" type="button" @click="nextVideo()" class="csh-video-nav csh-video-nav--next">&#8250;</button>
+            <div x-show="videos.length > 1" class="csh-video-counter">
+                <span x-text="selectedVideoIndex + 1"></span>&thinsp;/&thinsp;<span x-text="videos.length"></span>
+            </div>
         </section>
 
         <section class="csh-portrait">
@@ -270,14 +336,6 @@
                     <span class="csh-pill-value">{{ $nation?->nom_region ?? 'Inconnue' }}</span>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="mx-6 -mt-2 mb-6 flex justify-end" x-show="videos.length > 1">
-        <div class="flex items-center gap-2 rounded bg-slate-900/80 border border-slate-700 px-2 py-1 text-xs text-white">
-            <span>Vidéo <span x-text="selectedVideoIndex + 1"></span>/<span x-text="videos.length"></span></span>
-            <button type="button" @click="prevVideo()" class="rounded bg-slate-700 px-2 py-0.5 hover:bg-slate-600">◀</button>
-            <button type="button" @click="nextVideo()" class="rounded bg-slate-700 px-2 py-0.5 hover:bg-slate-600">▶</button>
         </div>
     </div>
 
@@ -394,7 +452,7 @@
                     <template x-if="activeConstellation">
                         <div class="csh-constellation-detail">
                             <div class="csh-constellation-title" x-text="activeConstellation.titre_const || 'Constellation sans nom'"></div>
-                            <div class="csh-constellation-desc" x-text="activeConstellation.descri_const || 'Aucune description.'"></div>
+                            <div class="csh-constellation-desc" x-html="renderDescriConst(activeConstellation.descri_const) || 'Aucune description.'"></div>
                         </div>
                     </template>
                 </div>
@@ -416,7 +474,7 @@
             <h2 class="text-xl font-bold text-hub-text mb-4">Aptitudes</h2>
             <div class="space-y-4">
                 @foreach($personnage->aptitudes as $aptitude)
-                    <div class="border border-hub-border rounded-xl p-4">
+                    <div id="aptitude-{{ $aptitude->id_aptitude }}" class="border border-hub-border rounded-xl p-4">
                         <div class="flex items-center gap-2 mb-2">
                             @if($aptitude->typeApti)
                                 <span class="text-xs text-hub-text-sec bg-hub-surface-hover px-2 py-0.5 rounded">{{ $aptitude->typeApti->libelle_Apti }}</span>

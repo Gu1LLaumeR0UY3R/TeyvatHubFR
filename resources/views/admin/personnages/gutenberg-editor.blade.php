@@ -459,21 +459,30 @@
                             @forelse($personnage->constellations as $constellation)
                                 <button type="button"
                                         @click="openConstellationDetail(constellations[{{ $loop->index }}])"
+                                        title="Voir les détails de cette constellation"
                                         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg
-                                               bg-neutral-200 border border-neutral-300 hover:bg-neutral-300
-                                               transition-colors text-left">
-                                    <span class="w-6 h-6 rounded-full bg-neutral-500 flex-shrink-0"></span>
-                                    <span class="text-sm font-semibold text-neutral-800">{{ $constellation->titre_const }}</span>
+                                               bg-neutral-200 border border-neutral-300
+                                               hover:bg-neutral-300 hover:border-neutral-500
+                                               transition-all text-left group">
+                                    <span class="w-7 h-7 rounded-full bg-neutral-600 flex-shrink-0
+                                                 flex items-center justify-center text-white text-[10px] font-bold">
+                                        C{{ $loop->index + 1 }}
+                                    </span>
+                                    <span class="flex-1 text-sm font-semibold text-neutral-800">{{ $constellation->titre_const }}</span>
+                                    <span class="text-neutral-400 group-hover:text-neutral-700 text-xs font-semibold transition-colors whitespace-nowrap">✎ Détails →</span>
                                 </button>
                             @empty
                                 @for($i = 0; $i < 6; $i++)
                                     <button type="button"
                                             @click="openConstellationDetail(constellations[{{ $i }}] ?? null)"
                                             class="w-full flex items-center gap-3 px-3 py-2 rounded-lg
-                                                   bg-neutral-200 border border-neutral-300 hover:bg-neutral-300
-                                                   transition-colors text-left">
-                                        <span class="w-6 h-6 rounded-full bg-neutral-500 flex-shrink-0"></span>
-                                        <span class="text-sm font-semibold text-neutral-400">nom Constellation {{ $i+1 }}</span>
+                                                   bg-neutral-200 border border-dashed border-neutral-400
+                                                   hover:bg-neutral-300 transition-all text-left opacity-60">
+                                        <span class="w-7 h-7 rounded-full bg-neutral-400 flex-shrink-0
+                                                     flex items-center justify-center text-white text-[10px] font-bold">
+                                            C{{ $i+1 }}
+                                        </span>
+                                        <span class="text-sm font-semibold text-neutral-400">Constellation {{ $i+1 }} — vide</span>
                                     </button>
                                 @endfor
                             @endforelse
@@ -518,56 +527,59 @@
                          @dragstart="startDrag" @dragover.prevent @drop="dropOn"
                          class="editor-block border border-neutral-400 bg-neutral-100 rounded-lg p-4 cursor-move">
 
-                    <h2 class="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3">Compétences</h2>
+                    {{-- En-tête avec bouton + --}}
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Compétences</h2>
+                        <button type="button" @click="openCompetenceModal(null)"
+                                title="Ajouter une compétence"
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                       bg-neutral-700 text-white text-xs font-bold
+                                       hover:bg-neutral-800 active:scale-95 transition-all shadow">
+                            <span class="text-base leading-none font-black">+</span>
+                            <span>Ajouter</span>
+                        </button>
+                    </div>
 
-                    <div class="space-y-3">
+                    <div class="space-y-2">
+                        {{-- Message vide --}}
+                        <template x-if="aptitudes.length === 0">
+                            <div class="text-center py-8 text-neutral-400 text-sm italic
+                                        border border-dashed border-neutral-300 rounded-xl">
+                                Aucune compétence — cliquez sur « Ajouter » pour commencer
+                            </div>
+                        </template>
+
+                        {{-- Liste des compétences --}}
                         <template x-for="(apt, idx) in aptitudes" :key="idx">
                             <div class="flex items-center justify-between gap-3
-                                        bg-neutral-200 border border-neutral-300 rounded-xl p-3">
+                                        bg-neutral-200 border border-neutral-300 rounded-xl p-3 group">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-14 h-14 rounded-full bg-neutral-500 flex-shrink-0 overflow-hidden
+                                    <div class="w-12 h-12 rounded-full bg-neutral-500 flex-shrink-0 overflow-hidden
                                                 flex items-center justify-center">
                                         <template x-if="apt.icon">
                                             <img :src="apt.icon" :alt="apt.titre" class="w-full h-full object-cover">
                                         </template>
                                         <template x-if="!apt.icon">
-                                            <span class="text-neutral-300 text-2xl">✦</span>
+                                            <span class="text-neutral-300 text-xl">✦</span>
                                         </template>
                                     </div>
                                     <div>
                                         <div class="font-semibold text-neutral-800 text-sm"
-                                             x-text="apt.titre || 'nom Compétence'"></div>
-                                        <div class="text-xs text-neutral-500" x-text="apt.type_label"></div>
+                                             x-text="apt.titre || 'Compétence sans titre'"></div>
+                                        <div class="text-xs text-neutral-500" x-text="apt.type_label || 'Type non défini'"></div>
                                     </div>
                                 </div>
                                 <button type="button" @click="openCompetenceModal(apt)"
-                                        class="w-9 h-9 rounded-lg bg-neutral-300 border border-neutral-400
-                                               flex items-center justify-center text-neutral-600 text-base
-                                               hover:bg-neutral-400 transition-colors flex-shrink-0">✎</button>
+                                        title="Modifier cette compétence"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                               bg-neutral-300 border border-neutral-400 text-neutral-700 text-xs font-semibold
+                                               group-hover:bg-neutral-700 group-hover:text-white group-hover:border-neutral-700
+                                               active:scale-95 transition-all flex-shrink-0">
+                                    <span>✎</span>
+                                    <span>Modifier</span>
+                                </button>
                             </div>
                         </template>
-
-                        {{-- Placeholder si aucune competence chargee --}}
-                        <template x-if="aptitudes.length === 0">
-                            <div>
-                                @for($i = 0; $i < 3; $i++)
-                                    <div class="flex items-center justify-between gap-3 bg-neutral-200 border border-neutral-300 rounded-xl p-3 mb-3">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-14 h-14 rounded-full bg-neutral-400 flex-shrink-0 flex items-center justify-center">
-                                                <span class="text-neutral-200 text-2xl">✦</span>
-                                            </div>
-                                            <span class="font-semibold text-neutral-400 text-sm">nom Compétence</span>
-                                        </div>
-                                        <div class="w-9 h-9 rounded-lg bg-neutral-300 border border-neutral-400 flex items-center justify-center text-sm text-neutral-500">✎</div>
-                                    </div>
-                                @endfor
-                            </div>
-                        </template>
-
-                        <button type="button" @click="openCompetenceModal(null)"
-                                class="w-14 h-14 rounded-full bg-neutral-300 border-2 border-dashed border-neutral-400
-                                       text-3xl text-neutral-500 font-bold leading-none
-                                       hover:bg-neutral-400 transition-colors">+</button>
                     </div>
                 </section>
 

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Elements;
 use App\Models\Etoile;
 use App\Models\Constellation;
+use App\Models\Artefact;
 use App\Models\Personnage;
+use App\Models\Reaction;
 use App\Models\Role;
 use App\Models\TypeArme;
 use App\Models\TypePerso;
@@ -112,7 +114,11 @@ class PersonnageController extends Controller
             'nations',
             'armesRecommandees.arme',
             'artefactsRecommandees.artefact1',
+            'artefactsRecommandees.artefact1.photos',
+            'artefactsRecommandees.artefact1.rareté',
             'artefactsRecommandees.artefact2',
+            'artefactsRecommandees.artefact2.photos',
+            'artefactsRecommandees.artefact2.rareté',
             'constellations.photo',
             'aptitudes.typeApti',
             'aptitudes.photos',
@@ -127,9 +133,11 @@ class PersonnageController extends Controller
         $typesApti = TypeApti::orderBy('id_TypeApti')->get();
 
         $armesDisponibles = \App\Models\Arme::with('typeArme')->orderBy('nom_arme')->get();
+        $artefactsDisponibles = Artefact::with(['photos', 'rareté'])->orderBy('nom_artefact')->get();
         $allowedTypeId = $personnage->fid_TArmes;
+        $reactions = Reaction::orderBy('nom_reaction')->get();
 
-        return view('admin.personnages.edit', compact('personnage', 'elements', 'etoiles', 'typesArme', 'typesPerso', 'roles', 'nations', 'armesDisponibles', 'allowedTypeId', 'typesApti'));
+        return view('admin.personnages.edit', compact('personnage', 'elements', 'etoiles', 'typesArme', 'typesPerso', 'roles', 'nations', 'armesDisponibles', 'artefactsDisponibles', 'allowedTypeId', 'typesApti', 'reactions'));
     }
 
     public function update(Request $request, Personnage $personnage): RedirectResponse

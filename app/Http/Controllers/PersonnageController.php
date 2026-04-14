@@ -64,6 +64,7 @@ class PersonnageController extends Controller
             'etoile',
             'bio',
             'aptitudes.typeApti',
+            'aptitudes.photos',
             'constellations',
             'specialite.plat.photos',
             'roles',
@@ -76,6 +77,20 @@ class PersonnageController extends Controller
             'artefactsRecommandees.artefact2',
         ]);
 
-        return view('personnages.show', compact('personnage'));
+        $aptitudesJson = $personnage->aptitudes
+            ->sortBy('id_aptitude')
+            ->values()
+            ->map(fn($a) => [
+                'id_aptitude'  => (int) $a->id_aptitude,
+                'titre_apti'   => $a->titre_apti,
+                'descri_apti'  => $a->descri_apti ?? '',
+                'fid_TypeApti' => (int) $a->fid_TypeApti,
+                'image_url'    => $a->photos->first()?->source_url
+                               ?? ($a->photos->first()?->chemin_photo
+                                   ? asset('storage/' . $a->photos->first()->chemin_photo)
+                                   : null),
+            ]);
+
+        return view('personnages.show', compact('personnage', 'aptitudesJson'));
     }
 }
