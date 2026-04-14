@@ -3,6 +3,7 @@
 
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-hub-gold">Gestion des utilisateurs</h1>
+        <a href="{{ route('admin.utilisateurs.create') }}" class="px-4 py-2 bg-hub-gold text-hub-bg rounded hover:opacity-90">+ Nouveau</a>
     </div>
 
     @if(session('success'))
