@@ -8,12 +8,12 @@
             <span class="mx-1">/</span>
             Références
         </div>
-        <h1 class="text-2xl font-bold text-hub-text">{{ $cfg['plural'] }}</h1>
+        <h1 class="text-2xl font-bold text-hub-text">{{ $type === 'reactions' ? 'Slugs' : $cfg['plural'] }}</h1>
     </div>
     <div class="flex items-center gap-2">
         <a href="{{ route('admin.references.index', ['type' => $type, 'create' => 1]) }}"
            class="px-4 py-2 bg-hub-primary text-white rounded-xl text-sm font-medium hover:bg-opacity-90 transition-colors">
-            + Ajouter
+            {{ $type === 'reactions' ? '+ Ajouter un slug' : '+ Ajouter' }}
         </a>
         <a href="{{ route('admin.dashboard') }}"
            class="px-4 py-2 border border-hub-border text-hub-text-sec rounded-xl hover:border-hub-primary text-sm transition-colors">
@@ -27,7 +27,7 @@
     @foreach($allTypes as $slug => $c)
         <a href="{{ route('admin.references.index', $slug) }}"
            class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {{ $slug === $type ? 'bg-hub-primary text-white' : 'bg-hub-surface border border-hub-border text-hub-text-sec hover:text-hub-primary hover:border-hub-primary' }}">
-            {{ $c['plural'] }}
+            {{ $slug === 'reactions' ? 'Slugs' : $c['plural'] }}
         </a>
     @endforeach
 </div>
@@ -44,7 +44,7 @@
         <button type="button"
                 @click="openAdd()"
                 class="flex items-center gap-2 px-4 py-2 bg-hub-primary text-white rounded-xl text-sm font-medium hover:bg-opacity-90 transition-colors">
-            <span class="text-lg leading-none">+</span> Ajouter
+            <span class="text-lg leading-none">+</span> {{ $type === 'reactions' ? 'Ajouter un slug' : 'Ajouter' }}
         </button>
     </div>
 
@@ -201,8 +201,17 @@
             @click="openAdd()"
             class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-hub-primary px-5 py-3 text-sm font-semibold text-black shadow-xl hover:bg-opacity-90 transition-colors">
         <span class="text-lg leading-none">+</span>
-        Ajouter
+        {{ $type === 'reactions' ? 'Slug' : 'Ajouter' }}
     </button>
+
+    @if($type === 'reactions')
+        <button type="button"
+                @click="openAdd()"
+                title="Ajouter un slug"
+                class="fixed bottom-20 right-6 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-hub-border bg-white text-xl font-bold text-hub-primary shadow-xl hover:scale-105 transition-transform">
+            +
+        </button>
+    @endif
 </div>
 
 <script>

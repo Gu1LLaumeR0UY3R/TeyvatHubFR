@@ -464,12 +464,18 @@ class PersonnageBlockController extends Controller
             ]);
         }
 
-        $constellationImageFor = function (string $slug, int $index): string {
-            $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
-            foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
-                $path = $base . '.' . $ext;
-                if (Storage::disk('public')->exists($path)) {
-                    return asset('storage/' . $path);
+        $constellationImageFor = function (int $personnageId, string $slug, int $index): string {
+            $bases = [
+                'photos/personnages/constellations/p' . $personnageId . '-c' . $index,
+                'photos/personnages/constellations/' . $slug . '-c' . $index,
+            ];
+
+            foreach ($bases as $base) {
+                foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
+                    $path = $base . '.' . $ext;
+                    if (Storage::disk('public')->exists($path)) {
+                        return asset('storage/' . $path);
+                    }
                 }
             }
 
@@ -487,7 +493,7 @@ class PersonnageBlockController extends Controller
                     'label' => 'C' . $index,
                     'titre_const' => $constellation->titre_const,
                     'descri_const' => $constellation->descri_const,
-                    'image_url' => $constellationImageFor($personnage->slug, $index),
+                    'image_url' => $constellationImageFor((int) $personnage->id_perso, (string) $personnage->slug, $index),
                 ];
             })
             ->values();
@@ -505,16 +511,23 @@ class PersonnageBlockController extends Controller
         $index = (int) $data['constellation_index'];
         $dir = 'photos/personnages/constellations';
         $extension = strtolower($request->file('image')->getClientOriginalExtension() ?: $request->file('image')->extension() ?: 'png');
-        $filename = $personnage->slug . '-c' . $index . '.' . $extension;
+        $idFilename = 'p' . $personnage->id_perso . '-c' . $index . '.' . $extension;
+        $legacySlugFilename = $personnage->slug . '-c' . $index . '.' . $extension;
 
         $existingFiles = Storage::disk('public')->files($dir);
         foreach ($existingFiles as $file) {
-            if (preg_match('/^' . preg_quote($dir, '/') . '\\/' . preg_quote($personnage->slug, '/') . '-c' . $index . '\\./', $file)) {
+            if (
+                preg_match('/^' . preg_quote($dir, '/') . '\/p' . preg_quote((string) $personnage->id_perso, '/') . '-c' . $index . '\./', $file)
+                || preg_match('/^' . preg_quote($dir, '/') . '\/' . preg_quote($personnage->slug, '/') . '-c' . $index . '\./', $file)
+            ) {
                 Storage::disk('public')->delete($file);
             }
         }
 
-        $path = $request->file('image')->storeAs($dir, $filename, 'public');
+        $path = $request->file('image')->storeAs($dir, $idFilename, 'public');
+
+        // Rétrocompatibilité : conserver aussi le nom historique basé sur slug.
+        $request->file('image')->storeAs($dir, $legacySlugFilename, 'public');
 
         return response()->json([
             'success' => true,
