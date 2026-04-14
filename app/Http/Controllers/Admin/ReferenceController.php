@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ReferenceController extends Controller
@@ -47,11 +49,13 @@ class ReferenceController extends Controller
     {
         $cfg   = $this->resolve($type);
         $items = $cfg['model']::with('photos')->orderBy($cfg['field'])->get();
+        $serializedItems = $items->map(fn($item) => $this->serializeItem($item, $cfg))->values();
 
         return view('admin.references.index', [
             'type'   => $type,
             'cfg'    => $cfg,
             'items'  => $items,
+            'serializedItems' => $serializedItems,
             'allTypes' => self::config(),
         ]);
     }
@@ -62,7 +66,8 @@ class ReferenceController extends Controller
 
         $request->validate([
             'libelle' => ['required', 'string', 'max:120'],
-            'icon_url' => ['nullable', 'string', 'max:500'],
+            'icon_url' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'icon_file' => ['sometimes', 'nullable', 'image', 'max:4096'],
         ]);
 
         $data = [$cfg['field'] => $request->input('libelle')];
@@ -72,15 +77,16 @@ class ReferenceController extends Controller
         }
 
         $item = $cfg['model']::create($data);
-        $this->syncIcon($item, $request->input('icon_url'));
+        $this->syncIcon(
+            $item,
+            $request->input('icon_url'),
+            $request->file('icon_file'),
+            true
+        );
 
         return response()->json([
             'success' => true,
-            'item'    => [
-                'id' => $item->getKey(),
-                'libelle' => $item->{$cfg['field']},
-                'icon_url' => $this->extractIcon($item),
-            ],
+            'item'    => $this->serializeItem($item->fresh('photos'), $cfg),
         ]);
     }
 
@@ -90,7 +96,8 @@ class ReferenceController extends Controller
 
         $request->validate([
             'libelle' => ['required', 'string', 'max:120'],
-            'icon_url' => ['nullable', 'string', 'max:500'],
+            'icon_url' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'icon_file' => ['sometimes', 'nullable', 'image', 'max:4096'],
         ]);
 
         $item = $cfg['model']::findOrFail($id);
@@ -101,15 +108,17 @@ class ReferenceController extends Controller
         }
 
         $item->save();
-        $this->syncIcon($item, $request->input('icon_url'));
+        $shouldSyncIcon = $request->has('icon_url') || $request->hasFile('icon_file');
+        $this->syncIcon(
+            $item,
+            $request->input('icon_url'),
+            $request->file('icon_file'),
+            $shouldSyncIcon
+        );
 
         return response()->json([
             'success' => true,
-            'item'    => [
-                'id' => $item->getKey(),
-                'libelle' => $item->{$cfg['field']},
-                'icon_url' => $this->extractIcon($item),
-            ],
+            'item'    => $this->serializeItem($item->fresh('photos'), $cfg),
         ]);
     }
 
@@ -119,6 +128,8 @@ class ReferenceController extends Controller
         $item = $cfg['model']::findOrFail($id);
 
         try {
+            $this->deleteLocalIconFile($item->photos()->first());
+            $item->photos()->delete();
             $item->delete();
             return response()->json(['success' => true]);
         } catch (\Illuminate\Database\QueryException $e) {
@@ -129,19 +140,59 @@ class ReferenceController extends Controller
         }
     }
 
-    private function extractIcon(object $item): ?string
+    private function serializeItem(object $item, array $cfg): array
     {
         $photo = $item->photos()->first();
-        return $photo?->source_url ?: $photo?->chemin_photo;
+
+        return [
+            'id' => $item->getKey(),
+            'libelle' => $item->{$cfg['field']},
+            'icon_url' => $this->resolveIconUrl($photo),
+            'icon_raw' => $this->resolveRawIconValue($photo),
+        ];
     }
 
-    private function syncIcon(object $item, ?string $iconUrl): void
+    private function syncIcon(object $item, ?string $iconUrl, ?UploadedFile $iconFile, bool $shouldSync): void
     {
+        if (!$shouldSync) {
+            return;
+        }
+
+        $photo = $item->photos()->first();
+
+        if ($iconFile) {
+            $this->deleteLocalIconFile($photo);
+            $storedPath = $iconFile->store('references/icons', 'public');
+
+            $item->photos()->updateOrCreate(
+                [
+                    'photoable_type' => get_class($item),
+                    'photoable_id' => $item->getKey(),
+                ],
+                [
+                    'chemin_photo' => $storedPath,
+                    'source_url' => null,
+                    'type' => 'icon',
+                ]
+            );
+
+            return;
+        }
+
         $value = trim((string) $iconUrl);
 
         if ($value === '') {
+            $this->deleteLocalIconFile($photo);
             $item->photos()->delete();
             return;
+        }
+
+        $localPath = $this->extractLocalPathFromInput($value);
+        $cheminPhoto = $localPath ?? $value;
+        $sourceUrl = ($localPath === null && filter_var($value, FILTER_VALIDATE_URL)) ? $value : null;
+
+        if ($photo && $photo->chemin_photo !== $cheminPhoto) {
+            $this->deleteLocalIconFile($photo);
         }
 
         $item->photos()->updateOrCreate(
@@ -150,10 +201,102 @@ class ReferenceController extends Controller
                 'photoable_id' => $item->getKey(),
             ],
             [
-                'chemin_photo' => $value,
-                'source_url' => filter_var($value, FILTER_VALIDATE_URL) ? $value : null,
+                'chemin_photo' => $cheminPhoto,
+                'source_url' => $sourceUrl,
                 'type' => 'icon',
             ]
         );
+    }
+
+    private function resolveIconUrl(object|null $photo): ?string
+    {
+        if (!$photo) {
+            return null;
+        }
+
+        if (!empty($photo->source_url)) {
+            return $photo->source_url;
+        }
+
+        $path = trim((string) $photo->chemin_photo);
+        if ($path === '') {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        if (Str::startsWith($path, ['/storage/', 'storage/'])) {
+            return asset(ltrim($path, '/'));
+        }
+
+        return $this->publicStorageUrl($path);
+    }
+
+    private function resolveRawIconValue(object|null $photo): ?string
+    {
+        if (!$photo) {
+            return null;
+        }
+
+        if (!empty($photo->source_url)) {
+            return $photo->source_url;
+        }
+
+        $path = trim((string) $photo->chemin_photo);
+        if ($path === '') {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        if (Str::startsWith($path, ['/storage/', 'storage/'])) {
+            return asset(ltrim($path, '/'));
+        }
+
+        return $this->publicStorageUrl($path);
+    }
+
+    private function extractLocalPathFromInput(string $value): ?string
+    {
+        if (Str::startsWith($value, '/storage/')) {
+            return ltrim(substr($value, strlen('/storage/')), '/');
+        }
+
+        if (Str::startsWith($value, 'storage/')) {
+            return ltrim(substr($value, strlen('storage/')), '/');
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            $path = parse_url($value, PHP_URL_PATH);
+            if (is_string($path) && Str::startsWith($path, '/storage/')) {
+                return ltrim(substr($path, strlen('/storage/')), '/');
+            }
+        }
+
+        return null;
+    }
+
+    private function deleteLocalIconFile(object|null $photo): void
+    {
+        if (!$photo) {
+            return;
+        }
+
+        $path = trim((string) $photo->chemin_photo);
+        if ($path === '' || filter_var($path, FILTER_VALIDATE_URL)) {
+            return;
+        }
+
+        $localPath = $this->extractLocalPathFromInput($path) ?? $path;
+        Storage::disk('public')->delete($localPath);
+    }
+
+    private function publicStorageUrl(string $path): string
+    {
+        return asset('storage/' . ltrim($path, '/'));
     }
 }

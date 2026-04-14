@@ -74,7 +74,7 @@
 
                 {{-- Mode édition inline --}}
                 <template x-if="editingId === item.id">
-                      <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
                        <input type="text"
                            x-model="editValue"
                            @keydown.enter="saveEdit(item.id)"
@@ -88,6 +88,10 @@
                            @keydown.escape="cancelEdit()"
                            class="rounded-lg border border-hub-border bg-hub-surface px-3 py-1.5 text-sm text-hub-text focus:outline-none focus:ring-1 focus:ring-hub-primary"
                            placeholder="URL icône (optionnel)" />
+                       <input type="file"
+                           accept="image/*"
+                           @change="editIconFile = $event.target.files?.[0] || null"
+                           class="rounded-lg border border-hub-border bg-hub-surface px-3 py-1.5 text-sm text-hub-text file:mr-2 file:rounded file:border-0 file:bg-hub-primary file:px-2 file:py-1 file:text-xs file:font-medium file:text-white" />
                       </div>
                 </template>
 
@@ -133,7 +137,7 @@
     <div x-show="addOpen"
          x-cloak
          class="border-t border-hub-border px-6 py-4 bg-hub-surface-hover">
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
             <input type="text"
                    x-model="addValue"
                    @keydown.enter="saveAdd()"
@@ -147,6 +151,10 @@
                      @keydown.escape="addOpen = false; addValue = ''; addIconValue = ''"
                      placeholder="URL icône (optionnel)"
                      class="flex-1 rounded-lg border border-hub-border bg-hub-surface px-3 py-2 text-sm text-hub-text focus:outline-none focus:border-hub-primary focus:ring-1 focus:ring-hub-primary" />
+            <input type="file"
+                    accept="image/*"
+                    @change="addIconFile = $event.target.files?.[0] || null"
+                    class="flex-1 rounded-lg border border-hub-border bg-hub-surface px-3 py-2 text-sm text-hub-text file:mr-2 file:rounded file:border-0 file:bg-hub-primary file:px-2 file:py-1 file:text-xs file:font-medium file:text-white" />
             <button type="button"
                     @click="saveAdd()"
                     :disabled="saving || !addValue.trim()"
@@ -154,11 +162,12 @@
                 Ajouter
             </button>
             <button type="button"
-                    @click="addOpen = false; addValue = ''; addIconValue = ''"
+                    @click="addOpen = false; addValue = ''; addIconValue = ''; addIconFile = null"
                     class="px-3 py-2 border border-hub-border text-hub-text-sec rounded-xl text-sm hover:text-hub-text transition-colors">
                 Annuler
             </button>
         </div>
+        <p class="mt-2 text-xs text-hub-text-sec">Conseil: uploade une image locale pour éviter les icônes cassées si la source web disparaît.</p>
     </div>
 
     {{-- Modale confirmation suppression --}}
@@ -200,13 +209,16 @@
 function referenceManager() {
     return {
         autoOpenAdd: @json(request()->boolean('create')),
-        items: @json($items->map(fn($i) => ['id' => $i->getKey(), 'libelle' => $i->{$cfg['field']}, 'icon_url' => optional($i->photos->first())->source_url ?: optional($i->photos->first())->chemin_photo])->values()),
+        items: @json($serializedItems),
         addOpen: false,
         addValue: '',
         addIconValue: '',
+        addIconFile: null,
         editingId: null,
         editValue: '',
         editIconValue: '',
+        editOriginalIconValue: '',
+        editIconFile: null,
         deleteTarget: null,
         saving: false,
         error: '',
@@ -223,6 +235,7 @@ function referenceManager() {
             this.addOpen = true;
             this.addValue = '';
             this.addIconValue = '';
+            this.addIconFile = null;
             this.cancelEdit();
         },
 
@@ -230,13 +243,17 @@ function referenceManager() {
             this.addOpen = false;
             this.editingId = item.id;
             this.editValue = item.libelle;
-            this.editIconValue = item.icon_url || '';
+            this.editIconValue = item.icon_raw || '';
+            this.editOriginalIconValue = item.icon_raw || '';
+            this.editIconFile = null;
         },
 
         cancelEdit() {
             this.editingId = null;
             this.editValue = '';
             this.editIconValue = '';
+            this.editOriginalIconValue = '';
+            this.editIconFile = null;
         },
 
         confirmDelete(item) {
@@ -249,13 +266,19 @@ function referenceManager() {
             this.saving = true;
             this.error = '';
             try {
+                const formData = new FormData();
+                formData.append('libelle', this.addValue.trim());
+                if (this.addIconValue.trim() !== '') {
+                    formData.append('icon_url', this.addIconValue.trim());
+                }
+                if (this.addIconFile) {
+                    formData.append('icon_file', this.addIconFile);
+                }
+
                 const r = await fetch('{{ route('admin.references.store', $type) }}', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                    body: JSON.stringify({
-                        libelle: this.addValue.trim(),
-                        icon_url: this.addIconValue.trim() || null,
-                    }),
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: formData,
                 });
                 const d = await r.json();
                 if (d.success) {
@@ -263,6 +286,7 @@ function referenceManager() {
                     this.items.sort((a, b) => a.libelle.localeCompare(b.libelle));
                     this.addValue = '';
                     this.addIconValue = '';
+                    this.addIconFile = null;
                     this.addOpen = false;
                 } else {
                     this.error = d.message || 'Erreur lors de la création.';
@@ -276,20 +300,27 @@ function referenceManager() {
             this.saving = true;
             this.error = '';
             try {
+                const iconChanged = this.editIconValue.trim() !== (this.editOriginalIconValue || '');
+                const formData = new FormData();
+                formData.append('_method', 'PATCH');
+                formData.append('libelle', this.editValue.trim());
+                if (iconChanged) {
+                    formData.append('icon_url', this.editIconValue.trim());
+                }
+                if (this.editIconFile) {
+                    formData.append('icon_file', this.editIconFile);
+                }
+
                 const r = await fetch(`{{ url('admin/references/' . $type) }}/${id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                    body: JSON.stringify({
-                        libelle: this.editValue.trim(),
-                        icon_url: this.editIconValue.trim() || null,
-                    }),
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: formData,
                 });
                 const d = await r.json();
                 if (d.success) {
                     const idx = this.items.findIndex(i => i.id === id);
                     if (idx !== -1) {
-                        this.items[idx].libelle = d.item.libelle;
-                        this.items[idx].icon_url = d.item.icon_url || null;
+                        this.items[idx] = d.item;
                     }
                     this.items.sort((a, b) => a.libelle.localeCompare(b.libelle));
                     this.cancelEdit();
