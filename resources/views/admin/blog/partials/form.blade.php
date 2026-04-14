@@ -1,5 +1,6 @@
 @php
     $isEdit = $article !== null;
+    $slugBases = ['actu', 'guide', 'build', 'event', 'maj'];
 @endphp
 
 @if ($errors->any())
@@ -12,7 +13,25 @@
     </div>
 @endif
 
-<form method="POST" action="{{ $action }}" class="space-y-5">
+<form method="POST" action="{{ $action }}" class="space-y-5"
+            x-data="{
+                normalize(value) {
+                        return (value || '')
+                                .toString()
+                                .toLowerCase()
+                                .normalize('NFD')
+                                .replace(/[\u0300-\u036f]/g, '')
+                                .replace(/[^a-z0-9]+/g, '-')
+                                .replace(/^-+|-+$/g, '')
+                                .replace(/-{2,}/g, '-');
+                },
+                generateSlug(base = '') {
+                        const title = this.normalize(this.$refs.titleInput?.value || '');
+                        const prefix = this.normalize(base);
+                        const generated = prefix ? [prefix, title].filter(Boolean).join('-') : title;
+                        this.$refs.slugInput.value = generated;
+                }
+            }">
     @csrf
     @if($method !== 'POST')
         @method($method)
@@ -20,16 +39,27 @@
 
     <div>
         <label for="titre_article" class="block text-sm font-medium text-slate-700 mb-1">Titre</label>
-        <input id="titre_article" name="titre_article" type="text" required
+        <input id="titre_article" name="titre_article" type="text" required x-ref="titleInput"
                value="{{ old('titre_article', $article?->titre_article) }}"
                class="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-hub-gold" />
     </div>
 
     <div>
         <label for="slug" class="block text-sm font-medium text-slate-700 mb-1">Slug (optionnel)</label>
-        <input id="slug" name="slug" type="text"
+        <input id="slug" name="slug" type="text" x-ref="slugInput"
                value="{{ old('slug', $article?->slug) }}"
                class="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-hub-gold" />
+        <div class="mt-2 flex flex-wrap gap-2">
+            <button type="button" @click="generateSlug()" class="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100">
+                Générer depuis le titre
+            </button>
+            @foreach($slugBases as $base)
+                <button type="button" @click="generateSlug('{{ $base }}')" class="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100">
+                    {{ $base }} + titre
+                </button>
+            @endforeach
+        </div>
+        <p class="mt-1 text-xs text-slate-500">Astuce: laisse vide pour auto-générer depuis le titre à l'enregistrement.</p>
     </div>
 
     <div>
