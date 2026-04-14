@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Animal;
+use App\Models\Artefact;
 use App\Models\Arme;
 use App\Models\Ennemi;
 use App\Models\Ingredient;
@@ -25,6 +26,7 @@ class AdminController extends Controller
         $stats = [
             'personnages'  => Personnage::count(),
             'armes'        => Arme::count(),
+            'artefacts'    => Artefact::count(),
             'ennemis'      => Ennemi::count(),
             'animaux'      => Animal::count(),
             'plats'        => Plat::count(),

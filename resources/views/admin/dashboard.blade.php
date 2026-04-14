@@ -22,6 +22,7 @@
     @foreach([
         ['label' => 'Personnages', 'count' => $stats['personnages'], 'route' => 'admin.personnages.index'],
         ['label' => 'Armes', 'count' => $stats['armes'], 'route' => 'admin.armes.index'],
+        ['label' => 'Artefacts', 'count' => $stats['artefacts'], 'route' => 'admin.artefacts.index'],
         ['label' => 'Ennemis', 'count' => $stats['ennemis'], 'route' => 'admin.ennemis.index'],
         ['label' => 'Animaux', 'count' => $stats['animaux'], 'route' => 'admin.animaux.index'],
         ['label' => 'Plats', 'count' => $stats['plats'], 'route' => 'admin.cuisine.index'],
@@ -35,6 +36,26 @@
             <p class="text-hub-text-sec text-sm mt-1">{{ $stat['label'] }}</p>
         </a>
     @endforeach
+</div>
+
+{{-- Données de référence --}}
+<div class="mb-8">
+    <h2 class="text-lg font-bold text-hub-text mb-3">Données de référence</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        @foreach(\App\Http\Controllers\Admin\ReferenceController::allTypes() as $slug => $cfg)
+            @php $count = $cfg['model']::count(); @endphp
+            <div class="bg-hub-surface border border-hub-border rounded-xl p-4 hover:border-hub-primary transition-colors group">
+                <a href="{{ route('admin.references.index', $slug) }}" class="block">
+                    <p class="text-xl font-bold text-hub-primary">{{ $count }}</p>
+                    <p class="text-hub-text text-sm font-medium mt-0.5 group-hover:text-hub-primary transition-colors">{{ $cfg['plural'] }}</p>
+                </a>
+                <a href="{{ route('admin.references.index', ['type' => $slug, 'create' => 1]) }}"
+                   class="mt-3 inline-flex items-center rounded-lg border border-hub-border px-2.5 py-1 text-xs text-hub-text-sec hover:text-hub-primary hover:border-hub-primary transition-colors">
+                    + Ajouter
+                </a>
+            </div>
+        @endforeach
+    </div>
 </div>
 
 {{-- Import Genshin --}}

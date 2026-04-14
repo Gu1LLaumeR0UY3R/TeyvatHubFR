@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin Dashboard — TeyvatHub</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -29,10 +30,12 @@
                 <a href="{{ route('admin.dashboard') }}" class="block px-3 py-2 rounded-lg text-hub-text hover:bg-hub-surface-hover text-sm font-medium">Dashboard</a>
                 <a href="{{ route('admin.personnages.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Personnages</a>
                 <a href="{{ route('admin.armes.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Armes</a>
+                <a href="{{ route('admin.artefacts.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Artefacts</a>
                 <a href="{{ route('admin.ennemis.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Ennemis</a>
                 <a href="{{ route('admin.animaux.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Animaux</a>
                 <a href="{{ route('admin.cuisine.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Cuisine</a>
                 <a href="{{ route('admin.nations.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Nations</a>
+                <a href="{{ route('admin.references.index', 'elements') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Références</a>
                 <a href="{{ route('admin.utilisateurs.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Utilisateurs</a>
             </nav>
         </aside>
