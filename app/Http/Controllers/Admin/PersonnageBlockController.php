@@ -10,10 +10,14 @@ use App\Models\PersonnageArtefactRecommandee;
 use App\Models\PersonnageArmeRecommandee;
 use App\Models\PersonnageVideo;
 use App\Models\Nation;
+use App\Models\TeamComposition;
+use App\Models\TeamCompositionMembre;
+use App\Models\TeamSlotRemplacant;
 use App\Models\TypeArme;
 use Illuminate\Http\Request;
 use App\Models\Personnage;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -382,6 +386,12 @@ class PersonnageBlockController extends Controller
                     'builds.' . $index . '.artefact2_id' => 'Un build 2P+2P requiert un second set en 2P.',
                 ]);
             }
+
+            if ($pieces1 === 2 && (int) $build['artefact1_id'] === (int) $artefact2Id) {
+                throw ValidationException::withMessages([
+                    'builds.' . $index . '.artefact2_id' => 'Un build 2P+2P doit utiliser deux sets différents.',
+                ]);
+            }
         }
 
         PersonnageArtefactRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
@@ -419,22 +429,69 @@ class PersonnageBlockController extends Controller
     {
         $data = $request->validate([
             'constellations' => ['required', 'array', 'min:1'],
-            'constellations.*.id_const' => ['required', 'integer', 'exists:constellation,id_const'],
-            'constellations.*.titre_const' => ['required', 'string', 'max:200'],
+            'constellations.*.id_const' => ['nullable', 'integer', 'exists:constellation,id_const'],
+            'constellations.*.index' => ['nullable', 'integer', 'min:1', 'max:6'],
+            'constellations.*.titre_const' => ['nullable', 'string', 'max:200'],
             'constellations.*.descri_const' => ['nullable', 'string'],
         ]);
 
-        foreach ($data['constellations'] as $payload) {
-            Constellation::query()
-                ->where('id_const', (int) $payload['id_const'])
-                ->where('fid_perso', $personnage->id_perso)
-                ->update([
-                    'titre_const' => $payload['titre_const'],
-                    'descri_const' => $payload['descri_const'] ?? null,
-                ]);
+        foreach ($data['constellations'] as $rowIndex => $payload) {
+            $title = trim((string) ($payload['titre_const'] ?? ''));
+            $desc = trim((string) ($payload['descri_const'] ?? ''));
+            $idConst = isset($payload['id_const']) ? (int) $payload['id_const'] : null;
+            $index = isset($payload['index']) ? (int) $payload['index'] : ((int) $rowIndex + 1);
+
+            if ($idConst) {
+                Constellation::query()
+                    ->where('id_const', $idConst)
+                    ->where('fid_perso', $personnage->id_perso)
+                    ->update([
+                        'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
+                        'descri_const' => $desc !== '' ? $desc : null,
+                    ]);
+                continue;
+            }
+
+            if ($title === '' && $desc === '') {
+                continue;
+            }
+
+            Constellation::create([
+                'fid_perso' => $personnage->id_perso,
+                'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
+                'descri_const' => $desc !== '' ? $desc : null,
+            ]);
         }
 
-        return response()->json(['success' => true]);
+        $constellationImageFor = function (string $slug, int $index): string {
+            $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
+            foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
+                $path = $base . '.' . $ext;
+                if (Storage::disk('public')->exists($path)) {
+                    return asset('storage/' . $path);
+                }
+            }
+
+            return asset('images/placeholder.svg');
+        };
+
+        $constellations = $personnage->fresh()->constellations
+            ->sortBy('id_const')
+            ->values()
+            ->map(function ($constellation, $idx) use ($personnage, $constellationImageFor) {
+                $index = $idx + 1;
+                return [
+                    'id_const' => (int) $constellation->id_const,
+                    'index' => $index,
+                    'label' => 'C' . $index,
+                    'titre_const' => $constellation->titre_const,
+                    'descri_const' => $constellation->descri_const,
+                    'image_url' => $constellationImageFor($personnage->slug, $index),
+                ];
+            })
+            ->values();
+
+        return response()->json(['success' => true, 'constellations' => $constellations]);
     }
 
     public function uploadConstellationImage(Request $request, Personnage $personnage): JsonResponse
@@ -675,4 +732,269 @@ class PersonnageBlockController extends Controller
             'block_order' => $data['block_order'],
         ]);
     }
+
+    public function storeTeam(Request $request, Personnage $personnage): JsonResponse
+    {
+        $data = $request->validate([
+            'type_reaction' => ['required', 'string', 'max:80'],
+            'tag' => ['nullable', Rule::in(['recommended', 'f2p'])],
+            'membres' => ['required', 'array', 'size:4'],
+            'membres.*.id_perso' => ['required', 'integer', 'exists:personnage,id_perso'],
+            'membres.*.slot' => ['required', 'integer', 'min:1', 'max:4'],
+            'membres.*.role_override' => ['nullable', 'string', 'max:100'],
+            'remplacants' => ['nullable', 'array'],
+            'remplacants.*.slot' => ['required', 'integer', 'min:1', 'max:4'],
+            'remplacants.*.id_perso' => ['required', 'integer', 'exists:personnage,id_perso'],
+            'remplacants.*.role_override' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $this->validateTeamPayload($personnage, $data, null);
+
+        $team = DB::transaction(function () use ($personnage, $data) {
+            $team = TeamComposition::create([
+                'fid_perso' => $personnage->id_perso,
+                'type_reaction' => trim((string) $data['type_reaction']),
+                'tag' => $data['tag'] ?? null,
+            ]);
+
+            foreach ($data['membres'] as $membre) {
+                TeamCompositionMembre::create([
+                    'fid_team' => $team->id_team,
+                    'fid_perso' => (int) $membre['id_perso'],
+                    'slot' => (int) $membre['slot'],
+                    'role_override' => $membre['role_override'] ?? null,
+                ]);
+            }
+
+            foreach ($data['remplacants'] ?? [] as $remplacant) {
+                TeamSlotRemplacant::create([
+                    'fid_team' => $team->id_team,
+                    'slot' => (int) $remplacant['slot'],
+                    'fid_perso_remplacant' => (int) $remplacant['id_perso'],
+                    'role_override' => $remplacant['role_override'] ?? null,
+                ]);
+            }
+
+            return $team;
+        });
+
+        $team->load([
+            'membres.personnage.element',
+            'membres.personnage.photos',
+            'membres.personnage.roles',
+            'alternatives.personnage.element',
+            'alternatives.personnage.photos',
+            'alternatives.personnage.roles',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'team' => $this->formatTeam($team),
+        ]);
+    }
+
+    public function updateTeam(Request $request, Personnage $personnage, int $id_team): JsonResponse
+    {
+        $team = TeamComposition::where('id_team', $id_team)
+            ->where('fid_perso', $personnage->id_perso)
+            ->firstOrFail();
+
+        $data = $request->validate([
+            'type_reaction' => ['required', 'string', 'max:80'],
+            'tag' => ['nullable', Rule::in(['recommended', 'f2p'])],
+            'membres' => ['required', 'array', 'size:4'],
+            'membres.*.id_perso' => ['required', 'integer', 'exists:personnage,id_perso'],
+            'membres.*.slot' => ['required', 'integer', 'min:1', 'max:4'],
+            'membres.*.role_override' => ['nullable', 'string', 'max:100'],
+            'remplacants' => ['nullable', 'array'],
+            'remplacants.*.slot' => ['required', 'integer', 'min:1', 'max:4'],
+            'remplacants.*.id_perso' => ['required', 'integer', 'exists:personnage,id_perso'],
+            'remplacants.*.role_override' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $this->validateTeamPayload($personnage, $data, $team->id_team);
+
+        DB::transaction(function () use ($team, $data) {
+            $team->update([
+                'type_reaction' => trim((string) $data['type_reaction']),
+                'tag' => $data['tag'] ?? null,
+            ]);
+
+            $team->membres()->delete();
+            $team->alternatives()->delete();
+
+            foreach ($data['membres'] as $membre) {
+                TeamCompositionMembre::create([
+                    'fid_team' => $team->id_team,
+                    'fid_perso' => (int) $membre['id_perso'],
+                    'slot' => (int) $membre['slot'],
+                    'role_override' => $membre['role_override'] ?? null,
+                ]);
+            }
+
+            foreach ($data['remplacants'] ?? [] as $remplacant) {
+                TeamSlotRemplacant::create([
+                    'fid_team' => $team->id_team,
+                    'slot' => (int) $remplacant['slot'],
+                    'fid_perso_remplacant' => (int) $remplacant['id_perso'],
+                    'role_override' => $remplacant['role_override'] ?? null,
+                ]);
+            }
+        });
+
+        $team->load([
+            'membres.personnage.element',
+            'membres.personnage.photos',
+            'membres.personnage.roles',
+            'alternatives.personnage.element',
+            'alternatives.personnage.photos',
+            'alternatives.personnage.roles',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'team' => $this->formatTeam($team),
+        ]);
+    }
+
+    public function deleteTeam(Personnage $personnage, int $id_team): JsonResponse
+    {
+        TeamComposition::where('id_team', $id_team)
+            ->where('fid_perso', $personnage->id_perso)
+            ->firstOrFail()
+            ->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    private function validateTeamPayload(Personnage $personnage, array $data, ?int $ignoreTeamId): void
+    {
+        $slots = array_map(static fn(array $m) => (int) $m['slot'], $data['membres']);
+        sort($slots);
+        if ($slots !== [1, 2, 3, 4]) {
+            throw ValidationException::withMessages([
+                'membres' => 'Les membres doivent couvrir exactement les slots 1 à 4.',
+            ]);
+        }
+
+        $memberIds = array_map(static fn(array $m) => (int) $m['id_perso'], $data['membres']);
+        if (count(array_unique($memberIds)) !== 4) {
+            throw ValidationException::withMessages([
+                'membres' => 'Un personnage ne peut apparaître qu\'une fois parmi les 4 membres.',
+            ]);
+        }
+
+        if (!in_array((int) $personnage->id_perso, $memberIds, true)) {
+            throw ValidationException::withMessages([
+                'membres' => 'Le personnage principal doit être présent dans la team.',
+            ]);
+        }
+
+        $replacementKeys = [];
+        foreach ($data['remplacants'] ?? [] as $idx => $remplacant) {
+            $slot = (int) $remplacant['slot'];
+            $idPerso = (int) $remplacant['id_perso'];
+
+            $memberForSlot = collect($data['membres'])->firstWhere('slot', $slot);
+            if ($memberForSlot && (int) $memberForSlot['id_perso'] === $idPerso) {
+                throw ValidationException::withMessages([
+                    "remplacants.$idx.id_perso" => 'Un remplaçant ne peut pas être identique au titulaire du même slot.',
+                ]);
+            }
+
+            if (in_array($idPerso, $memberIds, true)) {
+                throw ValidationException::withMessages([
+                    "remplacants.$idx.id_perso" => 'Un remplaçant ne peut pas déjà être titulaire de la team.',
+                ]);
+            }
+
+            $key = $slot . ':' . $idPerso;
+            if (isset($replacementKeys[$key])) {
+                throw ValidationException::withMessages([
+                    "remplacants.$idx.id_perso" => 'Remplaçant dupliqué pour ce slot.',
+                ]);
+            }
+            $replacementKeys[$key] = true;
+        }
+
+        $tag = $data['tag'] ?? null;
+        if ($tag) {
+            $conflictQuery = TeamComposition::query()
+                ->where('fid_perso', $personnage->id_perso)
+                ->where('type_reaction', trim((string) $data['type_reaction']))
+                ->where('tag', $tag);
+
+            if ($ignoreTeamId !== null) {
+                $conflictQuery->where('id_team', '!=', $ignoreTeamId);
+            }
+
+            if ($conflictQuery->exists()) {
+                throw ValidationException::withMessages([
+                    'tag' => "Il existe déjà une team {$tag} pour ce type de réaction.",
+                ]);
+            }
+        }
+    }
+
+    private function formatTeam(TeamComposition $team): array
+    {
+        return [
+            'id_team' => (int) $team->id_team,
+            'type_reaction' => $team->type_reaction,
+            'tag' => $team->tag,
+            'membres' => $team->membres
+                ->sortBy('slot')
+                ->values()
+                ->map(function (TeamCompositionMembre $membre) {
+                    $perso = $membre->personnage;
+                    $photo = $perso?->photos?->first();
+                    $defaultRole = $perso?->roles?->first()?->libelle_role;
+
+                    return [
+                        'slot' => (int) $membre->slot,
+                        'id_perso' => (int) $membre->fid_perso,
+                        'nom' => $perso?->nom_perso ?? '',
+                        'element' => $perso?->element?->libelle_element ?? '',
+                        'icon' => $photo?->source_url
+                            ?? ($photo?->chemin_photo
+                                ? (filter_var($photo->chemin_photo, FILTER_VALIDATE_URL)
+                                    ? $photo->chemin_photo
+                                    : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                                : null),
+                        'default_role' => $defaultRole,
+                        'role_override' => $membre->role_override,
+                        'role' => $membre->role_override ?: $defaultRole,
+                    ];
+                })
+                ->all(),
+            'remplacants' => $team->alternatives
+                ->sortBy('id_rpl')
+                ->values()
+                ->map(function (TeamSlotRemplacant $remplacant) {
+                    $perso = $remplacant->personnage;
+                    $photo = $perso?->photos?->first();
+                    $defaultRole = $perso?->roles?->first()?->libelle_role;
+
+                    return [
+                        'id' => (int) ($remplacant->id_rpl ?? 0),
+                        'slot' => (int) $remplacant->slot,
+                        'id_perso' => (int) $remplacant->fid_perso_remplacant,
+                        'nom' => $perso?->nom_perso ?? '',
+                        'element' => $perso?->element?->libelle_element ?? '',
+                        'icon' => $photo?->source_url
+                            ?? ($photo?->chemin_photo
+                                ? (filter_var($photo->chemin_photo, FILTER_VALIDATE_URL)
+                                    ? $photo->chemin_photo
+                                    : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                                : null),
+                        'default_role' => $defaultRole,
+                        'role_override' => $remplacant->role_override,
+                        'role' => $remplacant->role_override ?: $defaultRole,
+                    ];
+                })
+                ->all(),
+        ];
+    }
+
 }
+

@@ -109,6 +109,11 @@ class Personnage extends Model
         return $this->belongsToMany(Nation::class, 'personnage_nation', 'fid_perso', 'fid_nation');
     }
 
+    public function teamCompositions(): HasMany
+    {
+        return $this->hasMany(TeamComposition::class, 'fid_perso', 'id_perso')->orderBy('id_team');
+    }
+
     /** Résout l'URL d'une photo à partir de son objet. */
     private function resolvePhotoUrl(Photo $photo): string
     {
