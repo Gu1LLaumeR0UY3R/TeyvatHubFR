@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class TypeApti extends Model
 {
@@ -12,4 +12,9 @@ class TypeApti extends Model
     protected $primaryKey = 'id_TypeApti';
 
     protected $fillable = ['libelle_Apti'];
+
+    public function photos(): MorphMany
+    {
+        return $this->morphMany(Photo::class, 'photoable');
+    }
 }
