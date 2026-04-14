@@ -8,6 +8,7 @@ use App\Models\Arme;
 use App\Models\Constellation;
 use App\Models\PersonnageArtefactRecommandee;
 use App\Models\PersonnageArmeRecommandee;
+use App\Models\PersonnageHistoire;
 use App\Models\PersonnageVideo;
 use App\Models\Nation;
 use App\Models\TeamComposition;
@@ -678,6 +679,54 @@ class PersonnageBlockController extends Controller
         ]);
     }
 
+    public function updateHistoires(Request $request, Personnage $personnage): JsonResponse
+    {
+        $data = $request->validate([
+            'histoires' => ['required', 'array', 'min:1'],
+            'histoires.*.id_histoire' => ['nullable', 'integer', 'exists:histoire,id_histoire'],
+            'histoires.*.titre_histoire' => ['required', 'string', 'max:200'],
+            'histoires.*.histoire' => ['required', 'string'],
+        ]);
+
+        $keptIds = [];
+
+        foreach ($data['histoires'] as $index => $payload) {
+            $attributes = [
+                'fid_perso' => $personnage->id_perso,
+                'titre_histoire' => trim((string) $payload['titre_histoire']),
+                'histoire' => trim((string) $payload['histoire']),
+                'ordre' => $index + 1,
+            ];
+
+            if (!empty($payload['id_histoire'])) {
+                $histoire = PersonnageHistoire::query()
+                    ->where('id_histoire', (int) $payload['id_histoire'])
+                    ->where('fid_perso', $personnage->id_perso)
+                    ->first();
+
+                if ($histoire) {
+                    $histoire->update($attributes);
+                    $keptIds[] = (int) $histoire->id_histoire;
+                    continue;
+                }
+            }
+
+            $created = PersonnageHistoire::query()->create($attributes);
+            $keptIds[] = (int) $created->id_histoire;
+        }
+
+        PersonnageHistoire::query()
+            ->where('fid_perso', $personnage->id_perso)
+            ->whereNotIn('id_histoire', $keptIds)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'histoires_ids' => $keptIds,
+            'histoires_count' => count($keptIds),
+        ]);
+    }
+
     public function uploadAptitudeImage(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
@@ -720,7 +769,7 @@ class PersonnageBlockController extends Controller
     {
         $data = $request->validate([
             'block_order' => ['required', 'array', 'min:1'],
-            'block_order.*' => ['required', 'string', 'in:main_zone,armes,artefacts,constellations,competences'],
+            'block_order.*' => ['required', 'string', 'in:main_zone,armes,artefacts,constellations,competences,histoires'],
         ]);
 
         $personnage->update([

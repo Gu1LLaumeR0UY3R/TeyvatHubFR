@@ -1032,6 +1032,55 @@
                                    : null),
             ]);
 
+        $histoiresJson = $personnage->histoires
+            ->sortBy('ordre')
+            ->values()
+            ->map(fn($h) => [
+                'id_histoire' => (int) $h->id_histoire,
+                'titre_histoire' => $h->titre_histoire ?? '',
+                'histoire' => $h->histoire ?? '',
+                'ordre' => (int) ($h->ordre ?? 1),
+            ]);
+
+        $storyMonstresJson = $ennemisDisponibles->map(function ($ennemi) {
+            $photo = $ennemi->photos->first();
+            $image = $photo?->source_url
+                ?? ($photo?->chemin_photo
+                    ? (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)
+                        ? $photo->chemin_photo
+                        : asset('storage/' . ltrim((string) $photo->chemin_photo, '/')))
+                    : asset('images/placeholder.svg'));
+
+            return [
+                'key' => $ennemi->slug,
+                'label' => $ennemi->nom_ennemi,
+                'image' => $image,
+                'url' => route('ennemis.show', $ennemi),
+                'is_boss' => str_contains(strtolower((string) ($ennemi->typeEnnemi?->libelle_Type ?? '')), 'boss'),
+            ];
+        })->values();
+
+        $storyArmesJson = collect($availableArmesJson)->map(fn($arme) => [
+            'key' => $arme['slug'] ?? null,
+            'label' => $arme['nom'] ?? 'Arme',
+            'image' => $arme['icon'] ?? asset('images/placeholder.svg'),
+            'url' => !empty($arme['slug']) ? route('armes.show', $arme['slug']) : null,
+        ])->filter(fn($arme) => !empty($arme['key']))->values();
+
+        $storyAptitudesJson = $aptitudesJson->map(fn($aptitude) => [
+            'key' => (string) $aptitude['id_aptitude'],
+            'label' => $aptitude['titre_apti'] ?: ('Aptitude #' . $aptitude['id_aptitude']),
+            'image' => $aptitude['image_url'] ?? asset('images/placeholder.svg'),
+            'url' => '#aptitude-' . $aptitude['id_aptitude'],
+        ])->values();
+
+        $storyCommandSourcesJson = [
+            'aptitudes' => $storyAptitudesJson,
+            'armes' => $storyArmesJson,
+            'monstres' => $storyMonstresJson,
+            'boss' => $storyMonstresJson->where('is_boss', true)->values(),
+        ];
+
         $typesAptiJson = $typesApti->map(fn($t) => [
             'id'      => (int) $t->id_TypeApti,
             'libelle' => $t->libelle_Apti,
@@ -1170,6 +1219,8 @@
          data-save-competences-url="{{ route('admin.personnage.block.competences.update', $personnage) }}"
          data-upload-competences-url="{{ route('admin.personnage.block.competences.upload', $personnage) }}"
          data-aptitudes="{{ e(json_encode($aptitudesJson)) }}"
+         data-histoires="{{ e(json_encode($histoiresJson)) }}"
+         data-story-command-sources="{{ e(json_encode($storyCommandSourcesJson)) }}"
          data-types-apti="{{ e(json_encode($typesAptiJson)) }}"
          data-teams="{{ e(json_encode($teamsJson)) }}"
          data-team-pool="{{ e(json_encode($teamPersonnagesPoolJson)) }}"
@@ -1178,6 +1229,7 @@
          data-update-team-url-base="{{ route('admin.personnage.block.teams.store', $personnage) }}"
          data-delete-team-url-base="{{ route('admin.personnage.block.teams.store', $personnage) }}"
          data-showcase-url="{{ route('personnages.show', $personnage) }}"
+         data-save-histoires-url="{{ route('admin.personnage.block.histoires.update', $personnage) }}"
          data-google-drive-api-key="{{ e((string) config('services.google_drive.api_key', '')) }}"
          data-google-drive-client-id="{{ e((string) config('services.google_drive.client_id', '')) }}"
          data-google-drive-app-id="{{ e((string) config('services.google_drive.app_id', '')) }}"
@@ -1357,6 +1409,46 @@
                             class="mt-3 w-full rounded border border-dashed border-slate-400 py-2 text-sm text-slate-800 hover:border-emerald-600 hover:text-emerald-700 transition-colors">
                         + Ajouter une vidéo
                     </button>
+                </div>
+
+                <hr class="border-slate-300" />
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Histoires</label>
+                        <button type="button" @click="openHistoireForm(null)"
+                                class="flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100">
+                            <span>+</span> Ajouter
+                        </button>
+                    </div>
+
+                    <template x-if="histoiresError">
+                        <div class="mb-2 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700" x-text="histoiresError"></div>
+                    </template>
+
+                    <div class="space-y-1.5">
+                        <template x-for="(histoire, index) in histoires" :key="`histoire-sidebar-${index}`">
+                            <div class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                <span class="text-[11px] font-semibold text-slate-700 flex-1 truncate"
+                                      x-text="histoire.titre_histoire || `Histoire ${index + 1}`"></span>
+                                <button type="button" @click="moveHistoireUp(index)" class="shrink-0 rounded px-1 text-slate-400 hover:text-slate-700 text-xs">↑</button>
+                                <button type="button" @click="moveHistoireDown(index)" class="shrink-0 rounded px-1 text-slate-400 hover:text-slate-700 text-xs">↓</button>
+                                <button type="button" @click="openHistoireForm(index)" class="shrink-0 rounded px-1 text-slate-400 hover:text-slate-700 text-xs">✎</button>
+                                <button type="button" @click="removeHistoire(index)" class="shrink-0 rounded px-1 text-slate-400 hover:text-red-500 text-xs">×</button>
+                            </div>
+                        </template>
+
+                        <template x-if="!histoires.length">
+                            <p class="text-[11px] text-slate-400 italic">Aucune histoire.</p>
+                        </template>
+                    </div>
+
+                    <div class="mt-2">
+                        <button type="button" @click="saveHistoires()"
+                                class="w-full rounded border border-blue-600 bg-blue-600 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-colors">
+                            Enregistrer les histoires
+                        </button>
+                    </div>
                 </div>
 
                 <hr class="border-slate-300" />
@@ -2193,6 +2285,124 @@
                 </div>
             </template>
 
+            {{-- ============ MODAL AJOUT / ÉDITION HISTOIRE ============ --}}
+            <template x-if="histoireFormOpen">
+                <div class="th-const-edit-overlay" @click.self="histoireFormOpen = false; closeStoryCommandMenu()">
+                    <div class="th-apt-single-modal" style="width:min(980px,98vw)">
+                        <div class="flex items-center justify-between gap-4 pb-3 border-b border-slate-200">
+                            <div class="text-base font-bold text-slate-900"
+                                 x-text="histoireFormIdx === null ? 'Ajouter une histoire' : 'Modifier l\'histoire'"></div>
+                            <button type="button" @click="histoireFormOpen = false; closeStoryCommandMenu()"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                                Annuler
+                            </button>
+                        </div>
+
+                        <template x-if="histoiresError">
+                            <div class="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" x-text="histoiresError"></div>
+                        </template>
+
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Titre <span class="text-red-400">*</span></label>
+                                <input type="text" x-model="histoireFormData.titre_histoire"
+                                       placeholder="Titre de l'histoire"
+                                       class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <label class="block text-[11px] font-semibold text-slate-500">Histoire <span class="text-red-400">*</span></label>
+                                    <div class="text-[11px] text-slate-500">Commandes: /aptitudes, /armes, /boss, /monstres</div>
+                                </div>
+                                <div class="relative">
+                                    <textarea x-ref="histoireTextarea"
+                                              x-model="histoireFormData.histoire"
+                                              @input="onHistoireTextareaInput($event)"
+                                              @keydown="onHistoireTextareaKeydown($event)"
+                                              rows="12"
+                                              placeholder="Écris l'histoire... puis utilise /aptitudes, /armes, /boss, /monstres pour insérer des références"
+                                              class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none resize-y"></textarea>
+
+                                    <template x-if="storyCommandMenu.open">
+                                        <div class="absolute left-0 right-0 top-[calc(100%+6px)] z-[90] rounded-xl border border-slate-300 bg-white shadow-xl max-h-72 overflow-y-auto">
+                                            <template x-for="(option, idx) in getStorySlashCommands()" :key="`story-cmd-${idx}`">
+                                                <button type="button"
+                                                        @click="confirmStorySlashCommand(option)"
+                                                        class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-100"
+                                                        :class="storyCommandMenu.selectedIndex === idx ? 'bg-slate-100' : ''">
+                                                    <template x-if="option.image">
+                                                        <img :src="option.image" alt="" class="w-8 h-8 rounded object-cover border border-slate-200" />
+                                                    </template>
+                                                    <template x-if="!option.image">
+                                                        <span class="w-8 h-8 rounded border border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-400">/</span>
+                                                    </template>
+                                                    <div class="min-w-0">
+                                                        <div class="text-sm font-medium text-slate-800 truncate" x-text="option.label"></div>
+                                                        <div class="text-[11px] text-slate-500 truncate" x-text="option.meta"></div>
+                                                    </div>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="mt-1 flex items-center gap-1.5"
+                                     x-show="!storyPickerOpen && !storyCommandMenu.open">
+                                    <kbd class="inline-flex items-center rounded border border-slate-300 bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-600 shadow-sm">/aptitudes</kbd>
+                                    <kbd class="inline-flex items-center rounded border border-slate-300 bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-600 shadow-sm">/armes</kbd>
+                                    <kbd class="inline-flex items-center rounded border border-slate-300 bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-600 shadow-sm">/boss</kbd>
+                                    <kbd class="inline-flex items-center rounded border border-slate-300 bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-600 shadow-sm">/monstres</kbd>
+                                    <span class="text-[10px] text-slate-400">pour insérer une référence</span>
+                                </div>
+
+                                <template x-if="storyPickerOpen">
+                                    <div class="mt-2 rounded-lg border border-indigo-400 bg-slate-800 p-2 shadow-lg">
+                                        <div class="mb-2 flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-1.5">
+                                                <kbd class="rounded border border-indigo-500 bg-indigo-900 px-1 py-0.5 font-mono text-[10px] text-indigo-300" x-text="storyCommandLabel(storyPickerCommand)"></kbd>
+                                                <span class="text-[11px] font-semibold text-slate-300">Recherche rapide + clic pour insérer</span>
+                                            </div>
+                                            <button type="button"
+                                                    @click="closeStoryPicker()"
+                                                    class="flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-slate-700 hover:text-slate-200 transition-colors text-xs font-bold">✕</button>
+                                        </div>
+
+                                        <input type="text"
+                                               x-model="storyPickerSearch"
+                                               placeholder="Recherche rapide..."
+                                               class="mb-2 w-full rounded border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-400 focus:outline-none" />
+
+                                        <div class="max-h-52 overflow-y-auto">
+                                            <div class="grid grid-cols-1 gap-1">
+                                                <template x-for="item in filteredStoryPickerOptions()" :key="`story-picker-${storyPickerCommand}-${item.key}`">
+                                                    <button type="button"
+                                                            @click="applyStoryPickerItem(item)"
+                                                            class="flex items-center gap-2 rounded border border-transparent bg-slate-900/40 px-2 py-1.5 text-left hover:border-indigo-400 hover:bg-slate-700">
+                                                        <img :src="item.image || '{{ asset('images/placeholder.svg') }}'" alt="" class="h-8 w-8 rounded object-cover" />
+                                                        <span class="truncate text-xs font-medium text-slate-200" x-text="item.label"></span>
+                                                    </button>
+                                                </template>
+                                                <template x-if="filteredStoryPickerOptions().length === 0">
+                                                    <div class="px-2 py-2 text-[11px] italic text-slate-400">Aucun résultat</div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex justify-end">
+                            <button type="button" @click="saveHistoireForm()"
+                                    class="rounded-lg border border-emerald-500 bg-emerald-500 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-400 transition-colors">
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             {{-- ============ MODAL AJOUT / ÉDITION COMPÉTENCE ============ --}}
             <template x-if="aptitudeFormOpen">
                 <div class="th-const-edit-overlay" @click.self="aptitudeFormOpen = false">
@@ -2930,6 +3140,8 @@
             const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
             const existingConstellations = safeJsonParse(data.constellations, []);
             const existingAptitudes = safeJsonParse(data.aptitudes, []);
+            const existingHistoires = safeJsonParse(data.histoires, []);
+            const storyCommandSources = safeJsonParse(data.storyCommandSources, {});
             const existingTypesApti = safeJsonParse(data.typesApti, []);
             const existingTeams = safeJsonParse(data.teams, []);
             const existingTeamPool = safeJsonParse(data.teamPool, []);
@@ -3015,11 +3227,26 @@
                 aptitudeFormSaving: false,
                 showAptitudePicker: false,
                 aptitudePickerSlotIndex: null,
+                histoireFormOpen: false,
+                histoireFormIdx: null,
+                histoireFormData: { titre_histoire: '', histoire: '' },
+                storyCommandSources,
+                storyPickerOpen: false,
+                storyPickerCommand: '',
+                storyPickerSearch: '',
+                storyCommandMenu: {
+                    open: false,
+                    start: null,
+                    end: null,
+                    query: '',
+                    selectedIndex: 0,
+                },
                 slashMenuOpen: false,
                 slashMenuQuery: '',
                 slashMenuSelectedIndex: 0,
                 slashMenuSlotIndex: null,
                 aptitudes: existingAptitudes,
+                histoires: Array.isArray(existingHistoires) ? existingHistoires : [],
                 typesApti: existingTypesApti,
                 teams: existingTeams,
                 teamPool: existingTeamPool,
@@ -3062,6 +3289,7 @@
                 armesError: '',
                 artefactsError: '',
                 constellationsError: '',
+                histoiresError: '',
                 elementIcons,
                 nationIcons,
                 weaponTypeIcons,
@@ -3927,11 +4155,12 @@
                         }
 
                         const armesResult = await this.saveArmes({ strict: false });
+                        await this.saveHistoires();
 
-                        if (armesResult.saved) {
+                        if (armesResult.saved && !this.histoiresError) {
                             this.showToast('Modifications sauvegardées', 'success');
                         } else {
-                            this.showToast('Zone principale sauvegardée (armes non enregistrées)', 'error');
+                            this.showToast('Zone principale sauvegardée (certaines sections ont échoué)', 'error');
                         }
                     } catch (e) {
                         this.showToast(e?.message || 'Erreur pendant la sauvegarde', 'error');
@@ -4211,6 +4440,308 @@
                 },
                 removeAptitude(index) {
                     this.aptitudes.splice(index, 1);
+                },
+
+                openHistoireForm(index) {
+                    this.closeStoryCommandMenu();
+                    this.closeStoryPicker();
+                    this.histoireFormIdx = index;
+                    if (index === null) {
+                        this.histoireFormData = {
+                            id_histoire: null,
+                            titre_histoire: '',
+                            histoire: '',
+                        };
+                    } else {
+                        const histoire = this.histoires[index] || {};
+                        this.histoireFormData = {
+                            id_histoire: histoire.id_histoire || null,
+                            titre_histoire: histoire.titre_histoire || '',
+                            histoire: histoire.histoire || '',
+                        };
+                    }
+                    this.histoiresError = '';
+                    this.histoireFormOpen = true;
+                    this.$nextTick(() => {
+                        this.$refs?.histoireTextarea?.focus();
+                    });
+                },
+
+                saveHistoireForm() {
+                    const titre = String(this.histoireFormData.titre_histoire || '').trim();
+                    const contenu = String(this.histoireFormData.histoire || '').trim();
+
+                    if (!titre) {
+                        this.histoiresError = 'Le titre de l\'histoire est obligatoire.';
+                        return;
+                    }
+                    if (!contenu) {
+                        this.histoiresError = 'Le texte de l\'histoire est obligatoire.';
+                        return;
+                    }
+
+                    const payload = {
+                        id_histoire: this.histoireFormData.id_histoire || null,
+                        titre_histoire: titre,
+                        histoire: contenu,
+                        ordre: this.histoireFormIdx === null ? this.histoires.length + 1 : (this.histoireFormIdx + 1),
+                    };
+
+                    if (this.histoireFormIdx === null) {
+                        this.histoires.push(payload);
+                    } else {
+                        this.histoires.splice(this.histoireFormIdx, 1, payload);
+                    }
+
+                    this.histoires = this.histoires.map((h, idx) => ({ ...h, ordre: idx + 1 }));
+                    this.histoireFormOpen = false;
+                    this.closeStoryCommandMenu();
+                    this.histoiresError = '';
+                },
+
+                removeHistoire(index) {
+                    this.histoires.splice(index, 1);
+                    this.histoires = this.histoires.map((h, idx) => ({ ...h, ordre: idx + 1 }));
+                },
+
+                moveHistoireUp(index) {
+                    if (index <= 0) return;
+                    const current = this.histoires[index];
+                    this.histoires[index] = this.histoires[index - 1];
+                    this.histoires[index - 1] = current;
+                    this.histoires = this.histoires.map((h, idx) => ({ ...h, ordre: idx + 1 }));
+                },
+
+                moveHistoireDown(index) {
+                    if (index >= this.histoires.length - 1) return;
+                    const current = this.histoires[index];
+                    this.histoires[index] = this.histoires[index + 1];
+                    this.histoires[index + 1] = current;
+                    this.histoires = this.histoires.map((h, idx) => ({ ...h, ordre: idx + 1 }));
+                },
+
+                closeStoryCommandMenu() {
+                    this.storyCommandMenu = {
+                        open: false,
+                        start: null,
+                        end: null,
+                        query: '',
+                        selectedIndex: 0,
+                    };
+                },
+
+                closeStoryPicker() {
+                    this.storyPickerOpen = false;
+                    this.storyPickerCommand = '';
+                    this.storyPickerSearch = '';
+                },
+
+                storyCommandLabel(command) {
+                    const labels = {
+                        aptitudes: '/aptitudes',
+                        armes: '/armes',
+                        monstres: '/monstres',
+                        boss: '/boss',
+                    };
+                    return labels[command] || ('/' + command);
+                },
+
+                storySourceForCommand(command) {
+                    return Array.isArray(this.storyCommandSources?.[command])
+                        ? this.storyCommandSources[command]
+                        : [];
+                },
+
+                storyTokenType(command) {
+                    const map = {
+                        aptitudes: 'aptitude',
+                        armes: 'arme',
+                        monstres: 'monstre',
+                        boss: 'boss',
+                    };
+                    return map[command] || command;
+                },
+
+                getStorySlashCommands(query = null) {
+                    const all = [
+                        { value: '/aptitudes', key: 'aptitudes', label: 'aptitudes', description: 'Insérer une aptitude' },
+                        { value: '/armes', key: 'armes', label: 'armes', description: 'Insérer une arme' },
+                        { value: '/boss', key: 'boss', label: 'boss', description: 'Insérer un boss' },
+                        { value: '/monstres', key: 'monstres', label: 'monstres', description: 'Insérer un monstre' },
+                    ];
+                    const rawQuery = query ?? this.storyCommandMenu.query;
+                    if (!rawQuery) return all;
+                    const q = String(rawQuery || '').toLowerCase();
+                    return all.filter(c => c.label.toLowerCase().startsWith(q));
+                },
+
+                filteredStoryPickerOptions() {
+                    const source = this.storySourceForCommand(this.storyPickerCommand);
+                    const q = String(this.storyPickerSearch || '').trim().toLowerCase();
+                    if (!q) return source.slice(0, 80);
+                    return source.filter(item => String(item.label || '').toLowerCase().includes(q)).slice(0, 80);
+                },
+
+                onHistoireTextareaInput(event) {
+                    const textarea = event.target;
+                    const value = String(textarea.value || '');
+                    const cursor = textarea.selectionStart || 0;
+                    const before = value.slice(0, cursor);
+
+                    const commandOnly = before.match(/\/([a-z]*)$/i);
+                    if (!commandOnly) {
+                        this.closeStoryCommandMenu();
+                        return;
+                    }
+
+                    const query = String(commandOnly[1] || '').toLowerCase();
+                    const commands = this.getStorySlashCommands(query);
+
+                    if (!commands.length) {
+                        this.closeStoryCommandMenu();
+                        return;
+                    }
+
+                    this.storyCommandMenu = {
+                        open: true,
+                        start: cursor - commandOnly[0].length,
+                        end: cursor,
+                        query,
+                        selectedIndex: 0,
+                    };
+                },
+
+                onHistoireTextareaKeydown(event) {
+                    if (!this.storyCommandMenu.open) return;
+
+                    if (event.key === 'ArrowDown') {
+                        const cmds = this.getStorySlashCommands();
+                        event.preventDefault();
+                        this.storyCommandMenu.selectedIndex = (this.storyCommandMenu.selectedIndex + 1) % Math.max(1, cmds.length);
+                        return;
+                    }
+
+                    if (event.key === 'ArrowUp') {
+                        const cmds = this.getStorySlashCommands();
+                        event.preventDefault();
+                        this.storyCommandMenu.selectedIndex = (this.storyCommandMenu.selectedIndex - 1 + Math.max(1, cmds.length)) % Math.max(1, cmds.length);
+                        return;
+                    }
+
+                    if (event.key === 'Enter' || event.key === 'Tab') {
+                        const cmds = this.getStorySlashCommands();
+                        if (cmds.length > 0) {
+                            event.preventDefault();
+                            this.confirmStorySlashCommand(cmds[this.storyCommandMenu.selectedIndex]);
+                        }
+                        return;
+                    }
+
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        this.closeStoryCommandMenu();
+                    }
+                },
+
+                confirmStorySlashCommand(cmd) {
+                    const textarea = this.$refs?.histoireTextarea;
+                    if (!textarea) return;
+
+                    const current = String(this.histoireFormData.histoire || '');
+                    const start = Number(this.storyCommandMenu.start ?? current.length);
+                    const end = Number(this.storyCommandMenu.end ?? current.length);
+                    const replacement = cmd.value;
+
+                    this.histoireFormData.histoire = current.slice(0, start) + replacement + current.slice(end);
+                    this.storyPickerOpen = true;
+                    this.storyPickerCommand = cmd.key;
+                    this.storyPickerSearch = '';
+
+                    this.$nextTick(() => {
+                        const nextPos = start + replacement.length;
+                        textarea.focus();
+                        textarea.setSelectionRange(nextPos, nextPos);
+                        this.closeStoryCommandMenu();
+                    });
+                },
+
+                applyStoryPickerItem(item) {
+                    if (!item) return;
+
+                    const commandLiteral = this.storyCommandLabel(this.storyPickerCommand);
+                    const tokenType = this.storyTokenType(this.storyPickerCommand);
+                    const token = `[[${tokenType}:${item.key}|${item.label}]]`;
+                    const current = String(this.histoireFormData.histoire || '');
+
+                    const idx = current.lastIndexOf(commandLiteral);
+                    if (idx !== -1) {
+                        this.histoireFormData.histoire = current.slice(0, idx) + token + current.slice(idx + commandLiteral.length);
+                    } else {
+                        this.histoireFormData.histoire = current + (current.endsWith(' ') ? '' : ' ') + token;
+                    }
+
+                    this.$nextTick(() => {
+                        const textarea = this.$refs?.histoireTextarea;
+                        if (!textarea) return;
+                        const nextPos = this.histoireFormData.histoire.length;
+                        textarea.focus();
+                        textarea.setSelectionRange(nextPos, nextPos);
+                        this.closeStoryPicker();
+                    });
+                },
+
+                async saveHistoires() {
+                    const payload = this.histoires
+                        .map((histoire, index) => ({
+                            id_histoire: histoire.id_histoire || null,
+                            titre_histoire: String(histoire.titre_histoire || '').trim(),
+                            histoire: String(histoire.histoire || '').trim(),
+                            ordre: index + 1,
+                        }))
+                        .filter(histoire => histoire.titre_histoire !== '' && histoire.histoire !== '');
+
+                    if (!payload.length) {
+                        this.histoiresError = 'Ajoute au moins une histoire avec titre et texte.';
+                        this.showToast(this.histoiresError, 'error');
+                        return;
+                    }
+
+                    try {
+                        const resp = await fetch(data.saveHistoiresUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': data.csrf,
+                            },
+                            body: JSON.stringify({ histoires: payload }),
+                        });
+
+                        const respJson = await resp.json().catch(() => ({}));
+
+                        if (!resp.ok) {
+                            let msg = 'Erreur sauvegarde histoires';
+                            const firstKey = Object.keys(respJson?.errors || {})[0];
+                            if (firstKey && respJson.errors[firstKey]?.[0]) {
+                                msg = respJson.errors[firstKey][0];
+                            }
+                            this.histoiresError = msg;
+                            this.showToast(msg, 'error');
+                            return;
+                        }
+
+                        const ids = respJson.histoires_ids || [];
+                        this.histoires = payload.map((histoire, index) => ({
+                            ...histoire,
+                            id_histoire: ids[index] || histoire.id_histoire || null,
+                            ordre: index + 1,
+                        }));
+
+                        this.histoiresError = '';
+                        this.showToast('Histoires sauvegardées', 'success');
+                    } catch (error) {
+                        this.histoiresError = 'Erreur réseau lors de la sauvegarde des histoires.';
+                        this.showToast(this.histoiresError, 'error');
+                    }
                 },
 
                 openTeamManager() {

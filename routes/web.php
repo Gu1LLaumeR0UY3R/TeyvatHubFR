@@ -124,6 +124,7 @@ Route::prefix('admin')->group(function () {
             Route::post('constellations/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadConstellationImage'])->name('admin.personnage.block.constellations.upload');
             Route::post('constellation-map', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellationMap'])->name('admin.personnage.block.constellation-map.update');
             Route::put('competences', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateCompetences'])->name('admin.personnage.block.competences.update');
+            Route::put('histoires', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateHistoires'])->name('admin.personnage.block.histoires.update');
             Route::post('competences/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadAptitudeImage'])->name('admin.personnage.block.competences.upload');
             Route::post('teams', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'storeTeam'])->name('admin.personnage.block.teams.store');
             Route::put('teams/{id_team}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateTeam'])->name('admin.personnage.block.teams.update');

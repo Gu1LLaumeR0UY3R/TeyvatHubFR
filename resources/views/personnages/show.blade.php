@@ -121,10 +121,65 @@
             ];
         })
         ->values();
+
+    $storyReferences = is_array($storyReferences ?? null) ? $storyReferences : [];
+
+    $renderStoryHtml = function (?string $text) use ($storyReferences) {
+        $raw = (string) ($text ?? '');
+        if ($raw === '') {
+            return '';
+        }
+
+        $pattern = '/\[\[(aptitude|arme|boss|monstre):([^\]|]+)\|([^\]]+)\]\]/i';
+        $offset = 0;
+        $chunks = [];
+
+        preg_match_all($pattern, $raw, $matches, PREG_OFFSET_CAPTURE);
+
+        foreach ($matches[0] as $idx => $fullMatch) {
+            $matchedText = $fullMatch[0];
+            $start = $fullMatch[1];
+
+            if ($start > $offset) {
+                $chunks[] = nl2br(e(substr($raw, $offset, $start - $offset)));
+            }
+
+            $type = strtolower((string) ($matches[1][$idx][0] ?? ''));
+            $key = (string) ($matches[2][$idx][0] ?? '');
+            $label = (string) ($matches[3][$idx][0] ?? '');
+
+            $entry = $storyReferences[$type][$key] ?? null;
+
+            if (!$entry) {
+                $chunks[] = e($matchedText);
+                $offset = $start + strlen($matchedText);
+                continue;
+            }
+
+            $safeLabel = e($label !== '' ? $label : ($entry['label'] ?? $key));
+            $safeImage = e((string) ($entry['image'] ?? asset('images/placeholder.svg')));
+            $safeUrl = e((string) ($entry['url'] ?? '#'));
+            $isAnchor = str_starts_with((string) ($entry['url'] ?? ''), '#');
+            $targetAttrs = $isAnchor ? '' : ' target="_blank" rel="noopener"';
+
+            $chunks[] = '<a href="' . $safeUrl . '" class="th-story-ref"' . $targetAttrs . '>'
+                . $safeLabel
+                . '<span class="th-story-ref-popover"><img src="' . $safeImage . '" alt="' . $safeLabel . '"></span>'
+                . '</a>';
+
+            $offset = $start + strlen($matchedText);
+        }
+
+        if ($offset < strlen($raw)) {
+            $chunks[] = nl2br(e(substr($raw, $offset)));
+        }
+
+        return implode('', $chunks);
+    };
 @endphp
 
 <style>
-    .character-show-hero { --csh-panel: rgba(13, 18, 42, 0.72); --csh-border: rgba(255,255,255,0.12); --csh-text: #eef2ff; --csh-muted: #bdc8ec; --csh-accent: #6fd0be; max-width: min(1800px, 95vw); margin:0 auto 2.25rem; padding:2rem; position:relative; border-radius: 22px; border:1px solid var(--csh-border); background: linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.015)), linear-gradient(180deg, rgba(10,15,35,0.9), rgba(10,15,35,0.74)); box-shadow: 0 24px 56px rgba(5,9,28,0.52), inset 0 1px 0 rgba(255,255,255,0.07); display:grid; grid-template-columns: clamp(220px,18vw,320px) minmax(0,1fr); grid-template-areas: "portrait hero" "portrait video" "portrait meta"; column-gap: 1.5rem; row-gap:1rem; align-items:start; color: var(--csh-text); font-family:'Space Grotesk', 'Trebuchet MS', sans-serif; }
+    .character-show-hero { --csh-panel: rgba(13, 18, 42, 0.72); --csh-border: rgba(255,255,255,0.12); --csh-text: #eef2ff; --csh-muted: #bdc8ec; --csh-accent: #6fd0be; max-width: min(2100px, 98vw); margin:0 auto 2.5rem; padding:2.35rem; position:relative; border-radius: 22px; border:1px solid var(--csh-border); background: linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.015)), linear-gradient(180deg, rgba(10,15,35,0.9), rgba(10,15,35,0.74)); box-shadow: 0 24px 56px rgba(5,9,28,0.52), inset 0 1px 0 rgba(255,255,255,0.07); display:grid; grid-template-columns: clamp(260px,22vw,400px) minmax(0,1fr); grid-template-areas: "portrait hero" "portrait video" "portrait meta"; column-gap: 1.8rem; row-gap:1.15rem; align-items:start; color: var(--csh-text); font-family:'Space Grotesk', 'Trebuchet MS', sans-serif; }
     .character-show-hero[data-element="anemo"] { --csh-accent:#74C2A8; }
     .character-show-hero[data-element="geo"] { --csh-accent:#f2be42; }
     .character-show-hero[data-element="electro"] { --csh-accent:#b88ef8; }
@@ -133,27 +188,31 @@
     .character-show-hero[data-element="pyro"] { --csh-accent:#ff8550; }
     .character-show-hero[data-element="cryo"] { --csh-accent:#91d8ee; }
 
-    .csh-portrait { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background: linear-gradient(180deg, rgba(8,12,30,.4), rgba(8,12,30,.18)); width: 100%; max-width: 1024px; height: 768px; grid-area:portrait; }
-    .csh-full { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background: linear-gradient(180deg, rgba(8,12,30,.4), rgba(8,12,30,.18)); width: min(100%, 860px); aspect-ratio: 16 / 9; grid-area:video; position:relative; justify-self:center; margin-inline:auto; }
+    .csh-portrait { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background: linear-gradient(180deg, rgba(8,12,30,.4), rgba(8,12,30,.18)); width: 100%; max-width: 1200px; height: 860px; grid-area:portrait; }
+    .csh-full { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.15); background: linear-gradient(180deg, rgba(8,12,30,.4), rgba(8,12,30,.18)); width: min(100%, 1020px); aspect-ratio: 16 / 9; grid-area:video; position:relative; justify-self:center; margin-inline:auto; }
     .csh-portrait img { width:100%; height:100%; object-fit:cover; }
     .csh-hero { grid-area:hero; padding-bottom:0.8rem; border-bottom:1px solid rgba(255,255,255,0.08); }
     .csh-hero-head { display:flex; align-items:center; gap:.8rem; }
     .csh-name { font-family:'Cinzel', Georgia, serif; font-size: clamp(2rem,4vw,3rem); margin:0; line-height:1.05; color:#eff6ff; }
     .csh-icon-img { width:42px; height:42px; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.35); background:rgba(255,255,255,0.12); }
     .csh-icon-img img { width:100%; height:100%; object-fit:cover; }
-    .csh-meta { grid-area:meta; display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:.42rem; padding-top:.63rem; }
-    .csh-pill { background: var(--csh-panel); border:1px solid rgba(255,255,255,0.11); border-radius:12px; padding:.45rem .55rem; min-height:52px; display:flex; flex-direction:column; justify-content:center; }
-    .csh-pill-label { color:var(--csh-muted); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; margin-bottom:.14rem; }
-    .csh-pill-value { color:var(--csh-text); font-size:.95rem; font-weight:700; }
-    .csh-pill--element .csh-pill-value { color: var(--csh-accent); font-weight:800; }
+    .csh-meta { grid-area:meta; display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:.6rem; padding-top:.75rem; }
+    .csh-pill { background: linear-gradient(145deg, rgba(18,25,55,0.85), rgba(10,15,35,0.75)); border:1px solid rgba(255,255,255,0.13); border-radius:16px; padding:.85rem 1rem; min-height:80px; display:flex; flex-direction:column; justify-content:center; gap:.3rem; transition: border-color .2s, box-shadow .2s; }
+    .csh-pill:hover { border-color: rgba(255,255,255,0.22); box-shadow: 0 4px 20px rgba(0,0,0,.35); }
+    .csh-pill-label { color:var(--csh-muted); font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; font-weight:600; }
+    .csh-pill-value { color:var(--csh-text); font-size:1.05rem; font-weight:700; }
+    .csh-pill--element { border-color: rgba(var(--csh-accent-rgb, 111,208,190), 0.35); background: linear-gradient(145deg, rgba(18,30,55,0.9), rgba(10,18,40,0.82)); }
+    .csh-pill--element .csh-pill-value { color: var(--csh-accent); font-weight:800; font-size:1.1rem; }
+    .csh-pill--element .csh-pill-label { color: color-mix(in srgb, var(--csh-accent) 60%, var(--csh-muted)); }
+    .csh-pill img { width:24px; height:24px; border-radius:50%; }
 
-    .csh-preview-table { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 0 1.5rem 1.5rem; }
+    .csh-preview-table { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin: 0 0 1.8rem; }
     .csh-preview-panel { border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(8,13,30,0.9)); box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32); overflow: hidden; }
     .csh-preview-panel-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding: 1rem 1.15rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .csh-preview-panel-title { color:#e5eefc; font-size:.92rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
     .csh-preview-panel-subtitle { color:#8aa0ca; font-size:.72rem; }
 
-    .csh-preview-weapon-list { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:.85rem; padding: 1rem 1.15rem 1.15rem; }
+    .csh-preview-weapon-list { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; padding: 1.05rem 1.2rem 1.2rem; }
     .csh-weapon-item { border:1px solid rgba(148,163,184,0.35); border-radius:0.6rem; background: linear-gradient(180deg, rgba(18, 28, 55, 0.86), rgba(10, 16, 34, 0.88)); padding:.55rem; display:flex; align-items:center; gap:.75rem; min-height:72px; }
     .csh-weapon-index { width:26px; height:26px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; color:#eff6ff; background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); flex-shrink:0; }
     .csh-weapon-icon-wrap { width:48px; height:48px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.22); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
@@ -216,6 +275,51 @@
         backdrop-filter: blur(4px);
     }
     .csh-full:hover .csh-video-counter { opacity: 1; }
+
+    .th-story-ref {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.05rem 0.38rem;
+        margin: 0 0.12rem;
+        border-radius: 999px;
+        border: 1px solid rgba(125, 211, 252, 0.5);
+        background: rgba(14, 116, 144, 0.2);
+        color: #d8f0ff;
+        font-weight: 600;
+        text-decoration: none;
+        transition: border-color .18s, background .18s;
+    }
+    .th-story-ref:hover {
+        border-color: rgba(125, 211, 252, 0.85);
+        background: rgba(14, 116, 144, 0.35);
+    }
+    .th-story-ref-popover {
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 8px);
+        transform: translateX(-50%) scale(.98);
+        width: 136px;
+        height: 136px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 14px 30px rgba(0,0,0,.45);
+        background: #0f172a;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .16s, transform .16s;
+        z-index: 40;
+    }
+    .th-story-ref-popover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .th-story-ref:hover .th-story-ref-popover {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
 </style>
 
 <script>
@@ -265,7 +369,7 @@ document.addEventListener('alpine:init', () => {
 });
 </script>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+<div class="max-w-[120rem] mx-auto px-4 sm:px-6 lg:px-8 py-8"
      x-data="personnageShowData()">
 
     <nav class="mb-6 text-sm text-hub-text-sec">
@@ -313,26 +417,26 @@ document.addEventListener('alpine:init', () => {
         <div class="csh-meta">
             <div class="csh-pill csh-pill--element">
                 <span class="csh-pill-label">Élément</span>
-                <div class="flex items-center gap-2">
-                    <img src="{{ $elementIcon }}" alt="" class="w-5 h-5 rounded-full" />
+                <div class="flex items-center gap-2.5 mt-1">
+                    <img src="{{ $elementIcon }}" alt="" class="w-6 h-6 rounded-full ring-1 ring-white/20" />
                     <span class="csh-pill-value">{{ $personnage->element?->libelle_element ?? 'Inconnu' }}</span>
                 </div>
             </div>
             <div class="csh-pill">
                 <span class="csh-pill-label">Arme</span>
-                <div class="flex items-center gap-2">
-                    <img src="{{ $weaponTypeIcon }}" alt="" class="w-5 h-5 rounded-full" />
+                <div class="flex items-center gap-2.5 mt-1">
+                    <img src="{{ $weaponTypeIcon }}" alt="" class="w-6 h-6 rounded-full ring-1 ring-white/20" />
                     <span class="csh-pill-value">{{ $personnage->typeArme?->libelle_TArme ?? 'Inconnu' }}</span>
                 </div>
             </div>
             <div class="csh-pill">
                 <span class="csh-pill-label">Rareté</span>
-                <span class="csh-pill-value">{{ $personnage->etoile?->libelle ?? '?' }}</span>
+                <span class="csh-pill-value mt-1">{{ $personnage->etoile?->libelle ?? '?' }}</span>
             </div>
             <div class="csh-pill">
                 <span class="csh-pill-label">Nation</span>
-                <div class="flex items-center gap-2">
-                    <img src="{{ $nationIcon }}" alt="" class="w-5 h-5 rounded-full" />
+                <div class="flex items-center gap-2.5 mt-1">
+                    <img src="{{ $nationIcon }}" alt="" class="w-6 h-6 rounded-full ring-1 ring-white/20" />
                     <span class="csh-pill-value">{{ $nation?->nom_region ?? 'Inconnue' }}</span>
                 </div>
             </div>
@@ -466,6 +570,20 @@ document.addEventListener('alpine:init', () => {
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
             <h2 class="text-xl font-bold text-hub-text mb-3">{{ $personnage->bio->titre_bio }}</h2>
             <p class="text-hub-text-sec leading-relaxed">{{ $personnage->bio->descri_bio }}</p>
+        </div>
+    @endif
+
+    @if($personnage->histoires->count())
+        <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
+            <h2 class="text-xl font-bold text-hub-text mb-4">Histoires</h2>
+            <div class="space-y-4">
+                @foreach($personnage->histoires as $index => $histoire)
+                    <article class="border border-hub-border rounded-xl p-4 bg-hub-surface-hover/40">
+                        <h3 class="font-semibold text-hub-text mb-2">{{ $histoire->titre_histoire ?: ('Histoire ' . ($index + 1)) }}</h3>
+                        <div class="text-hub-text-sec text-sm leading-relaxed">{!! $renderStoryHtml($histoire->histoire) !!}</div>
+                    </article>
+                @endforeach
+            </div>
         </div>
     @endif
 

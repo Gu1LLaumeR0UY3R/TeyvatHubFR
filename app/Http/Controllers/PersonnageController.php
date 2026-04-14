@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Elements;
 use App\Models\Etoile;
+use App\Models\Arme;
+use App\Models\Ennemi;
 use App\Models\Personnage;
 use App\Models\TypeArme;
 use Illuminate\Http\Request;
@@ -70,6 +72,7 @@ class PersonnageController extends Controller
             'roles',
             'photos',
             'videos',
+            'histoires',
             'nations',
             'typeArme',
             'armesRecommandees.arme.typeArme.photos',
@@ -91,6 +94,70 @@ class PersonnageController extends Controller
                                    : null),
             ]);
 
-        return view('personnages.show', compact('personnage', 'aptitudesJson'));
+        $resolvePhotoUrl = static function ($photo): string {
+            if (!$photo) {
+                return asset('images/placeholder.svg');
+            }
+            if ($photo->source_url) {
+                return $photo->source_url;
+            }
+            if (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)) {
+                return $photo->chemin_photo;
+            }
+
+            return asset('storage/' . ltrim((string) $photo->chemin_photo, '/'));
+        };
+
+        $referencesAptitudes = $personnage->aptitudes
+            ->sortBy('id_aptitude')
+            ->values()
+            ->mapWithKeys(fn($aptitude) => [
+                (string) $aptitude->id_aptitude => [
+                    'label' => $aptitude->titre_apti,
+                    'image' => $resolvePhotoUrl($aptitude->photos->first()),
+                    'url' => '#aptitude-' . $aptitude->id_aptitude,
+                ],
+            ])
+            ->all();
+
+        $referencesArmes = Arme::with('photos')
+            ->orderBy('nom_arme')
+            ->get(['id_arme', 'nom_arme', 'slug'])
+            ->mapWithKeys(fn($arme) => [
+                $arme->slug => [
+                    'label' => $arme->nom_arme,
+                    'image' => $resolvePhotoUrl($arme->photos->first()),
+                    'url' => route('armes.show', $arme),
+                ],
+            ])
+            ->all();
+
+        $ennemis = Ennemi::with(['photos', 'typeEnnemi'])
+            ->orderBy('nom_ennemi')
+            ->get(['id_ennemi', 'nom_ennemi', 'slug', 'fid_typeEnne']);
+
+        $referencesMonstres = $ennemis
+            ->mapWithKeys(fn($ennemi) => [
+                $ennemi->slug => [
+                    'label' => $ennemi->nom_ennemi,
+                    'image' => $resolvePhotoUrl($ennemi->photos->first()),
+                    'url' => route('ennemis.show', $ennemi),
+                    'is_boss' => str_contains(strtolower((string) ($ennemi->typeEnnemi?->libelle_Type ?? '')), 'boss'),
+                ],
+            ])
+            ->all();
+
+        $referencesBoss = collect($referencesMonstres)
+            ->filter(fn($entry) => !empty($entry['is_boss']))
+            ->all();
+
+        $storyReferences = [
+            'aptitude' => $referencesAptitudes,
+            'arme' => $referencesArmes,
+            'monstre' => $referencesMonstres,
+            'boss' => $referencesBoss,
+        ];
+
+        return view('personnages.show', compact('personnage', 'aptitudesJson', 'storyReferences'));
     }
 }
