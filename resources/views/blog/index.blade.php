@@ -21,7 +21,13 @@
     @if($articles->count())
         <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             @foreach($articles as $article)
+                @php $featuredPhoto = $article->photos->firstWhere('type', 'featured'); @endphp
                 <article class="rounded-2xl border border-hub-border bg-hub-surface p-5">
+                    @if($featuredPhoto)
+                        <a href="{{ route('blog.show', $article) }}" class="mb-4 block overflow-hidden rounded-xl">
+                            <img src="{{ $article->resolvePhotoUrl($featuredPhoto) }}" alt="{{ $article->titre_article }}" class="h-52 w-full object-cover transition-transform duration-300 hover:scale-[1.02]">
+                        </a>
+                    @endif
                     <div class="text-xs text-hub-text-sec mb-2">
                         {{ optional($article->date_publication)->format('d/m/Y H:i') ?? optional($article->created_at)->format('d/m/Y H:i') }}
                     </div>

@@ -214,6 +214,9 @@ Route::prefix('admin')->group(function () {
             'update'  => 'admin.evenements.update',
             'destroy' => 'admin.evenements.destroy',
         ]);
+        Route::post('/blog/slugs', [BlogArticleController::class, 'storeSlug'])->name('admin.blog.slugs.store');
+        Route::delete('/blog/slugs/{blogSlug}', [BlogArticleController::class, 'destroySlug'])->name('admin.blog.slugs.destroy');
+        Route::delete('/blog/{blog}/images/{photo}', [BlogArticleController::class, 'destroyImage'])->name('admin.blog.images.destroy');
         Route::resource('/blog', BlogArticleController::class)->except(['show'])->names([
             'index'   => 'admin.blog.index',
             'create'  => 'admin.blog.create',

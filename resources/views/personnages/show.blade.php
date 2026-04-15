@@ -97,18 +97,16 @@
             . "'); background-size: auto, auto, cover; background-position: center;";
     }
 
-    $constellationImageFor = function (int $personnageId, string $slug, int $index): string {
-        $bases = [
-            'photos/personnages/constellations/p' . $personnageId . '-c' . $index,
-            'photos/personnages/constellations/' . $slug . '-c' . $index,
-        ];
+    $constellationImageFor = function ($constellation, string $slug, int $index) use ($photoUrl): string {
+        if ($constellation?->photo) {
+            return $photoUrl($constellation->photo) ?? asset('images/placeholder.svg');
+        }
 
-        foreach ($bases as $base) {
-            foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
-                $path = $base . '.' . $ext;
-                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
-                    return asset('storage/' . $path);
-                }
+        $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
+        foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
+            $path = $base . '.' . $ext;
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                return asset('storage/' . $path);
             }
         }
 
@@ -123,7 +121,7 @@
                 'label' => 'C' . ($idx + 1),
                 'titre_const' => $constellation->titre_const,
                 'descri_const' => $constellation->descri_const,
-                'image_url' => $constellationImageFor((int) $personnage->id_perso, (string) $personnage->slug, $idx + 1),
+                'image_url' => $constellationImageFor($constellation, $personnage->slug, $idx + 1),
             ];
         })
         ->values();

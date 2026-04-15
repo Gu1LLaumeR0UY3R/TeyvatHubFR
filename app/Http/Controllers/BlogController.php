@@ -11,6 +11,7 @@ class BlogController extends Controller
     public function index(Request $request): View
     {
         $articles = BlogArticle::query()
+            ->with('photos')
             ->where('statut', 'publie')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $term = (string) $request->input('search');
@@ -31,6 +32,8 @@ class BlogController extends Controller
     public function show(BlogArticle $article): View
     {
         abort_unless($article->statut === 'publie', 404);
+
+        $article->load('photos');
 
         return view('blog.show', compact('article'));
     }

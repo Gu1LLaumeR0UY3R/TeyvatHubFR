@@ -67,7 +67,7 @@ class PersonnageController extends Controller
             'bio',
             'aptitudes.typeApti',
             'aptitudes.photos',
-            'constellations',
+            'constellations.photo',
             'specialite.plat.photos',
             'roles',
             'photos',
