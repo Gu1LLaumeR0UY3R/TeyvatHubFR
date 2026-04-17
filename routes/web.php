@@ -21,6 +21,7 @@ use App\Http\Controllers\RouletteTeamController;
 use App\Http\Controllers\MotusController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminManageController;
 use App\Http\Controllers\Admin\BlogArticleController;
 use Illuminate\Support\Facades\Route;
 
@@ -264,6 +265,14 @@ Route::prefix('admin')->group(function () {
         Route::post('/references/{type}', [\App\Http\Controllers\Admin\ReferenceController::class, 'store'])->name('admin.references.store');
         Route::patch('/references/{type}/{id}', [\App\Http\Controllers\Admin\ReferenceController::class, 'update'])->name('admin.references.update');
         Route::delete('/references/{type}/{id}', [\App\Http\Controllers\Admin\ReferenceController::class, 'destroy'])->name('admin.references.destroy');
+        Route::middleware('admin.can:admins')->prefix('admins')->group(function () {
+            Route::get('/', [AdminManageController::class, 'index'])->name('admin.admins.index');
+            Route::get('/create', [AdminManageController::class, 'create'])->name('admin.admins.create');
+            Route::post('/', [AdminManageController::class, 'store'])->name('admin.admins.store');
+            Route::get('/{admin}/edit', [AdminManageController::class, 'edit'])->name('admin.admins.edit');
+            Route::put('/{admin}', [AdminManageController::class, 'update'])->name('admin.admins.update');
+            Route::delete('/{admin}', [AdminManageController::class, 'destroy'])->name('admin.admins.destroy');
+        });
     });
 });
 
