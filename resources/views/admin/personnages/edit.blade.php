@@ -1,8 +1,9 @@
 ﻿<x-admin-layout>
-    <x-slot name="title">Modifier {{ $personnage->nom_perso }} — Admin</x-slot>
+    @php $isFreshCreate = request()->boolean('fresh'); @endphp
+    <x-slot name="title">{{ $isFreshCreate ? 'Ajouter un personnage — Admin' : 'Modifier '.$personnage->nom_perso.' — Admin' }}</x-slot>
 
     <div class="hidden" aria-hidden="true">
-        <input type="text" name="nom_perso" value="{{ $personnage->nom_perso }}" />
+        <input type="text" name="nom_perso" value="{{ $isFreshCreate ? '' : $personnage->nom_perso }}" />
         <select name="fid_element">
             @foreach($elements as $el)
                 <option value="{{ $el->id_element }}" {{ (int) $personnage->fid_element === (int) $el->id_element ? 'selected' : '' }}>{{ $el->libelle_element }}</option>
@@ -186,6 +187,25 @@
             color: #b9f7df;
             border:1px solid rgba(52, 211, 153, 0.34);
         }
+        .csh-weapon-tooltip {
+            position:absolute;
+            left:calc(100% - 12px);
+            top:50%;
+            width:min(340px, 48vw);
+            transform:translateY(-50%) translateX(-8px);
+            opacity:0;
+            pointer-events:none;
+            transition:opacity .18s ease, transform .18s ease;
+            border:1px solid rgba(148,163,184,0.24);
+            border-radius:12px;
+            background:rgba(7, 12, 25, 0.96);
+            box-shadow:0 18px 36px rgba(2,6,23,0.48);
+            padding:.7rem .8rem;
+            z-index:4;
+        }
+        .csh-weapon-item:hover .csh-weapon-tooltip { opacity:1; transform:translateY(-50%) translateX(0); }
+        .csh-weapon-tooltip-title { color:#f8fafc; font-size:.78rem; font-weight:700; margin-bottom:.4rem; }
+        .csh-weapon-tooltip-copy { color:#cbd5e1; font-size:.72rem; line-height:1.4; white-space:pre-line; }
         .csh-artefact-item {
             border:1px solid rgba(148,163,184,0.3);
             border-radius:14px;
@@ -202,8 +222,33 @@
         }
         .csh-artefact-title { color:#e2e8f0; font-size:.9rem; font-weight:700; }
         .csh-artefact-piece { color:#fef3c7; font-size:.72rem; font-weight:700; }
-        .csh-artefact-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.35rem 0; }
+        .csh-artefact-row { display:flex; align-items:center; gap:.85rem; padding:.35rem 0; }
+        .csh-artefact-media { position:relative; width:64px; height:64px; flex-shrink:0; }
+        .csh-artefact-icon { width:64px; height:64px; border-radius:12px; object-fit:cover; border:1px solid rgba(148,163,184,0.28); background:rgba(15,23,42,0.35); display:block; }
+        .csh-artefact-tooltip {
+            position:absolute;
+            left:calc(100% + 12px);
+            top:50%;
+            width:min(320px, 48vw);
+            transform:translateY(-50%) translateX(-8px);
+            opacity:0;
+            pointer-events:none;
+            transition:opacity .18s ease, transform .18s ease;
+            border:1px solid rgba(148,163,184,0.24);
+            border-radius:12px;
+            background:rgba(7, 12, 25, 0.96);
+            box-shadow:0 18px 36px rgba(2,6,23,0.48);
+            padding:.7rem .8rem;
+            z-index:4;
+        }
+        .csh-artefact-media:hover .csh-artefact-tooltip { opacity:1; transform:translateY(-50%) translateX(0); }
+        .csh-artefact-tooltip-title { color:#f8fafc; font-size:.78rem; font-weight:700; margin-bottom:.4rem; }
+        .csh-artefact-tooltip-line { display:flex; gap:.45rem; align-items:flex-start; margin-top:.35rem; }
+        .csh-artefact-tooltip-badge { flex-shrink:0; min-width:34px; text-align:center; border-radius:999px; background:rgba(250,204,21,0.14); color:#fde68a; border:1px solid rgba(250,204,21,0.24); font-size:.64rem; font-weight:700; padding:.12rem .35rem; }
+        .csh-artefact-tooltip-copy { color:#cbd5e1; font-size:.72rem; line-height:1.4; }
+        .csh-artefact-copy { min-width:0; display:flex; flex-direction:column; gap:.15rem; }
         .csh-artefact-name { color:#cbd5e1; font-size:.82rem; }
+        .csh-artefact-meta { color:#94a3b8; font-size:.72rem; }
         .csh-artefact-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
         .csh-weapon-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
         .csh-constellation-shell {
@@ -536,6 +581,7 @@
             overflow: hidden;
         }
         .th-armes-picker-modal { position: fixed; z-index: 50; background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); max-width: 640px; width: 100%; max-height: 70vh; overflow-y: auto; }
+        .th-artefact-picker-modal { z-index: 90; }
         .th-armes-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
         .th-armes-picker-item { cursor: pointer; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; text-align: center; background: #f8fafc; transition: all 0.2s; }
         .th-armes-picker-item:hover { border-color: #0ea5e9; background: #f0f9ff; transform: scale(1.02); }
@@ -854,6 +900,8 @@
                 'id' => $a->id_arme,
                 'nom' => $a->nom_arme,
                 'slug' => $a->slug,
+                'passive_name' => $a->nom_competence,
+                'passive_desc' => $a->descr_arme,
                 'etoile' => $rarityLabel,
                 'stars' => $rarityStars,
                 'fid_etoile' => $a->fid_etoile,
@@ -874,6 +922,22 @@
 
             $rarityLabel = $artefact->rareté?->libelle_rareté ?? '';
             $rarityStars = (int) preg_replace('/\D+/', '', (string) $rarityLabel);
+            $rarityOptions = [];
+
+            if ($rarityStars >= 1 && $rarityStars <= 5) {
+                $rarityOptions[] = $rarityStars;
+
+                // Les sets 5★ existent généralement aussi en 4★.
+                if ($rarityStars === 5) {
+                    $rarityOptions[] = 4;
+                }
+            }
+
+            $rarityOptions = array_values(array_unique($rarityOptions));
+            sort($rarityOptions);
+            $displayRarity = !empty($rarityOptions)
+                ? implode(' / ', array_map(fn ($star) => $star . '★', $rarityOptions))
+                : ($rarityLabel ?: '?');
 
             return [
                 'id' => (int) $artefact->id_artefact,
@@ -881,8 +945,9 @@
                 'slug' => $artefact->slug,
                 'bonus_2p' => $artefact->bonus_2p,
                 'bonus_4p' => $artefact->bonus_4p,
-                'rarete' => $rarityLabel,
+                'rarete' => $displayRarity,
                 'stars' => $rarityStars,
+                'rarity_options' => $rarityOptions,
                 'icon' => $icon,
             ];
         })->values();
@@ -901,6 +966,8 @@
                 'id_arme' => $w->arme?->id_arme,
                 'nom' => $w->arme?->nom_arme,
                 'slug' => $slug,
+                'passive_name' => $w->arme?->nom_competence,
+                'passive_desc' => $w->arme?->descr_arme,
                 'etoile' => $rarityLabel,
                 'stars' => $rarityStars,
                 'fid_etoile' => $w->arme?->fid_etoile ?? 1,
@@ -923,6 +990,8 @@
                 'id_build' => $build->id_build,
                 'artefact1_id' => $build->artefact1?->id_artefact,
                 'artefact1_nom' => $artefact1,
+                'artefact1_bonus_2p' => $build->artefact1?->bonus_2p,
+                'artefact1_bonus_4p' => $build->artefact1?->bonus_4p,
                 'artefact1_icon' => $artefact1Photo?->source_url
                     ?? ($artefact1Photo?->chemin_photo
                         ? (filter_var((string) $artefact1Photo->chemin_photo, FILTER_VALIDATE_URL)
@@ -932,6 +1001,8 @@
                 'pieces_1' => (int) $build->pieces_1,
                 'artefact2_id' => $build->artefact2?->id_artefact,
                 'artefact2_nom' => $artefact2,
+                'artefact2_bonus_2p' => $build->artefact2?->bonus_2p,
+                'artefact2_bonus_4p' => $build->artefact2?->bonus_4p,
                 'artefact2_icon' => $artefact2Photo?->source_url
                     ?? ($artefact2Photo?->chemin_photo
                         ? (filter_var((string) $artefact2Photo->chemin_photo, FILTER_VALIDATE_URL)
@@ -939,22 +1010,20 @@
                             : asset('storage/' . ltrim((string) $artefact2Photo->chemin_photo, '/')))
                         : asset('images/placeholder.svg')),
                 'pieces_2' => (int) ($build->pieces_2 ?? 0),
+                'main_stat_sablier' => $build->main_stat_sablier,
+                'main_stat_gobelet' => $build->main_stat_gobelet,
+                'main_stat_couronne' => $build->main_stat_couronne,
+                'sub_stats' => $build->sub_stats,
                 'position' => (int) $build->position,
             ];
         })->values();
 
-        $constellationImageFor = function (int $personnageId, string $slug, int $index): string {
-            $bases = [
-                'photos/personnages/constellations/p' . $personnageId . '-c' . $index,
-                'photos/personnages/constellations/' . $slug . '-c' . $index,
-            ];
-
-            foreach ($bases as $base) {
-                foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
-                    $path = $base . '.' . $ext;
-                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
-                        return asset('storage/' . $path);
-                    }
+        $constellationImageFor = function (string $slug, int $index): string {
+            $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
+            foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
+                $path = $base . '.' . $ext;
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                    return asset('storage/' . $path);
                 }
             }
 
@@ -972,7 +1041,7 @@
                     'label' => 'C' . $index,
                     'titre_const' => $constellation->titre_const,
                     'descri_const' => $constellation->descri_const,
-                    'image_url' => $constellationImageFor((int) $personnage->id_perso, (string) $personnage->slug, $index),
+                    'image_url' => $constellationImageFor($personnage->slug, $index),
                 ];
             });
 
@@ -1188,6 +1257,7 @@
 
     <div id="personnage-editor-config"
          data-main-zone="{{ e($mainZoneJson) }}"
+         data-fresh-create="{{ $isFreshCreate ? '1' : '0' }}"
          data-nom-perso="{{ e($personnage->nom_perso) }}"
          data-fid-element="{{ e($personnage->fid_element) }}"
          data-fid-etoile="{{ e($personnage->fid_etoile) }}"
@@ -1293,6 +1363,7 @@
                         <img x-effect="$el.src = selectedElementIcon" alt="" class="w-7 h-7 rounded-full border border-slate-300 bg-slate-200 p-1 shadow-inner" />
                         <select x-model="mainZone.fid_element"
                                 class="flex-1 rounded border border-slate-300 bg-white px-2 py-2 text-black text-sm focus:outline-none focus:border-blue-500">
+                            <option value="">-- Choisir un élément --</option>
                             @foreach($elements as $el)
                                 <option value="{{ $el->id_element }}">{{ $el->libelle_element }}</option>
                             @endforeach
@@ -1306,6 +1377,7 @@
                         <img x-effect="$el.src = selectedWeaponTypeIcon" alt="" class="w-7 h-7 rounded-full border border-slate-300 bg-slate-200 p-1 shadow-inner" />
                         <select x-model="mainZone.fid_TArmes"
                                 class="flex-1 rounded border border-slate-300 bg-white px-2 py-2 text-black text-sm focus:outline-none focus:border-blue-500">
+                            <option value="">-- Choisir un type d'arme --</option>
                             @foreach($typesArme as $ta)
                                 <option value="{{ $ta->id_TArmes }}">{{ $ta->libelle_TArme }}</option>
                             @endforeach
@@ -1317,6 +1389,7 @@
                         <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide mb-1">Rareté</label>
                     <select x-model="mainZone.fid_etoile"
                             class="w-full rounded border border-slate-300 bg-white px-2 py-2 text-black text-sm focus:outline-none focus:border-blue-500">
+                        <option value="">-- Choisir une rareté --</option>
                         @foreach($etoiles as $et)
                             <option value="{{ $et->id_etoile }}">{{ $et->libelle }}</option>
                         @endforeach
@@ -1330,6 +1403,7 @@
                         <select x-model="mainZone.fid_nation"
                                 @change="mainZone.fid_nation = String($event.target.value)"
                                 class="flex-1 rounded border border-slate-300 bg-white px-2 py-2 text-black text-sm focus:outline-none focus:border-blue-500">
+                            <option value="">-- Aucune nation --</option>
                             @foreach($nations as $nation)
                                 <option value="{{ $nation->id_region }}">{{ $nation->nom_region }}</option>
                             @endforeach
@@ -1462,7 +1536,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Armes recommandées</label>
-                        <span class="text-[11px] text-slate-500" x-text="armes.length + '/6'"></span>
+                        <span class="text-[11px] text-slate-500" x-text="armes.length + '/3'"></span>
                     </div>
 
                     <template x-if="armesError">
@@ -1581,7 +1655,8 @@
 
                     <div class="mt-3">
                         <button type="button" @click="showArmesPicker = !showArmesPicker"
-                                class="w-full rounded border border-slate-300 py-2 text-sm text-slate-800 hover:bg-slate-100 transition-colors">
+                                :disabled="armes.length >= 3"
+                                class="w-full rounded border border-slate-300 py-2 text-sm text-slate-800 hover:bg-slate-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50">
                             + Ajouter
                         </button>
                     </div>
@@ -1609,8 +1684,12 @@
                                     <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800" x-text="artefactBuildLabel(build)"></span>
                                 </div>
                                 <div class="mt-1 text-[11px] text-slate-600" x-text="build.artefact1_nom || 'Set principal manquant'"></div>
+                                <div class="mt-0.5 text-[10px] text-slate-500" x-show="build.artefact1_id" x-text="artefactRarityForId(build.artefact1_id)"></div>
                                 <template x-if="build.pieces_1 === 2 && build.artefact2_nom">
-                                    <div class="text-[11px] text-slate-500" x-text="build.artefact2_nom"></div>
+                                    <div>
+                                        <div class="text-[11px] text-slate-500" x-text="build.artefact2_nom"></div>
+                                        <div class="mt-0.5 text-[10px] text-slate-500" x-show="build.artefact2_id" x-text="artefactRarityForId(build.artefact2_id)"></div>
+                                    </div>
                                 </template>
                             </div>
                         </template>
@@ -2591,7 +2670,6 @@
                             <div class="csh-preview-panel-title">Armes</div>
                             <div class="csh-preview-panel-subtitle">Colonne gauche du tableau preview</div>
                         </div>
-                        <div class="text-xs text-slate-400" x-text="armes.length ? `${armes.length} arme(s)` : 'Aucune arme'"></div>
                     </div>
 
                     <template x-if="armes.length">
@@ -2609,6 +2687,12 @@
                                             <div class="csh-weapon-badge">Starter</div>
                                         </template>
                                     </div>
+                                    <template x-if="arme.passive_name || arme.passive_desc">
+                                        <div class="csh-weapon-tooltip">
+                                            <div class="csh-weapon-tooltip-title" x-text="arme.passive_name || arme.nom"></div>
+                                            <div class="csh-weapon-tooltip-copy" x-text="arme.passive_desc || 'Aucun passif renseigné.'"></div>
+                                        </div>
+                                    </template>
                                 </article>
                             </template>
                         </div>
@@ -2625,7 +2709,6 @@
                             <div class="csh-preview-panel-title">Artefacts</div>
                             <div class="csh-preview-panel-subtitle">Colonne droite du tableau preview</div>
                         </div>
-                        <div class="text-xs text-slate-400" x-text="artefactBuilds.length ? `${artefactBuilds.length} build(s)` : 'Aucun build'"></div>
                     </div>
 
                     <template x-if="artefactBuilds.length">
@@ -2633,17 +2716,49 @@
                             <template x-for="(build, index) in artefactBuilds" :key="`preview-build-${build.id_build || index}`">
                                 <article class="csh-artefact-item">
                                     <div class="csh-artefact-head">
-                                        <div class="csh-artefact-title" x-text="`Build ${index + 1}`"></div>
+                                        <div class="csh-artefact-title" x-text="build.artefact2_nom ? `${build.artefact1_nom || 'Set principal'} + ${build.artefact2_nom}` : (build.artefact1_nom || 'Set principal')"></div>
                                         <div class="csh-artefact-piece" x-text="build.artefact2_nom ? '2P + 2P' : `${build.pieces_1}P`"></div>
                                     </div>
                                     <div class="csh-artefact-row">
-                                        <span class="csh-artefact-name" x-text="build.artefact1_nom || 'Artefact principal'"></span>
-                                        <span class="csh-artefact-piece" x-text="`${build.pieces_1}P`"></span>
+                                        <div class="csh-artefact-media">
+                                            <img :src="build.artefact1_icon || '{{ asset('images/placeholder.svg') }}'" alt="" class="csh-artefact-icon">
+                                            <div class="csh-artefact-tooltip" x-show="build.artefact1_bonus_2p || build.artefact1_bonus_4p">
+                                                <div class="csh-artefact-tooltip-title" x-text="build.artefact1_nom || 'Set principal'"></div>
+                                                <div class="csh-artefact-tooltip-line" x-show="build.artefact1_bonus_2p">
+                                                    <span class="csh-artefact-tooltip-badge">2P</span>
+                                                    <span class="csh-artefact-tooltip-copy" x-text="build.artefact1_bonus_2p"></span>
+                                                </div>
+                                                <div class="csh-artefact-tooltip-line" x-show="build.artefact1_bonus_4p">
+                                                    <span class="csh-artefact-tooltip-badge">4P</span>
+                                                    <span class="csh-artefact-tooltip-copy" x-text="build.artefact1_bonus_4p"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="csh-artefact-copy">
+                                            <span class="csh-artefact-name" x-text="build.artefact1_nom || 'Artefact principal'"></span>
+                                            <span class="csh-artefact-meta" x-text="build.artefact2_nom ? 'Premier set' : 'Set principal'"></span>
+                                        </div>
                                     </div>
                                     <template x-if="build.artefact2_nom">
                                         <div class="csh-artefact-row">
-                                            <span class="csh-artefact-name" x-text="build.artefact2_nom"></span>
-                                            <span class="csh-artefact-piece" x-text="`${build.pieces_2}P`"></span>
+                                            <div class="csh-artefact-media">
+                                                <img :src="build.artefact2_icon || '{{ asset('images/placeholder.svg') }}'" alt="" class="csh-artefact-icon">
+                                                <div class="csh-artefact-tooltip" x-show="build.artefact2_bonus_2p || build.artefact2_bonus_4p">
+                                                    <div class="csh-artefact-tooltip-title" x-text="build.artefact2_nom || 'Set secondaire'"></div>
+                                                    <div class="csh-artefact-tooltip-line" x-show="build.artefact2_bonus_2p">
+                                                        <span class="csh-artefact-tooltip-badge">2P</span>
+                                                        <span class="csh-artefact-tooltip-copy" x-text="build.artefact2_bonus_2p"></span>
+                                                    </div>
+                                                    <div class="csh-artefact-tooltip-line" x-show="build.artefact2_bonus_4p">
+                                                        <span class="csh-artefact-tooltip-badge">4P</span>
+                                                        <span class="csh-artefact-tooltip-copy" x-text="build.artefact2_bonus_4p"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="csh-artefact-copy">
+                                                <span class="csh-artefact-name" x-text="build.artefact2_nom"></span>
+                                                <span class="csh-artefact-meta">Second set</span>
+                                            </div>
                                         </div>
                                     </template>
                                 </article>
@@ -2924,8 +3039,9 @@
                             <div class="text-[11px] text-slate-400">Chaque build doit être soit 4P, soit 2P + 2P.</div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" @click="addArtefactBuild()"
-                                    class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400">+ Ajouter</button>
+                                <button type="button" @click="addArtefactBuild()"
+                                    :disabled="artefactBuilds.length >= 3"
+                                    class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50">+ Ajouter</button>
                             <button type="button" @click="showArtefactManager = false"
                                     class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
                         </div>
@@ -2969,6 +3085,7 @@
                                             <img :src="build.artefact1_icon || '{{ asset('images/placeholder.svg') }}'" alt="" class="h-11 w-11 rounded-lg object-cover border border-slate-200" />
                                             <div class="min-w-0 flex-1">
                                                 <div class="truncate text-sm font-semibold text-slate-900" x-text="build.artefact1_nom || 'Choisir un set'" ></div>
+                                                <div class="text-[10px] text-slate-500" x-show="build.artefact1_id" x-text="artefactRarityForId(build.artefact1_id)"></div>
                                                 <div class="text-[11px] text-slate-500" x-text="build.pieces_1 === 4 ? 'Set en 4 pièces' : 'Première moitié du 2P + 2P'"></div>
                                             </div>
                                         </button>
@@ -2984,11 +3101,50 @@
                                             <img :src="build.artefact2_icon || '{{ asset('images/placeholder.svg') }}'" alt="" class="h-11 w-11 rounded-lg object-cover border border-slate-200" />
                                             <div class="min-w-0 flex-1">
                                                 <div class="truncate text-sm font-semibold text-slate-900" x-text="build.artefact2_nom || (build.pieces_1 === 4 ? 'Non utilisé en 4P' : 'Choisir un second 2P')"></div>
+                                                <div class="text-[10px] text-slate-500" x-show="build.artefact2_id" x-text="artefactRarityForId(build.artefact2_id)"></div>
                                                 <div class="text-[11px] text-slate-500">Obligatoire si le build est en 2P + 2P</div>
                                             </div>
                                         </button>
                                         <button type="button" @click="clearArtefactSlot(index, 2)" x-show="build.artefact2_id && build.pieces_1 === 2"
                                                 class="mt-2 text-[11px] text-red-500 hover:text-red-600">Retirer</button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                    <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Stats recommandees</div>
+                                    <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                            <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500" title="Sablier">
+                                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M7 3h10"></path><path d="M7 21h10"></path><path d="M8 3c0 4 3 5 4 6-1 1-4 2-4 6"></path><path d="M16 3c0 4-3 5-4 6 1 1 4 2 4 6"></path>
+                                                </svg>
+                                            </span>
+                                            <input type="text" x-model.trim="build.main_stat_sablier" placeholder="Sablier (ATK%, ER, EM...)"
+                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        </label>
+                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                            <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500" title="Gobelet">
+                                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M7 3h10l-1 8a4 4 0 0 1-8 0L7 3Z"></path><path d="M10 15h4"></path><path d="M9 21h6"></path><path d="M12 15v6"></path>
+                                                </svg>
+                                            </span>
+                                            <input type="text" x-model.trim="build.main_stat_gobelet" placeholder="Gobelet (DGT Elem, PV%...)"
+                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        </label>
+                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                            <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500" title="Couronne">
+                                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M4 8l4 3 4-6 4 6 4-3-2 9H6L4 8Z"></path><path d="M8 20h8"></path>
+                                                </svg>
+                                            </span>
+                                            <input type="text" x-model.trim="build.main_stat_couronne" placeholder="Couronne (Crit, Soin, EM...)"
+                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        </label>
+                                        <label class="rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                            <div class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Subs stats</div>
+                                            <input type="text" x-model.trim="build.sub_stats" placeholder="Ex: Crit Rate, Crit DMG, ER, ATK%"
+                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -3005,8 +3161,8 @@
             </div>
         </template>
 
-        <div x-show="artefactPicker.open" x-cloak @click.outside="closeArtefactPicker()"
-             class="th-armes-picker-modal"
+           <div x-show="artefactPicker.open" x-cloak @click.outside="closeArtefactPicker()"
+               class="th-armes-picker-modal th-artefact-picker-modal"
              :style="`left: ${ (window.innerWidth * 0.33) + 100 }px; top: 120px;`">
 
             <div class="sticky top-0 border-b border-slate-300 bg-white p-3 space-y-2">
@@ -3046,7 +3202,12 @@
                                 </div>
                             </div>
                             <div class="name" x-text="artefact.nom"></div>
-                            <div class="rarity" x-text="artefact.rarete || '?'"></div>
+                            <div class="rarity flex flex-wrap items-center justify-center gap-1" x-show="artefact.rarity_options && artefact.rarity_options.length">
+                                <template x-for="star in artefact.rarity_options" :key="`art-rarity-${artefact.id}-${star}`">
+                                    <span class="rounded-full border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" x-text="`${star}★`"></span>
+                                </template>
+                            </div>
+                            <div class="rarity" x-show="!artefact.rarity_options || !artefact.rarity_options.length" x-text="artefact.rarete || '?'"></div>
                         </button>
                     </template>
                 </div>
@@ -3140,10 +3301,11 @@
             };
 
             const parsedMain    = safeJsonParse(data.mainZone, {});
+            const isFreshCreate = String(data.freshCreate || '0') === '1';
             const availableArmes = safeJsonParse(data.availableArmes, []);
             const availableArtefacts = safeJsonParse(data.availableArtefacts, []);
-            const existingArmes  = safeJsonParse(data.existingArmes, []);
-            const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
+            const existingArmes  = safeJsonParse(data.existingArmes, []).slice(0, 3);
+            const existingArtefacts = safeJsonParse(data.existingArtefacts, []).slice(0, 3);
             const existingConstellations = safeJsonParse(data.constellations, []);
             const existingAptitudes = safeJsonParse(data.aptitudes, []);
             const existingHistoires = safeJsonParse(data.histoires, []);
@@ -3168,17 +3330,17 @@
 
             return {
                 mainZone: {
-                    nom_perso:  parsedMain.nom_perso  || data.nomPerso || '',
-                    fid_element:parsedMain.fid_element|| data.fidElement || '',
-                    fid_etoile: parsedMain.fid_etoile || data.fidEtoile || '',
-                    fid_TArmes: parsedMain.fid_TArmes || data.fidTarmes || '',
-                    fid_TP:     parsedMain.fid_TP     || data.fidTp || '',
-                    fid_nation: parsedMain.fid_nation || data.fidNation || '',
+                    nom_perso:  isFreshCreate ? '' : (parsedMain.nom_perso || data.nomPerso || ''),
+                    fid_element:isFreshCreate ? '' : (parsedMain.fid_element || data.fidElement || ''),
+                    fid_etoile: isFreshCreate ? '' : (parsedMain.fid_etoile || data.fidEtoile || ''),
+                    fid_TArmes: isFreshCreate ? '' : (parsedMain.fid_TArmes || data.fidTarmes || ''),
+                    fid_TP:     parsedMain.fid_TP || data.fidTp || '',
+                    fid_nation: isFreshCreate ? '' : (parsedMain.fid_nation || data.fidNation || ''),
                     arme_icon:  parsedMain.arme_icon  || data.armeIcon || '',
-                    background_actif: parsedMain.background_actif || '',
-                    videos:     parsedMain.videos     || [],
+                    background_actif: isFreshCreate ? '' : (parsedMain.background_actif || ''),
+                    videos:     isFreshCreate ? [] : (parsedMain.videos || []),
                 },
-                driveBackgroundUrlInput: parsedMain.background_actif || '',
+                driveBackgroundUrlInput: isFreshCreate ? '' : (parsedMain.background_actif || ''),
                 googleDrive: {
                     apiKey: data.googleDriveApiKey || '',
                     clientId: data.googleDriveClientId || '',
@@ -3463,7 +3625,14 @@
                     if (!build) return [];
 
                     return this.availableArtefacts.filter(artefact => {
-                        if (this.artefactRarityFilter && String(artefact.stars || '') !== this.artefactRarityFilter) return false;
+                        if (this.artefactRarityFilter) {
+                            const requested = Number(this.artefactRarityFilter);
+                            const options = Array.isArray(artefact.rarity_options) && artefact.rarity_options.length
+                                ? artefact.rarity_options.map(Number)
+                                : [Number(artefact.stars || 0)];
+
+                            if (!options.includes(requested)) return false;
+                        }
                         if (this.artefactPicker.slot === 1 && build.pieces_1 === 2 && build.artefact2_id && Number(build.artefact2_id) === Number(artefact.id)) return false;
                         if (this.artefactPicker.slot === 2 && build.artefact1_id && Number(build.artefact1_id) === Number(artefact.id)) return false;
                         return true;
@@ -3633,12 +3802,14 @@
                     this.armesError = '';
                 },
                 addArme(arme) {
-                    if (this.armes.length >= 6) return;
+                    if (this.armes.length >= 3) return;
 
                     this.armes.push({
                         id_arme: arme.id,
                         nom: arme.nom,
                         slug: arme.slug,
+                        passive_name: arme.passive_name || '',
+                        passive_desc: arme.passive_desc || '',
                         etoile: arme.etoile,
                         stars: arme.stars,
                         fid_etoile: arme.fid_etoile,
@@ -3655,17 +3826,44 @@
                 artefactBuildLabel(build) {
                     return Number(build?.pieces_1) === 2 ? '2P + 2P' : '4P';
                 },
+                artefactRarityForId(artefactId) {
+                    const targetId = Number(artefactId);
+                    if (!targetId) return '';
+
+                    const artefact = this.availableArtefacts.find(item => Number(item.id) === targetId);
+                    if (!artefact) return '';
+
+                    const options = Array.isArray(artefact.rarity_options) && artefact.rarity_options.length
+                        ? artefact.rarity_options
+                        : (artefact.stars ? [artefact.stars] : []);
+
+                    if (options.length) {
+                        return options.map(star => `${star}★`).join(' / ');
+                    }
+
+                    return artefact.rarete || '';
+                },
                 addArtefactBuild() {
+                    if (this.artefactBuilds.length >= 3) return;
+
                     this.artefactBuilds.push({
                         id_build: null,
                         artefact1_id: null,
                         artefact1_nom: '',
+                        artefact1_bonus_2p: '',
+                        artefact1_bonus_4p: '',
                         artefact1_icon: defaultArtefact,
                         pieces_1: 4,
                         artefact2_id: null,
                         artefact2_nom: '',
+                        artefact2_bonus_2p: '',
+                        artefact2_bonus_4p: '',
                         artefact2_icon: defaultArtefact,
                         pieces_2: 0,
+                        main_stat_sablier: '',
+                        main_stat_gobelet: '',
+                        main_stat_couronne: '',
+                        sub_stats: '',
                         position: this.artefactBuilds.length + 1,
                     });
                     this.artefactsError = '';
@@ -3687,6 +3885,8 @@
                     if (build.pieces_1 === 4) {
                         build.artefact2_id = null;
                         build.artefact2_nom = '';
+                        build.artefact2_bonus_2p = '';
+                        build.artefact2_bonus_4p = '';
                         build.artefact2_icon = defaultArtefact;
                         build.pieces_2 = 0;
                     } else {
@@ -3707,10 +3907,14 @@
                     if (this.artefactPicker.slot === 1) {
                         build.artefact1_id = artefact.id;
                         build.artefact1_nom = artefact.nom;
+                        build.artefact1_bonus_2p = artefact.bonus_2p || '';
+                        build.artefact1_bonus_4p = artefact.bonus_4p || '';
                         build.artefact1_icon = artefact.icon;
                     } else {
                         build.artefact2_id = artefact.id;
                         build.artefact2_nom = artefact.nom;
+                        build.artefact2_bonus_2p = artefact.bonus_2p || '';
+                        build.artefact2_bonus_4p = artefact.bonus_4p || '';
                         build.artefact2_icon = artefact.icon;
                         build.pieces_2 = 2;
                     }
@@ -3723,10 +3927,14 @@
                     if (Number(slot) === 1) {
                         build.artefact1_id = null;
                         build.artefact1_nom = '';
+                        build.artefact1_bonus_2p = '';
+                        build.artefact1_bonus_4p = '';
                         build.artefact1_icon = defaultArtefact;
                     } else {
                         build.artefact2_id = null;
                         build.artefact2_nom = '';
+                        build.artefact2_bonus_2p = '';
+                        build.artefact2_bonus_4p = '';
                         build.artefact2_icon = defaultArtefact;
                         build.pieces_2 = 0;
                     }
@@ -3738,8 +3946,14 @@
                     }
 
                     const payload = [];
-                    for (let index = 0; index < this.artefactBuilds.length; index += 1) {
-                        const build = this.artefactBuilds[index];
+                    const builds = this.artefactBuilds.slice(0, 3);
+
+                    if (this.artefactBuilds.length > 3) {
+                        this.artefactsError = 'Maximum 3 builds artefacts.';
+                        return;
+                    }
+                    for (let index = 0; index < builds.length; index += 1) {
+                        const build = builds[index];
                         const pieces1 = Number(build.pieces_1) === 2 ? 2 : 4;
                         if (!build.artefact1_id) {
                             this.artefactsError = `Le build ${index + 1} doit avoir un set principal.`;
@@ -3761,6 +3975,10 @@
                             pieces_1: pieces1,
                             artefact2_id: pieces1 === 2 ? Number(build.artefact2_id) : null,
                             pieces_2: pieces1 === 2 ? 2 : null,
+                            main_stat_sablier: String(build.main_stat_sablier || '').trim() || null,
+                            main_stat_gobelet: String(build.main_stat_gobelet || '').trim() || null,
+                            main_stat_couronne: String(build.main_stat_couronne || '').trim() || null,
+                            sub_stats: String(build.sub_stats || '').trim() || null,
                         });
                     }
 

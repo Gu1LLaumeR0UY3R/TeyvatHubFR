@@ -11,7 +11,18 @@ class PersonnageArtefactRecommandee extends Model
     protected $table = 'personnage_artefact_recommandee';
     protected $primaryKey = 'id_build';
 
-    protected $fillable = ['fid_perso', 'fid_artefact_1', 'pieces_1', 'fid_artefact_2', 'pieces_2', 'position'];
+    protected $fillable = [
+        'fid_perso',
+        'fid_artefact_1',
+        'pieces_1',
+        'fid_artefact_2',
+        'pieces_2',
+        'main_stat_sablier',
+        'main_stat_gobelet',
+        'main_stat_couronne',
+        'sub_stats',
+        'position',
+    ];
 
     public function personnage(): BelongsTo
     {

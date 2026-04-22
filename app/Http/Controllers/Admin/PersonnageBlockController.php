@@ -282,7 +282,7 @@ class PersonnageBlockController extends Controller
     public function updateArmesRecommandees(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
-            'armes' => ['required', 'array', 'min:1', 'max:6'],
+            'armes' => ['required', 'array', 'min:1', 'max:3'],
             'armes.*.id_arme' => ['required', 'integer', 'exists:armes,id_arme'],
             'armes.*.rang' => ['nullable', 'integer', 'min:1', 'max:5'],
             'armes.*.is_starter' => ['nullable', 'boolean'],
@@ -368,11 +368,15 @@ class PersonnageBlockController extends Controller
     public function updateArtefactsRecommandees(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
-            'builds' => ['required', 'array', 'min:1'],
+            'builds' => ['required', 'array', 'min:1', 'max:3'],
             'builds.*.artefact1_id' => ['required', 'integer', 'exists:artefact,id_artefact'],
             'builds.*.pieces_1' => ['required', 'integer', Rule::in([2, 4])],
             'builds.*.artefact2_id' => ['nullable', 'integer', 'exists:artefact,id_artefact'],
             'builds.*.pieces_2' => ['nullable', 'integer', Rule::in([2])],
+            'builds.*.main_stat_sablier' => ['nullable', 'string', 'max:120'],
+            'builds.*.main_stat_gobelet' => ['nullable', 'string', 'max:120'],
+            'builds.*.main_stat_couronne' => ['nullable', 'string', 'max:120'],
+            'builds.*.sub_stats' => ['nullable', 'string', 'max:255'],
         ]);
 
         $builds = collect($data['builds'])->values();
@@ -406,6 +410,10 @@ class PersonnageBlockController extends Controller
                 'pieces_1' => $pieces1 === 4 ? '4p' : '2p',
                 'fid_artefact_2' => $pieces1 === 2 ? (int) $build['artefact2_id'] : null,
                 'pieces_2' => $pieces1 === 2 ? '2p' : null,
+                'main_stat_sablier' => $build['main_stat_sablier'] ?? null,
+                'main_stat_gobelet' => $build['main_stat_gobelet'] ?? null,
+                'main_stat_couronne' => $build['main_stat_couronne'] ?? null,
+                'sub_stats' => $build['sub_stats'] ?? null,
                 'position' => $index + 1,
             ]);
         }
