@@ -43,12 +43,13 @@ class BlogArticleController extends Controller
         $data = $request->validate([
             'titre_article' => ['required', 'string', 'max:180'],
             'slug' => ['nullable', 'string', 'max:200', 'unique:blog_article,slug'],
-            'contenu_article' => ['required', 'string'],
+            'layout_json' => ['required', 'json'],
             'statut' => ['required', Rule::in(['brouillon', 'publie'])],
             'date_publication' => ['nullable', 'date'],
             'featured_images.*' => ['nullable', 'image', 'max:5120'],
-            'inline_images.*' => ['nullable', 'image', 'max:5120'],
         ]);
+
+        $data = $this->normalizeArticlePayload($data);
 
         $data['slug'] = filled($data['slug'] ?? null)
             ? Str::slug((string) $data['slug'])
@@ -60,7 +61,6 @@ class BlogArticleController extends Controller
 
         $article = BlogArticle::create($data);
         $this->storeUploadedPhotos($article, $request->file('featured_images', []), 'featured');
-        $this->storeUploadedPhotos($article, $request->file('inline_images', []), 'inline');
 
         return redirect()->route('admin.blog.edit', $article)
             ->with('success', 'Article blog créé.');
@@ -82,12 +82,13 @@ class BlogArticleController extends Controller
         $data = $request->validate([
             'titre_article' => ['required', 'string', 'max:180'],
             'slug' => ['nullable', 'string', 'max:200', Rule::unique('blog_article', 'slug')->ignore($blog->id_article, 'id_article')],
-            'contenu_article' => ['required', 'string'],
+            'layout_json' => ['required', 'json'],
             'statut' => ['required', Rule::in(['brouillon', 'publie'])],
             'date_publication' => ['nullable', 'date'],
             'featured_images.*' => ['nullable', 'image', 'max:5120'],
-            'inline_images.*' => ['nullable', 'image', 'max:5120'],
         ]);
+
+        $data = $this->normalizeArticlePayload($data);
 
         $data['slug'] = filled($data['slug'] ?? null)
             ? Str::slug((string) $data['slug'])
@@ -99,7 +100,6 @@ class BlogArticleController extends Controller
 
         $blog->update($data);
         $this->storeUploadedPhotos($blog, $request->file('featured_images', []), 'featured');
-        $this->storeUploadedPhotos($blog, $request->file('inline_images', []), 'inline');
 
         return redirect()->route('admin.blog.index')
             ->with('success', 'Article blog mis à jour.');
@@ -203,5 +203,38 @@ class BlogArticleController extends Controller
         }
 
         Storage::disk('public')->delete((string) $photo->chemin_photo);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function normalizeArticlePayload(array $data): array
+    {
+        $layoutJson = $data['layout_json'] ?? null;
+        $layoutArray = null;
+
+        if (is_string($layoutJson) && trim($layoutJson) !== '') {
+            $decoded = json_decode($layoutJson, true);
+            $layoutArray = is_array($decoded) ? $decoded : null;
+        }
+
+        if ($layoutArray === null) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'layout_json' => 'La structure de l\'article doit être valide.',
+            ]);
+        }
+
+        $textContent = BlogArticle::textFromLayout($layoutArray);
+
+        if (trim($textContent) === '') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'layout_json' => 'Ajoute au moins un bloc de texte (heading ou paragraphe) dans l\'article.',
+            ]);
+        }
+
+        $data['layout_json'] = $layoutArray;
+
+        return $data;
     }
 }
