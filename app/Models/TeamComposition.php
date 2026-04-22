@@ -37,7 +37,6 @@ class TeamComposition extends Model
     public function alternatives(): HasMany
     {
         return $this->hasMany(TeamSlotRemplacant::class, 'fid_team', 'id_team')
-                    ->orderBy('slot')
-                    ->orderBy('id_rpl');
+                    ->orderBy('slot');
     }
 }
