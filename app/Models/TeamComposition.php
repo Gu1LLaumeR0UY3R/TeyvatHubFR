@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id_team
+ * @property int $fid_perso
+ * @property string $type_reaction
+ * @property string|null $tag
+ */
 class TeamComposition extends Model
 {
     protected $table      = 'team_composition';

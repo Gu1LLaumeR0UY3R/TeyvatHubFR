@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id_article
+ * @property string $titre_article
+ * @property string $slug
+ * @property string|null $extrait
+ * @property array|null $layout_json
+ * @property string $statut
+ * @property \Illuminate\Support\Carbon|null $date_publication
+ */
 class BlogArticle extends Model
 {
     use HasFactory;

@@ -10,6 +10,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string|null $pseudo
+ * @property string|null $avatar
+ * @property string|null $banniere
+ * @property string|null $bio_joueur
+ * @property string|null $uid_genshin
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

@@ -5,6 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id_membre
+ * @property int $fid_team
+ * @property int $fid_perso
+ * @property int $slot
+ * @property string|null $role_override
+ */
 class TeamCompositionMembre extends Model
 {
     protected $table      = 'team_composition_membre';

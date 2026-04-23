@@ -5,6 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id_rpl
+ * @property int $fid_team
+ * @property int $slot
+ * @property int $fid_perso_remplacant
+ * @property string|null $role_override
+ */
 class TeamSlotRemplacant extends Model
 {
     protected $table      = 'team_slot_remplacant';

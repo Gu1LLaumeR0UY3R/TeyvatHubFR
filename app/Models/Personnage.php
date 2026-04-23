@@ -11,6 +11,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id_perso
+ * @property string $nom_perso
+ * @property string $slug
+ * @property int|null $fid_TP
+ * @property int|null $fid_etoile
+ * @property int|null $fid_element
+ * @property int|null $fid_TArmes
+ * @property string|null $arme_icon
+ * @property string|null $background_actif
+ * @property string|null $block_order
+ */
 class Personnage extends Model
 {
     use HasFactory;

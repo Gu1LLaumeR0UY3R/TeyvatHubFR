@@ -233,9 +233,6 @@ class PersonnageBlockController extends Controller
             }
             $binary = ob_get_clean();
 
-            imagedestroy($src);
-            imagedestroy($dst);
-
             if ($binary === false || $binary === null) {
                 return $uploadedFile->storeAs($dir, $filename, 'public');
             }
@@ -295,7 +292,7 @@ class PersonnageBlockController extends Controller
         $expectedTypeId = $personnage->fid_TArmes;
         if ($expectedTypeId) {
             foreach ($armes as $index => $armeData) {
-                $armeModel = \App\Models\Arme::find($armeData['id_arme']);
+                $armeModel = Arme::find($armeData['id_arme']);
                 if (!$armeModel || $armeModel->fid_TArmes !== $expectedTypeId) {
                     throw ValidationException::withMessages([
                         'armes.' . $index . '.id_arme' => 'Cette arme n\'est pas compatible avec le type d\'arme du personnage.',

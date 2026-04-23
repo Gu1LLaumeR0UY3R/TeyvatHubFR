@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -9,7 +11,8 @@ class ProfilController extends Controller
 {
     public function index(): View
     {
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
 
         $persos_possedes = $user->personnages()->count();
         $armes_possedees = $user->armes()->count();
@@ -32,7 +35,8 @@ class ProfilController extends Controller
 
     public function personnages(): View
     {
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
         $personnages = $user->personnages()
             ->with(['element', 'etoile', 'photos'])
             ->orderByPivot('niveau', 'desc')
@@ -43,7 +47,8 @@ class ProfilController extends Controller
 
     public function armes(): View
     {
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
         $armes = $user->armes()
             ->with(['typeArme', 'etoile', 'photos'])
             ->orderByPivot('niveau', 'desc')
@@ -54,7 +59,8 @@ class ProfilController extends Controller
 
     public function parametres(): View
     {
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
         return view('profil.parametres', compact('user'));
     }
 }
