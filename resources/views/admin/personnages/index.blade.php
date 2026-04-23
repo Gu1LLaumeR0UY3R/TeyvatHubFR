@@ -111,7 +111,7 @@
                     @forelse($personnages as $personnage)
                         <tr class="hub-surface-hover">
                             <td class="px-3 py-2 text-center">
-                                <input type="checkbox" x-model="selected['{{ $personnage->id_perso }}']" class="rounded">
+                                <input type="checkbox" x-model="selected['{{ $personnage->getKey() }}']" class="rounded">
                             </td>
                             <td class="px-3 py-2 text-center">
                                 <img src="{{ $personnage->icone_url }}"

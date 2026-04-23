@@ -66,7 +66,7 @@ class NationController extends Controller
 
     public function edit(Nation $nation): View
     {
-        return view('admin.nations.edit', compact('nation'));
+        return view('admin.nations.edit', ['region' => $nation]);
     }
 
     public function update(Request $request, Nation $nation): RedirectResponse

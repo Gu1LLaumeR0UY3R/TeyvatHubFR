@@ -6,7 +6,7 @@
          animating: false,
          currentIndex: 0,
          intervalId: null,
-         personalityList: {{ Js::from($personnages->map(fn($p) => ['id' => $p->id_perso, 'nom' => $p->nom_perso, 'icone_url' => $p->icone_url])->values()) }},
+         personalityList: {{ Js::from($personnages->map(fn($p) => ['id' => $p->getKey(), 'nom' => $p->nom_perso, 'arme_icon' => $p->arme_icon])->values()) }},
          spin() {
              if (this.personalityList.length === 0) return;
              this.animating = true;

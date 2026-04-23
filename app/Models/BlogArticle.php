@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 class BlogArticle extends Model
 {
+    use HasFactory;
+
     public const EXCERPT_LENGTH = 170;
 
     protected $table = 'blog_article';
@@ -17,13 +20,14 @@ class BlogArticle extends Model
         'titre_article',
         'slug',
         'extrait',
-        'contenu_article',
+        'layout_json',
         'statut',
         'date_publication',
     ];
 
     protected $casts = [
         'date_publication' => 'datetime',
+        'layout_json' => 'array',
     ];
 
     protected static function booted(): void
@@ -51,7 +55,7 @@ class BlogArticle extends Model
             return $value;
         }
 
-        return self::makeExcerpt($this->contenu_article);
+        return self::makeExcerpt($this->textFromLayout($this->layout_json));
     }
 
     public function getRouteKeyName(): string
@@ -104,6 +108,29 @@ class BlogArticle extends Model
 
     public function syncExcerpt(): void
     {
-        $this->attributes['extrait'] = self::makeExcerpt($this->contenu_article);
+        $this->attributes['extrait'] = self::makeExcerpt($this->textFromLayout($this->layout_json));
+    }
+
+    public static function textFromLayout(array|string|null $layout): string
+    {
+        if (is_string($layout)) {
+            $decoded = json_decode($layout, true);
+            $layout = is_array($decoded) ? $decoded : null;
+        }
+
+        if (!is_array($layout)) {
+            return '';
+        }
+
+        $blocks = $layout['blocks'] ?? [];
+        if (!is_array($blocks)) {
+            return '';
+        }
+
+        return collect($blocks)
+            ->filter(fn($block) => is_array($block) && in_array(($block['type'] ?? null), ['heading', 'text'], true))
+            ->map(fn($block) => trim((string) ($block['text'] ?? '')))
+            ->filter()
+            ->implode("\n\n");
     }
 }

@@ -3,7 +3,7 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
      x-data="{
          personnages: {{ json_encode($personnages->map(fn($p) => [
-             'id'       => $p->id_perso,
+             'id'       => $p->getKey(),
              'nom'      => $p->nom_perso,
              'slug'     => $p->slug,
              'element'  => $p->element?->libelle_element ?? '',
@@ -26,7 +26,7 @@
                     class="w-full bg-hub-surface border border-hub-border rounded-xl px-4 py-2 text-hub-text focus:outline-none focus:border-hub-primary">
                 <option value="">Choisir...</option>
                 @foreach($personnages as $p)
-                    <option value="{{ $p->id_perso }}">{{ $p->nom_perso }}</option>
+                    <option value="{{ $p->getKey() }}">{{ $p->nom_perso }}</option>
                 @endforeach
             </select>
         </div>
@@ -37,7 +37,7 @@
                     class="w-full bg-hub-surface border border-hub-border rounded-xl px-4 py-2 text-hub-text focus:outline-none focus:border-hub-primary">
                 <option value="">Choisir...</option>
                 @foreach($personnages as $p)
-                    <option value="{{ $p->id_perso }}">{{ $p->nom_perso }}</option>
+                    <option value="{{ $p->getKey() }}">{{ $p->nom_perso }}</option>
                 @endforeach
             </select>
         </div>

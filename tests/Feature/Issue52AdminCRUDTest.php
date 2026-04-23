@@ -65,13 +65,22 @@ class Issue52AdminCRUDTest extends TestCase
     }
 
     // ──────────────────────────────────────────────
-    // Critère 3 : formulaire création personnage retourne 200
+    // Critère 3 : création ouvre l'éditeur personnage vierge
     // ──────────────────────────────────────────────
-    public function test_admin_personnages_create_retourne_200(): void
+    public function test_admin_personnages_create_redirige_vers_edit_vierge(): void
     {
-        $this->withSession($this->adminSession())
-            ->get(route('admin.personnages.create'))
-            ->assertStatus(200);
+        Etoile::create(['libelle' => '5★']);
+        TypePerso::create(['libelle_TP' => 'Standard']);
+        Elements::create(['libelle_element' => 'Dendro']);
+        TypeArme::create(['libelle_TArme' => 'Arc']);
+
+        $response = $this->withSession($this->adminSession())
+            ->get(route('admin.personnages.create'));
+
+        $this->assertDatabaseCount('personnage', 1);
+        $draft = Personnage::query()->firstOrFail();
+
+        $response->assertRedirect(route('admin.personnages.edit', ['personnage' => $draft, 'fresh' => 1]));
     }
 
     // ──────────────────────────────────────────────
@@ -93,7 +102,9 @@ class Issue52AdminCRUDTest extends TestCase
             'fid_TArmes'  => $typeArme->id_TArmes,
         ]);
 
-        $response->assertRedirect(route('admin.personnages.index'));
+        $perso = Personnage::where('nom_perso', 'Tighnari')->firstOrFail();
+
+        $response->assertRedirect(route('admin.personnages.edit', $perso));
         $this->assertDatabaseHas('personnage', ['nom_perso' => 'Tighnari']);
     }
 

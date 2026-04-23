@@ -66,14 +66,27 @@ class PersonnageController extends Controller
         return view('admin.personnages.index', compact('personnages', 'elements', 'etoiles', 'typeArmes', 'sort'));
     }
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        $elements  = Elements::all();
-        $etoiles   = Etoile::all();
-        $typesArme = TypeArme::all();
-        $typesPerso= TypePerso::all();
-        $roles     = Role::all();
-        return view('admin.personnages.create', compact('elements', 'etoiles', 'typesArme', 'typesPerso', 'roles'));
+        $fidElement = Elements::query()->value('id_element');
+        $fidEtoile = Etoile::query()->value('id_etoile');
+        $fidTypeArme = TypeArme::query()->value('id_TArmes');
+        $fidTypePerso = TypePerso::query()->value('id_TP');
+
+        if (!$fidElement || !$fidEtoile || !$fidTypeArme || !$fidTypePerso) {
+            return redirect()->route('admin.personnages.index')
+                ->with('error', 'Impossible d\'ouvrir un personnage vierge: certaines references (element, etoile, type arme ou type perso) sont manquantes.');
+        }
+
+        $draft = Personnage::create([
+            'nom_perso' => 'Brouillon ' . uniqid(),
+            'fid_etoile' => $fidEtoile,
+            'fid_element' => $fidElement,
+            'fid_TArmes' => $fidTypeArme,
+            'fid_TP' => $fidTypePerso,
+        ]);
+
+        return redirect()->route('admin.personnages.edit', ['personnage' => $draft, 'fresh' => 1]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -93,8 +106,8 @@ class PersonnageController extends Controller
             $personnage->photos()->create(['chemin_photo' => $path, 'source_url' => null]);
         }
 
-        return redirect()->route('admin.personnages.index')
-            ->with('success', 'Personnage créé avec succès.');
+        return redirect()->route('admin.personnages.edit', $personnage)
+            ->with('success', 'Personnage créé. Vous pouvez maintenant compléter sa fiche.');
     }
 
     public function show(Personnage $personnage): View

@@ -89,7 +89,7 @@
         </div>
 
         <div class="flex gap-3">
-            <button type="submit" class="px-4 py-2 bg-hub-gold text-hub-bg rounded hover:opacity-90">Créer</button>
+            <button type="submit" class="px-4 py-2 bg-hub-gold text-hub-bg rounded hover:opacity-90">Créer et ouvrir l'éditeur</button>
             <a href="{{ route('admin.personnages.index') }}" class="px-4 py-2 border border-hub-border rounded text-hub-text hover:bg-hub-surface">Annuler</a>
         </div>
     </form>

@@ -1226,7 +1226,7 @@
             ->map(function ($p) {
                 $photo = $p->photos->first();
                 return [
-                    'id_perso' => (int) $p->id_perso,
+                    'id_perso' => (int) $p->getKey(),
                     'nom' => $p->nom_perso,
                     'element' => $p->element?->libelle_element ?? '',
                     'default_role' => $p->roles->first()?->libelle_role,

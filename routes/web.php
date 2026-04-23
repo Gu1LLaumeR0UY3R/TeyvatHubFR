@@ -21,8 +21,10 @@ use App\Http\Controllers\RouletteTeamController;
 use App\Http\Controllers\MotusController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminManageController;
+use App\Http\Controllers\Admin\AdminTwoFactorChallengeController;
+use App\Http\Controllers\Admin\AdminTwoFactorController;
 use App\Http\Controllers\Admin\BlogArticleController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -63,16 +65,18 @@ Route::post('/outils/quiz/resultat', [OutilsController::class, 'quizResultat'])-
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', '2fa.user'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', '2fa.user'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/two-factor/enable', [TwoFactorController::class, 'enable'])->name('twofactor.enable');
+    Route::post('/profile/two-factor/disable', [TwoFactorController::class, 'disable'])->name('twofactor.disable');
 });
 
 // Routes profil joueur
-Route::middleware('auth')->prefix('profil')->group(function () {
+Route::middleware(['auth', '2fa.user'])->prefix('profil')->group(function () {
     Route::get('/', [ProfilController::class, 'index'])->name('profil.index');
     Route::get('/personnages', [ProfilController::class, 'personnages'])->name('profil.personnages');
     Route::get('/armes', [ProfilController::class, 'armes'])->name('profil.armes');
@@ -85,7 +89,7 @@ Route::middleware('auth')->prefix('profil')->group(function () {
 });
 
 // Outils protégés joueur
-Route::middleware('auth')->prefix('outils')->group(function () {
+Route::middleware(['auth', '2fa.user'])->prefix('outils')->group(function () {
     Route::get('/roulette', [OutilsController::class, 'roulette'])->name('outils.roulette');
     Route::patch('/roulette/sauvegarder', [OutilsController::class, 'rouletteSauvegarder'])->name('outils.roulette.sauvegarder');
     Route::get('/roulette-personnage', [RoulettePersonnageController::class, 'index'])->name('outils.roulette-personnage');
@@ -102,176 +106,204 @@ Route::middleware('auth')->prefix('outils')->group(function () {
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'login'])->name('admin.login');
     Route::post('/login', [AdminAuthController::class, 'authenticate'])->name('admin.authenticate');
-    Route::middleware('admin')->group(function () {
+    Route::get('/two-factor/challenge', [AdminTwoFactorChallengeController::class, 'show'])->name('admin.twofactor.challenge');
+    Route::post('/two-factor/challenge', [AdminTwoFactorChallengeController::class, 'verify'])->name('admin.twofactor.challenge.verify');
+
+    Route::middleware(['admin', '2fa.admin'])->group(function () {
+        // ─── Accès libre à tout admin connecté ───────────────────────────
         Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
-        Route::post('/import-genshin', [AdminController::class, 'importGenshin'])->name('admin.import-genshin');
+        Route::get('/security/two-factor', [AdminTwoFactorController::class, 'edit'])->name('admin.twofactor.settings');
+        Route::post('/security/two-factor/enable', [AdminTwoFactorController::class, 'enable'])->name('admin.twofactor.enable');
+        Route::post('/security/two-factor/disable', [AdminTwoFactorController::class, 'disable'])->name('admin.twofactor.disable');
         Route::get('/google-drive/browse', [\App\Http\Controllers\Admin\GoogleDriveController::class, 'browse'])->name('admin.google-drive.browse');
-        Route::patch('/personnages/bulk-update', [\App\Http\Controllers\Admin\PersonnageController::class, 'bulkUpdate'])->name('admin.personnages.bulk-update');
-        Route::resource('/personnages', \App\Http\Controllers\Admin\PersonnageController::class)->names([
-            'index'   => 'admin.personnages.index',
-            'create'  => 'admin.personnages.create',
-            'store'   => 'admin.personnages.store',
-            'show'    => 'admin.personnages.show',
-            'edit'    => 'admin.personnages.edit',
-            'update'  => 'admin.personnages.update',
-            'destroy' => 'admin.personnages.destroy',
-        ]);
-        // Routes AJAX blocs personnage
-        Route::prefix('personnages/{personnage:slug}/block')->group(function () {
-            Route::put('main-zone', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateMainZone'])->name('admin.personnage.block.main-zone.update');
-            Route::post('main-zone/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadImage'])->name('admin.personnage.block.main-zone.upload');
-            Route::get('main-zone/backgrounds', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'getBackgroundsByNation'])->name('admin.personnage.block.main-zone.backgrounds');
-            Route::put('armes-recommandees', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArmesRecommandees'])->name('admin.personnage.block.armes.update');
-            Route::delete('armes-recommandees/{id_arme}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArmeRecommandee'])->name('admin.personnage.block.armes.delete');
-            Route::put('artefacts-recommandes', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArtefactsRecommandees'])->name('admin.personnage.block.artefacts.update');
-            Route::delete('artefacts-recommandes/{id_build}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArtefactRecommande'])->name('admin.personnage.block.artefacts.delete');
-            Route::put('constellations', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellations'])->name('admin.personnage.block.constellations.update');
-            Route::post('constellations/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadConstellationImage'])->name('admin.personnage.block.constellations.upload');
-            Route::post('constellation-map', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellationMap'])->name('admin.personnage.block.constellation-map.update');
-            Route::put('competences', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateCompetences'])->name('admin.personnage.block.competences.update');
-            Route::put('histoires', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateHistoires'])->name('admin.personnage.block.histoires.update');
-            Route::post('competences/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadAptitudeImage'])->name('admin.personnage.block.competences.upload');
-            Route::post('teams', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'storeTeam'])->name('admin.personnage.block.teams.store');
-            Route::put('teams/{id_team}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateTeam'])->name('admin.personnage.block.teams.update');
-            Route::delete('teams/{id_team}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteTeam'])->name('admin.personnage.block.teams.delete');
-            Route::patch('order', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateBlockOrder'])->name('admin.personnage.block.order');
-        });
-        Route::patch('/armes/bulk-update', [\App\Http\Controllers\Admin\ArmeController::class, 'bulkUpdate'])->name('admin.armes.bulk-update');
-        Route::resource('/armes', \App\Http\Controllers\Admin\ArmeController::class)->names([
-            'index'   => 'admin.armes.index',
-            'create'  => 'admin.armes.create',
-            'store'   => 'admin.armes.store',
-            'show'    => 'admin.armes.show',
-            'edit'    => 'admin.armes.edit',
-            'update'  => 'admin.armes.update',
-            'destroy' => 'admin.armes.destroy',
-        ]);
-        Route::resource('/artefacts', \App\Http\Controllers\Admin\ArtefactController::class)->except(['show'])->names([
-            'index'   => 'admin.artefacts.index',
-            'create'  => 'admin.artefacts.create',
-            'store'   => 'admin.artefacts.store',
-            'edit'    => 'admin.artefacts.edit',
-            'update'  => 'admin.artefacts.update',
-            'destroy' => 'admin.artefacts.destroy',
-        ]);
-        Route::patch('/ennemis/bulk-update', [\App\Http\Controllers\Admin\EnnemiController::class, 'bulkUpdate'])->name('admin.ennemis.bulk-update');
-        Route::resource('/ennemis', \App\Http\Controllers\Admin\EnnemiController::class)->names([
-            'index'   => 'admin.ennemis.index',
-            'create'  => 'admin.ennemis.create',
-            'store'   => 'admin.ennemis.store',
-            'show'    => 'admin.ennemis.show',
-            'edit'    => 'admin.ennemis.edit',
-            'update'  => 'admin.ennemis.update',
-            'destroy' => 'admin.ennemis.destroy',
-        ]);
-        Route::patch('/animaux/bulk-update', [\App\Http\Controllers\Admin\AnimalController::class, 'bulkUpdate'])->name('admin.animaux.bulk-update');
-        Route::resource('/animaux', \App\Http\Controllers\Admin\AnimalController::class)->names([
-            'index'   => 'admin.animaux.index',
-            'create'  => 'admin.animaux.create',
-            'store'   => 'admin.animaux.store',
-            'show'    => 'admin.animaux.show',
-            'edit'    => 'admin.animaux.edit',
-            'update'  => 'admin.animaux.update',
-            'destroy' => 'admin.animaux.destroy',
-        ]);
-        Route::patch('/cuisine/bulk-update', [\App\Http\Controllers\Admin\CuisineController::class, 'bulkUpdate'])->name('admin.cuisine.bulk-update');
-        Route::resource('/cuisine', \App\Http\Controllers\Admin\CuisineController::class)->names([
-            'index'   => 'admin.cuisine.index',
-            'create'  => 'admin.cuisine.create',
-            'store'   => 'admin.cuisine.store',
-            'show'    => 'admin.cuisine.show',
-            'edit'    => 'admin.cuisine.edit',
-            'update'  => 'admin.cuisine.update',
-            'destroy' => 'admin.cuisine.destroy',
-        ]);
-        Route::patch('/nations/bulk-update', [\App\Http\Controllers\Admin\NationController::class, 'bulkUpdate'])->name('admin.nations.bulk-update');
-        Route::resource('/nations', \App\Http\Controllers\Admin\NationController::class)->names([
-            'index'   => 'admin.nations.index',
-            'create'  => 'admin.nations.create',
-            'store'   => 'admin.nations.store',
-            'show'    => 'admin.nations.show',
-            'edit'    => 'admin.nations.edit',
-            'update'  => 'admin.nations.update',
-            'destroy' => 'admin.nations.destroy',
-        ]);
-        // Alias legacy: conserver les anciennes routes admin.regions.*
-        Route::patch('/regions/bulk-update', [\App\Http\Controllers\Admin\NationController::class, 'bulkUpdate'])->name('admin.regions.bulk-update');
-        Route::resource('/regions', \App\Http\Controllers\Admin\NationController::class)->names([
-            'index'   => 'admin.regions.index',
-            'create'  => 'admin.regions.create',
-            'store'   => 'admin.regions.store',
-            'show'    => 'admin.regions.show',
-            'edit'    => 'admin.regions.edit',
-            'update'  => 'admin.regions.update',
-            'destroy' => 'admin.regions.destroy',
-        ]);
-        Route::resource('/evenements', \App\Http\Controllers\Admin\EvenementController::class)->names([
-            'index'   => 'admin.evenements.index',
-            'create'  => 'admin.evenements.create',
-            'store'   => 'admin.evenements.store',
-            'show'    => 'admin.evenements.show',
-            'edit'    => 'admin.evenements.edit',
-            'update'  => 'admin.evenements.update',
-            'destroy' => 'admin.evenements.destroy',
-        ]);
-        Route::post('/blog/slugs', [BlogArticleController::class, 'storeSlug'])->name('admin.blog.slugs.store');
-        Route::delete('/blog/slugs/{blogSlug}', [BlogArticleController::class, 'destroySlug'])->name('admin.blog.slugs.destroy');
-        Route::delete('/blog/{blog}/images/{photo}', [BlogArticleController::class, 'destroyImage'])->name('admin.blog.images.destroy');
-        Route::resource('/blog', BlogArticleController::class)->except(['show'])->names([
-            'index'   => 'admin.blog.index',
-            'create'  => 'admin.blog.create',
-            'store'   => 'admin.blog.store',
-            'edit'    => 'admin.blog.edit',
-            'update'  => 'admin.blog.update',
-            'destroy' => 'admin.blog.destroy',
-        ]);
-        Route::patch('/chronologie/bulk-update', [\App\Http\Controllers\Admin\ChronologieController::class, 'bulkUpdate'])->name('admin.chronologie.bulk-update');
-        Route::resource('/chronologie', \App\Http\Controllers\Admin\ChronologieController::class)->names([
-            'index'   => 'admin.chronologie.index',
-            'create'  => 'admin.chronologie.create',
-            'store'   => 'admin.chronologie.store',
-            'show'    => 'admin.chronologie.show',
-            'edit'    => 'admin.chronologie.edit',
-            'update'  => 'admin.chronologie.update',
-            'destroy' => 'admin.chronologie.destroy',
-        ]);
-        Route::patch('/chronologie/{chronologie}/ordre', [\App\Http\Controllers\Admin\ChronologieController::class, 'updateOrdre'])->name('admin.chronologie.ordre');
-        Route::patch('/roles/bulk-update', [\App\Http\Controllers\Admin\RoleController::class, 'bulkUpdate'])->name('admin.roles.bulk-update');
-        Route::resource('/roles', \App\Http\Controllers\Admin\RoleController::class)->names([
-            'index'   => 'admin.roles.index',
-            'create'  => 'admin.roles.create',
-            'store'   => 'admin.roles.store',
-            'show'    => 'admin.roles.show',
-            'edit'    => 'admin.roles.edit',
-            'update'  => 'admin.roles.update',
-            'destroy' => 'admin.roles.destroy',
-        ]);
-        Route::patch('/utilisateurs/bulk-update', [\App\Http\Controllers\Admin\UtilisateurController::class, 'bulkUpdate'])->name('admin.utilisateurs.bulk-update');
-        Route::resource('/utilisateurs', \App\Http\Controllers\Admin\UtilisateurController::class)->names([
-            'index'   => 'admin.utilisateurs.index',
-            'create'  => 'admin.utilisateurs.create',
-            'store'   => 'admin.utilisateurs.store',
-            'show'    => 'admin.utilisateurs.show',
-            'edit'    => 'admin.utilisateurs.edit',
-            'update'  => 'admin.utilisateurs.update',
-            'destroy' => 'admin.utilisateurs.destroy',
-        ]);
-        Route::post('/utilisateurs/{utilisateur}/bannir', [\App\Http\Controllers\Admin\UtilisateurController::class, 'bannir'])->name('admin.utilisateurs.bannir');
-        Route::post('/utilisateurs/{utilisateur}/debannir', [\App\Http\Controllers\Admin\UtilisateurController::class, 'debannir'])->name('admin.utilisateurs.debannir');
 
-        // CRUD références (éléments, types, étoiles, réactions…)
-        Route::get('/references/{type}', [\App\Http\Controllers\Admin\ReferenceController::class, 'index'])->name('admin.references.index');
-        Route::post('/references/{type}', [\App\Http\Controllers\Admin\ReferenceController::class, 'store'])->name('admin.references.store');
-        Route::patch('/references/{type}/{id}', [\App\Http\Controllers\Admin\ReferenceController::class, 'update'])->name('admin.references.update');
-        Route::delete('/references/{type}/{id}', [\App\Http\Controllers\Admin\ReferenceController::class, 'destroy'])->name('admin.references.destroy');
+        // ─── Import API (permission: import) ─────────────────────────────
+        Route::middleware('admin.can:import')->group(function () {
+            Route::post('/import-genshin', [AdminController::class, 'importGenshin'])->name('admin.import-genshin');
+        });
+
+        // ─── Encyclopédie (permission: encyclopedie) ──────────────────────
+        Route::middleware('admin.can:encyclopedie')->group(function () {
+            Route::patch('/personnages/bulk-update', [\App\Http\Controllers\Admin\PersonnageController::class, 'bulkUpdate'])->name('admin.personnages.bulk-update');
+            Route::resource('/personnages', \App\Http\Controllers\Admin\PersonnageController::class)->names([
+                'index'   => 'admin.personnages.index',
+                'create'  => 'admin.personnages.create',
+                'store'   => 'admin.personnages.store',
+                'show'    => 'admin.personnages.show',
+                'edit'    => 'admin.personnages.edit',
+                'update'  => 'admin.personnages.update',
+                'destroy' => 'admin.personnages.destroy',
+            ]);
+            // Routes AJAX blocs personnage
+            Route::prefix('personnages/{personnage:slug}/block')->group(function () {
+                Route::put('main-zone', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateMainZone'])->name('admin.personnage.block.main-zone.update');
+                Route::post('main-zone/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadImage'])->name('admin.personnage.block.main-zone.upload');
+                Route::get('main-zone/backgrounds', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'getBackgroundsByNation'])->name('admin.personnage.block.main-zone.backgrounds');
+                Route::put('armes-recommandees', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArmesRecommandees'])->name('admin.personnage.block.armes.update');
+                Route::delete('armes-recommandees/{id_arme}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArmeRecommandee'])->name('admin.personnage.block.armes.delete');
+                Route::put('artefacts-recommandes', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArtefactsRecommandees'])->name('admin.personnage.block.artefacts.update');
+                Route::delete('artefacts-recommandes/{id_build}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArtefactRecommande'])->name('admin.personnage.block.artefacts.delete');
+                Route::put('constellations', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellations'])->name('admin.personnage.block.constellations.update');
+                Route::post('constellations/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadConstellationImage'])->name('admin.personnage.block.constellations.upload');
+                Route::post('constellation-map', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellationMap'])->name('admin.personnage.block.constellation-map.update');
+                Route::put('competences', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateCompetences'])->name('admin.personnage.block.competences.update');
+                Route::put('histoires', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateHistoires'])->name('admin.personnage.block.histoires.update');
+                Route::post('competences/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadAptitudeImage'])->name('admin.personnage.block.competences.upload');
+                Route::post('teams', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'storeTeam'])->name('admin.personnage.block.teams.store');
+                Route::put('teams/{id_team}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateTeam'])->name('admin.personnage.block.teams.update');
+                Route::delete('teams/{id_team}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteTeam'])->name('admin.personnage.block.teams.delete');
+                Route::patch('order', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateBlockOrder'])->name('admin.personnage.block.order');
+            });
+            Route::patch('/armes/bulk-update', [\App\Http\Controllers\Admin\ArmeController::class, 'bulkUpdate'])->name('admin.armes.bulk-update');
+            Route::resource('/armes', \App\Http\Controllers\Admin\ArmeController::class)->names([
+                'index'   => 'admin.armes.index',
+                'create'  => 'admin.armes.create',
+                'store'   => 'admin.armes.store',
+                'show'    => 'admin.armes.show',
+                'edit'    => 'admin.armes.edit',
+                'update'  => 'admin.armes.update',
+                'destroy' => 'admin.armes.destroy',
+            ]);
+            Route::resource('/artefacts', \App\Http\Controllers\Admin\ArtefactController::class)->except(['show'])->names([
+                'index'   => 'admin.artefacts.index',
+                'create'  => 'admin.artefacts.create',
+                'store'   => 'admin.artefacts.store',
+                'edit'    => 'admin.artefacts.edit',
+                'update'  => 'admin.artefacts.update',
+                'destroy' => 'admin.artefacts.destroy',
+            ]);
+            Route::patch('/ennemis/bulk-update', [\App\Http\Controllers\Admin\EnnemiController::class, 'bulkUpdate'])->name('admin.ennemis.bulk-update');
+            Route::resource('/ennemis', \App\Http\Controllers\Admin\EnnemiController::class)->names([
+                'index'   => 'admin.ennemis.index',
+                'create'  => 'admin.ennemis.create',
+                'store'   => 'admin.ennemis.store',
+                'show'    => 'admin.ennemis.show',
+                'edit'    => 'admin.ennemis.edit',
+                'update'  => 'admin.ennemis.update',
+                'destroy' => 'admin.ennemis.destroy',
+            ]);
+            Route::patch('/animaux/bulk-update', [\App\Http\Controllers\Admin\AnimalController::class, 'bulkUpdate'])->name('admin.animaux.bulk-update');
+            Route::resource('/animaux', \App\Http\Controllers\Admin\AnimalController::class)->names([
+                'index'   => 'admin.animaux.index',
+                'create'  => 'admin.animaux.create',
+                'store'   => 'admin.animaux.store',
+                'show'    => 'admin.animaux.show',
+                'edit'    => 'admin.animaux.edit',
+                'update'  => 'admin.animaux.update',
+                'destroy' => 'admin.animaux.destroy',
+            ]);
+            Route::patch('/cuisine/bulk-update', [\App\Http\Controllers\Admin\CuisineController::class, 'bulkUpdate'])->name('admin.cuisine.bulk-update');
+            Route::resource('/cuisine', \App\Http\Controllers\Admin\CuisineController::class)->names([
+                'index'   => 'admin.cuisine.index',
+                'create'  => 'admin.cuisine.create',
+                'store'   => 'admin.cuisine.store',
+                'show'    => 'admin.cuisine.show',
+                'edit'    => 'admin.cuisine.edit',
+                'update'  => 'admin.cuisine.update',
+                'destroy' => 'admin.cuisine.destroy',
+            ]);
+            Route::patch('/nations/bulk-update', [\App\Http\Controllers\Admin\NationController::class, 'bulkUpdate'])->name('admin.nations.bulk-update');
+            Route::resource('/nations', \App\Http\Controllers\Admin\NationController::class)->names([
+                'index'   => 'admin.nations.index',
+                'create'  => 'admin.nations.create',
+                'store'   => 'admin.nations.store',
+                'show'    => 'admin.nations.show',
+                'edit'    => 'admin.nations.edit',
+                'update'  => 'admin.nations.update',
+                'destroy' => 'admin.nations.destroy',
+            ]);
+            // Alias legacy: conserver les anciennes routes admin.regions.*
+            Route::patch('/regions/bulk-update', [\App\Http\Controllers\Admin\NationController::class, 'bulkUpdate'])->name('admin.regions.bulk-update');
+            Route::resource('/regions', \App\Http\Controllers\Admin\NationController::class)->names([
+                'index'   => 'admin.regions.index',
+                'create'  => 'admin.regions.create',
+                'store'   => 'admin.regions.store',
+                'show'    => 'admin.regions.show',
+                'edit'    => 'admin.regions.edit',
+                'update'  => 'admin.regions.update',
+                'destroy' => 'admin.regions.destroy',
+            ]);
+            Route::patch('/roles/bulk-update', [\App\Http\Controllers\Admin\RoleController::class, 'bulkUpdate'])->name('admin.roles.bulk-update');
+            Route::resource('/roles', \App\Http\Controllers\Admin\RoleController::class)->names([
+                'index'   => 'admin.roles.index',
+                'create'  => 'admin.roles.create',
+                'store'   => 'admin.roles.store',
+                'show'    => 'admin.roles.show',
+                'edit'    => 'admin.roles.edit',
+                'update'  => 'admin.roles.update',
+                'destroy' => 'admin.roles.destroy',
+            ]);
+            // Références (éléments, types, étoiles, réactions…)
+            Route::get('/references/{type}', [\App\Http\Controllers\Admin\ReferenceController::class, 'index'])->name('admin.references.index');
+            Route::post('/references/{type}', [\App\Http\Controllers\Admin\ReferenceController::class, 'store'])->name('admin.references.store');
+            Route::patch('/references/{type}/{id}', [\App\Http\Controllers\Admin\ReferenceController::class, 'update'])->name('admin.references.update');
+            Route::delete('/references/{type}/{id}', [\App\Http\Controllers\Admin\ReferenceController::class, 'destroy'])->name('admin.references.destroy');
+        });
+
+        // ─── Blog (permission: blog) ──────────────────────────────────────
+        Route::middleware('admin.can:blog')->group(function () {
+            Route::post('/blog/slugs', [BlogArticleController::class, 'storeSlug'])->name('admin.blog.slugs.store');
+            Route::delete('/blog/slugs/{blogSlug}', [BlogArticleController::class, 'destroySlug'])->name('admin.blog.slugs.destroy');
+            Route::delete('/blog/{blog}/images/{photo}', [BlogArticleController::class, 'destroyImage'])->name('admin.blog.images.destroy');
+            Route::resource('/blog', BlogArticleController::class)->except(['show'])->names([
+                'index'   => 'admin.blog.index',
+                'create'  => 'admin.blog.create',
+                'store'   => 'admin.blog.store',
+                'edit'    => 'admin.blog.edit',
+                'update'  => 'admin.blog.update',
+                'destroy' => 'admin.blog.destroy',
+            ]);
+        });
+
+        // ─── Événements & Chronologie (permission: evenements) ────────────
+        Route::middleware('admin.can:evenements')->group(function () {
+            Route::resource('/evenements', \App\Http\Controllers\Admin\EvenementController::class)->names([
+                'index'   => 'admin.evenements.index',
+                'create'  => 'admin.evenements.create',
+                'store'   => 'admin.evenements.store',
+                'show'    => 'admin.evenements.show',
+                'edit'    => 'admin.evenements.edit',
+                'update'  => 'admin.evenements.update',
+                'destroy' => 'admin.evenements.destroy',
+            ]);
+            Route::patch('/chronologie/bulk-update', [\App\Http\Controllers\Admin\ChronologieController::class, 'bulkUpdate'])->name('admin.chronologie.bulk-update');
+            Route::resource('/chronologie', \App\Http\Controllers\Admin\ChronologieController::class)->names([
+                'index'   => 'admin.chronologie.index',
+                'create'  => 'admin.chronologie.create',
+                'store'   => 'admin.chronologie.store',
+                'show'    => 'admin.chronologie.show',
+                'edit'    => 'admin.chronologie.edit',
+                'update'  => 'admin.chronologie.update',
+                'destroy' => 'admin.chronologie.destroy',
+            ]);
+            Route::patch('/chronologie/{chronologie}/ordre', [\App\Http\Controllers\Admin\ChronologieController::class, 'updateOrdre'])->name('admin.chronologie.ordre');
+        });
+
+        // ─── Utilisateurs (permission: utilisateurs) ──────────────────────
+        Route::middleware('admin.can:utilisateurs')->group(function () {
+            Route::patch('/utilisateurs/bulk-update', [\App\Http\Controllers\Admin\UtilisateurController::class, 'bulkUpdate'])->name('admin.utilisateurs.bulk-update');
+            Route::resource('/utilisateurs', \App\Http\Controllers\Admin\UtilisateurController::class)->names([
+                'index'   => 'admin.utilisateurs.index',
+                'create'  => 'admin.utilisateurs.create',
+                'store'   => 'admin.utilisateurs.store',
+                'show'    => 'admin.utilisateurs.show',
+                'edit'    => 'admin.utilisateurs.edit',
+                'update'  => 'admin.utilisateurs.update',
+                'destroy' => 'admin.utilisateurs.destroy',
+            ]);
+            Route::post('/utilisateurs/{utilisateur}/bannir', [\App\Http\Controllers\Admin\UtilisateurController::class, 'bannir'])->name('admin.utilisateurs.bannir');
+            Route::post('/utilisateurs/{utilisateur}/debannir', [\App\Http\Controllers\Admin\UtilisateurController::class, 'debannir'])->name('admin.utilisateurs.debannir');
+        });
+
+        // ─── Gestion des admins (permission: admins) ──────────────────────
         Route::middleware('admin.can:admins')->prefix('admins')->group(function () {
-            Route::get('/', [AdminManageController::class, 'index'])->name('admin.admins.index');
-            Route::get('/create', [AdminManageController::class, 'create'])->name('admin.admins.create');
-            Route::post('/', [AdminManageController::class, 'store'])->name('admin.admins.store');
-            Route::get('/{admin}/edit', [AdminManageController::class, 'edit'])->name('admin.admins.edit');
-            Route::put('/{admin}', [AdminManageController::class, 'update'])->name('admin.admins.update');
-            Route::delete('/{admin}', [AdminManageController::class, 'destroy'])->name('admin.admins.destroy');
+            Route::get('/', [\App\Http\Controllers\Admin\AdminManageController::class, 'index'])->name('admin.admins.index');
+            Route::get('/create', [\App\Http\Controllers\Admin\AdminManageController::class, 'create'])->name('admin.admins.create');
+            Route::post('/', [\App\Http\Controllers\Admin\AdminManageController::class, 'store'])->name('admin.admins.store');
+            Route::get('/{admin}/edit', [\App\Http\Controllers\Admin\AdminManageController::class, 'edit'])->name('admin.admins.edit');
+            Route::put('/{admin}', [\App\Http\Controllers\Admin\AdminManageController::class, 'update'])->name('admin.admins.update');
+            Route::delete('/{admin}', [\App\Http\Controllers\Admin\AdminManageController::class, 'destroy'])->name('admin.admins.destroy');
         });
     });
 });

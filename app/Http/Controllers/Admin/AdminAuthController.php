@@ -46,14 +46,34 @@ class AdminAuthController extends Controller
         }
 
         session()->regenerate();
-        session(['admin_id' => $admin->id_admin, 'admin_pseudo' => $admin->pseudo_admin]);
+
+        if ($admin->two_factor_enabled) {
+            session([
+                'admin_2fa_pending_id' => $admin->id_admin,
+            ]);
+
+            return redirect()->route('admin.twofactor.challenge');
+        }
+
+        session([
+            'admin_id'    => $admin->id_admin,
+            'admin_pseudo' => $admin->pseudo_admin,
+            'admin_role'  => $admin->role,
+            'admin_2fa_passed' => true,
+        ]);
 
         return redirect()->route('admin.dashboard');
     }
 
     public function logout(Request $request): RedirectResponse
     {
-        session()->forget(['admin_id', 'admin_pseudo']);
+        session()->forget([
+            'admin_id',
+            'admin_pseudo',
+            'admin_role',
+            'admin_2fa_passed',
+            'admin_2fa_pending_id',
+        ]);
         session()->regenerateToken();
 
         return redirect()->route('admin.login');

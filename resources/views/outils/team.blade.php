@@ -15,7 +15,7 @@
                         class="w-full bg-hub-surface-hover border border-hub-border rounded-xl px-4 py-2 text-hub-text focus:outline-none focus:border-hub-primary">
                     <option value="">Aléatoire</option>
                     @foreach($personnages as $p)
-                        <option value="{{ $p->id_perso }}" {{ (isset($team) && $team->firstWhere('id_perso', $p->id_perso) && $team->first()->id_perso == $p->id_perso) ? 'selected' : '' }}>
+                        <option value="{{ $p->getKey() }}" {{ (isset($team) && $team->firstWhere('id_perso', $p->getKey()) && $team->first()->id_perso == $p->getKey()) ? 'selected' : '' }}>
                             {{ $p->nom_perso }}
                         </option>
                     @endforeach
