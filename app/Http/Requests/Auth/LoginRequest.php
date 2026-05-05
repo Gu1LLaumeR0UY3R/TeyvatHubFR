@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use App\Services\ActivityLogService;
 
 class LoginRequest extends FormRequest
 {
@@ -52,6 +53,27 @@ class LoginRequest extends FormRequest
 
         if (! $authenticated) {
             RateLimiter::hit($this->throttleKey());
+
+            // Loguer la tentative échouée et détecter l'activité suspecte
+            ActivityLogService::log(
+                action:    'login_failed',
+                level:     'warning',
+                context:   ['email' => $this->input('email')],
+                userType:  null,
+                userId:    null,
+                userLabel: $this->input('email'),
+                request:   $this,
+            );
+
+            // Alerte critique si seuil atteint
+            if (ActivityLogService::isSuspiciousLogin($this->ip())) {
+                ActivityLogService::log(
+                    action:  'suspicious_login_alert',
+                    level:   'critical',
+                    context: ['email' => $this->input('email'), 'threshold_reached' => true],
+                    request: $this,
+                );
+            }
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),

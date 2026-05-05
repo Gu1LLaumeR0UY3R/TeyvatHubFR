@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\ActivityLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -31,6 +32,17 @@ class AdminAuthController extends Controller
         $admin = Admin::where('email_admin', $request->email)->first();
 
         if (!$admin) {
+            // Log tentative avec email inconnu
+            ActivityLogService::log(
+                action:    'admin_login_failed',
+                level:     'warning',
+                context:   ['email' => $request->email, 'reason' => 'email_not_found'],
+                userLabel: $request->email,
+                request:   $request,
+            );
+            if (ActivityLogService::isSuspiciousLogin($request->ip())) {
+                ActivityLogService::log('suspicious_login_alert', 'critical', ['source' => 'admin', 'email' => $request->email], request: $request);
+            }
             return back()->withErrors(['email' => 'Identifiants incorrects.'])->withInput();
         }
 
@@ -42,6 +54,18 @@ class AdminAuthController extends Controller
         }
 
         if (! $validPassword) {
+            ActivityLogService::log(
+                action:    'admin_login_failed',
+                level:     'warning',
+                context:   ['email' => $request->email, 'reason' => 'wrong_password'],
+                userType:  'admin',
+                userId:    $admin->id_admin,
+                userLabel: $admin->email_admin,
+                request:   $request,
+            );
+            if (ActivityLogService::isSuspiciousLogin($request->ip())) {
+                ActivityLogService::log('suspicious_login_alert', 'critical', ['source' => 'admin', 'admin_id' => $admin->id_admin], request: $request);
+            }
             return back()->withErrors(['email' => 'Identifiants incorrects.'])->withInput();
         }
 
@@ -61,6 +85,15 @@ class AdminAuthController extends Controller
             'admin_role'  => $admin->role,
             'admin_2fa_passed' => true,
         ]);
+
+        ActivityLogService::log(
+            action:    'admin_login_success',
+            level:     'info',
+            userType:  'admin',
+            userId:    $admin->id_admin,
+            userLabel: $admin->email_admin,
+            request:   $request,
+        );
 
         return redirect()->route('admin.dashboard');
     }

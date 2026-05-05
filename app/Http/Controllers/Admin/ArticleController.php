@@ -203,6 +203,62 @@ class ArticleController extends Controller
         );
     }
 
+    // ── Résultats questionnaire (graphiques) ─────────────────────────
+    public function surveyResults(Article $article): View
+    {
+        $this->authorizeWrite();
+
+        abort_unless($article->type === 'questionnaire', 404);
+
+        $article->load(['survey.questions.answers']);
+        $survey = $article->survey;
+
+        abort_unless($survey, 404);
+
+        $results = [];
+        foreach ($survey->questions as $question) {
+            $answers = $question->answers->map(fn($a) => $a->value)->toArray();
+            $item = [
+                'type'    => $question->type,
+                'label'   => $question->label,
+                'options' => $question->options ?? [],
+                'count'   => count($answers),
+            ];
+
+            switch ($question->type) {
+                case 'qcm':
+                    $tally = array_count_values(array_map(fn($v) => is_array($v) ? '' : (string) $v, $answers));
+                    $item['tally'] = $tally;
+                    break;
+                case 'checkbox':
+                    $flat = array_merge(...array_map(fn($v) => is_array($v) ? $v : [], $answers));
+                    $item['tally'] = array_count_values($flat);
+                    break;
+                case 'rating':
+                    $nums = array_filter(array_map(fn($v) => is_numeric($v) ? (float) $v : null, $answers));
+                    $item['average'] = count($nums) > 0 ? round(array_sum($nums) / count($nums), 2) : 0;
+                    $item['distribution'] = array_count_values(array_map('intval', $nums));
+                    break;
+                case 'boolean':
+                    $yes = count(array_filter($answers, fn($v) => $v === true || $v === 1 || $v === '1'));
+                    $item['yes'] = $yes;
+                    $item['no']  = count($answers) - $yes;
+                    break;
+                case 'text':
+                    $item['responses'] = array_filter(
+                        array_map(fn($v) => is_string($v) ? mb_substr(strip_tags($v), 0, 500) : null, $answers)
+                    );
+                    break;
+            }
+
+            $results[] = $item;
+        }
+
+        $totalResponses = $survey->responses()->count();
+
+        return view('admin.articles.survey-results', compact('article', 'survey', 'results', 'totalResponses'));
+    }
+
     private function storeSurveyMeta(Request $request, Article $article): void
     {
         $data = $request->validate([

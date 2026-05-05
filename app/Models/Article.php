@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -51,6 +52,11 @@ class Article extends Model
     public function survey(): HasOne
     {
         return $this->hasOne(Survey::class, 'article_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(ArticleComment::class, 'article_id');
     }
 
     // ── Scopes locaux ─────────────────────────────────────────────────

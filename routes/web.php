@@ -26,8 +26,10 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\ImprovementVoteController;
 use App\Http\Controllers\SurveyResponseController;
+use App\Http\Controllers\ArticleCommentController;
 use App\Http\Controllers\Auth\TwoFactorController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\ArticleCommentModerationController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -57,12 +59,18 @@ Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('art
 Route::get('/histoire/nations', fn() => redirect()->route('nations.index'));
 Route::get('/histoire/nations/{nation}', fn(string $nation) => redirect()->route('nations.show', $nation));
 
-// Routes joueur : votes + questionnaires
+// Routes joueur : votes + questionnaires + commentaires
 Route::middleware(['auth', '2fa.user'])->group(function () {
     Route::post('/amelioration/{improvement}/vote', [ImprovementVoteController::class, 'toggle'])
          ->name('improvement.vote');
     Route::post('/surveys/{survey}/respond', [SurveyResponseController::class, 'store'])
          ->name('survey.respond');
+});
+
+// Commentaires articles (auth requise pour poster)
+Route::middleware(['auth', '2fa.user'])->group(function () {
+    Route::post('/articles/{article}/comments', [ArticleCommentController::class, 'store'])
+         ->name('articles.comment.store');
 });
 
 // Jeux publics
@@ -316,6 +324,23 @@ Route::prefix('admin')->group(function () {
             Route::put('/{admin}', [\App\Http\Controllers\Admin\AdminManageController::class, 'update'])->name('admin.admins.update');
             Route::delete('/{admin}', [\App\Http\Controllers\Admin\AdminManageController::class, 'destroy'])->name('admin.admins.destroy');
         });
+
+        // ─── Résultats questionnaires (permission: articles) ─────────────
+        Route::middleware('admin.can:articles')->group(function () {
+            Route::get('/articles/{article}/survey-results', [AdminArticleController::class, 'surveyResults'])
+                 ->name('admin.articles.survey-results');
+        });
+
+        // ─── Modération commentaires (permission: articles) ──────────────
+        Route::middleware('admin.can:articles')->prefix('comments')->group(function () {
+            Route::get('/', [ArticleCommentModerationController::class, 'index'])->name('admin.comments.index');
+            Route::patch('/{comment}/approve', [ArticleCommentModerationController::class, 'approve'])->name('admin.comments.approve');
+            Route::patch('/{comment}/reject', [ArticleCommentModerationController::class, 'reject'])->name('admin.comments.reject');
+            Route::delete('/{comment}', [ArticleCommentModerationController::class, 'destroy'])->name('admin.comments.destroy');
+        });
+
+        // ─── Logs d'activité (super_admin uniquement) ────────────────────
+        Route::get('/logs', [ActivityLogController::class, 'index'])->name('admin.logs.index');
     });
 });
 
