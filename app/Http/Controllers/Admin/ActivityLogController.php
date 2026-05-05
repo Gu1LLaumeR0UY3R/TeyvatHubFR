@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
-use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -12,13 +11,11 @@ class ActivityLogController extends Controller
 {
     /**
      * Liste paginée des logs avec filtres.
-     * Accès réservé au super_admin.
+     * Accès réservé aux admins ayant la permission 'manage_logs' (super_admin uniquement via Spatie).
+     * La vérification est déléguée au middleware admin.can:manage_logs sur la route.
      */
     public function index(Request $request): View
     {
-        $admin = Admin::find(session('admin_id'));
-        abort_unless($admin && in_array($admin->role, ['super_admin', 'superadmin']), 403);
-
         $query = ActivityLog::recent();
 
         if ($request->filled('level')) {

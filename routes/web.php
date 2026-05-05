@@ -339,8 +339,10 @@ Route::prefix('admin')->group(function () {
             Route::delete('/{comment}', [ArticleCommentModerationController::class, 'destroy'])->name('admin.comments.destroy');
         });
 
-        // ─── Logs d'activité (super_admin uniquement) ────────────────────
-        Route::get('/logs', [ActivityLogController::class, 'index'])->name('admin.logs.index');
+        // ─── Logs d'activité (permission: manage_logs — super_admin uniquement via Spatie) ───
+        Route::middleware('admin.can:manage_logs')->group(function () {
+            Route::get('/logs', [ActivityLogController::class, 'index'])->name('admin.logs.index');
+        });
     });
 });
 

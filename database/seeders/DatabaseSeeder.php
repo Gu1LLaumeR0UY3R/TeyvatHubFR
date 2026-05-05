@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            SpatiePermissionSeeder::class,
             TypeAptiSeeder::class,
             RoleSeeder::class,
             ArtefactSeeder::class,
