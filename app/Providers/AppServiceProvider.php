@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Admin;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Models\{
@@ -57,6 +58,21 @@ class AppServiceProvider extends ServiceProvider
             }
             $admin = Admin::find($adminId);
             return $admin ? $admin->can($permission) : false;
+        });
+
+        // Gate write_articles — compatible auth session manuelle
+        // Le callback reçoit null quand aucun joueur n'est connecté via Laravel Auth.
+        // On ignore le $user et on vérifie uniquement la session admin.
+        Gate::define('write_articles', function ($user = null): bool {
+            $adminId = session('admin_id');
+            if (!$adminId) {
+                return false;
+            }
+            if (session('admin_role') === 'super_admin') {
+                return true;
+            }
+            $admin = Admin::find($adminId);
+            return $admin !== null && $admin->can('articles');
         });
     }
 }

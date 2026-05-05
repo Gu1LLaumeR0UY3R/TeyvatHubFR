@@ -1,7 +1,7 @@
 @php
     $permLabels = [
         'encyclopedie' => ['label' => 'Encyclopedie', 'desc' => 'Personnages, Armes, Artefacts, Ennemis, Animaux, Cuisine, Nations'],
-        'blog' => ['label' => 'Blog', 'desc' => 'Rediger et publier des articles'],
+        'articles'     => ['label' => 'Articles', 'desc' => 'Rédiger et publier des articles'],
         'evenements' => ['label' => 'Evenements', 'desc' => 'Evenements et chronologie'],
         'utilisateurs' => ['label' => 'Utilisateurs', 'desc' => 'Gerer les comptes joueurs'],
         'admins' => ['label' => 'Admins', 'desc' => 'Creer et gerer d\'autres admins'],

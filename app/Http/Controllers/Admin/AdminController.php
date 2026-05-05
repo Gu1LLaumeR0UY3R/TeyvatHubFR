@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Animal;
 use App\Models\Artefact;
 use App\Models\Arme;
-use App\Models\BlogArticle;
 use App\Models\Ennemi;
 use App\Models\Ingredient;
 use App\Models\Nation;
 use App\Models\Personnage;
 use App\Models\Plat;
+use App\Models\Article;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,8 +33,8 @@ class AdminController extends Controller
             'plats'        => Plat::count(),
             'ingredients'  => Ingredient::count(),
             'nations'      => Nation::count(),
-            'blog'         => BlogArticle::count(),
             'utilisateurs' => User::count(),
+            'articles'     => Article::count(),
         ];
 
         return view('admin.dashboard', compact('stats'));

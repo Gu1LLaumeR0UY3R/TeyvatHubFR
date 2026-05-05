@@ -279,8 +279,60 @@
             display:flex;
             align-items:center;
             justify-content:center;
+            position: relative;
         }
         .csh-constellation-frame img { width:100%; height:100%; object-fit:cover; }
+        .csh-constellation-map-wrap {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        .csh-constellation-map-line {
+            position: absolute;
+            height: 2px;
+            transform-origin: 0 50%;
+            transition: background .2s ease, box-shadow .2s ease, opacity .2s ease;
+        }
+        .csh-constellation-map-line.is-off {
+            background: rgba(148,163,184,.45);
+            box-shadow: 0 0 0 1px rgba(148,163,184,.2);
+            opacity: .55;
+        }
+        .csh-constellation-map-line.is-on {
+            background: linear-gradient(90deg, #fde68a, #f59e0b);
+            box-shadow: 0 0 0 1px rgba(245,158,11,.25), 0 0 12px rgba(245,158,11,.35);
+            opacity: 1;
+        }
+        .csh-constellation-map-point {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            border: 2px solid #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+        }
+        .csh-constellation-map-point.is-off {
+            background: #475569;
+            color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(2,6,23,.35);
+        }
+        .csh-constellation-map-point.is-on {
+            background: #f59e0b;
+            color: #fff7ed;
+            box-shadow: 0 0 0 2px rgba(245,158,11,.3), 0 0 16px rgba(245,158,11,.45);
+        }
+        .csh-constellation-map-point.is-current {
+            background: #facc15;
+            color: #422006;
+            transform: translate(-50%, -50%) scale(1.07);
+            box-shadow: 0 0 0 2px rgba(250,204,21,.35), 0 0 18px rgba(250,204,21,.55);
+        }
         .csh-constellation-empty-media { color:#93a7cb; font-size:.82rem; text-align:center; padding: 0 1rem; }
         .csh-constellation-content { padding: 1rem 1.15rem 1.15rem; display:flex; flex-direction:column; gap:.9rem; }
         .csh-constellation-tabs { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.5rem; }
@@ -2819,9 +2871,31 @@
 
                 <div class="csh-constellation-grid">
                     <div class="csh-constellation-media">
-                        <div class="csh-constellation-frame">
+                        <div class="csh-constellation-frame" x-ref="constellationPreviewCanvas">
                             <template x-if="constellationMapImage">
-                                <img :src="constellationMapImage" alt="Carte constellation">
+                                <div class="csh-constellation-map-wrap th-const-map-media" :style="mapMediaStyle('constellationPreviewCanvas')">
+                                    <img :src="constellationMapImage" alt="Carte constellation"
+                                         @load="updateConstellationMapNaturalSize($event)"
+                                         style="object-fit: contain; object-position: center;">
+
+                                    <template x-for="(line, idx) in constellationMapLines" :key="`line-preview-${idx}`">
+                                        <template x-if="lineIsValid(line)">
+                                            <div class="csh-constellation-map-line"
+                                                 :class="constellationPreviewLineClass(line)"
+                                                 :style="mapLineStyle(line, 'constellationPreviewCanvas')"></div>
+                                        </template>
+                                    </template>
+
+                                    <template x-for="index in [1,2,3,4,5,6]" :key="`point-preview-${index}`">
+                                        <template x-if="constellationMapPositions[String(index)]">
+                                            <div class="csh-constellation-map-point"
+                                                 :class="constellationPreviewPointClass(index)"
+                                                 :style="mapPointStyle(index)">
+                                                <span x-text="index"></span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
                             </template>
                             <template x-if="!constellationMapImage && activeConstellation && activeConstellation.image_url">
                                 <img :src="activeConstellation.image_url" :alt="activeConstellation.titre_const || 'Constellation'">
@@ -2839,7 +2913,7 @@
                                     <button type="button"
                                             class="csh-constellation-tab"
                                             :class="selectedConstellationIndex === index ? 'is-active' : ''"
-                                            @click="selectedConstellationIndex = index">
+                                            @click="selectConstellationPreview(index)">
                                         <div x-text="constellation.label || ('C' + (index + 1))"></div>
                                         <div class="truncate text-[11px] opacity-80" x-text="constellation.titre_const || 'Sans titre'"></div>
                                     </button>
@@ -3533,6 +3607,9 @@
                     const idx = Math.max(0, Math.min(this.selectedConstellationIndex, this.constellations.length - 1));
                     return this.constellations[idx] || null;
                 },
+                get activeConstellationLevel() {
+                    return Math.max(1, Math.min(6, Number(this.selectedConstellationIndex || 0) + 1));
+                },
                 get nextMapPointLabel() {
                     if (this.selectedMapPoint !== null) {
                         return `C${this.selectedMapPoint} (repositionnement)`;
@@ -4095,6 +4172,20 @@
                     const angle = Math.atan2(dyPx, dxPx) * (180 / Math.PI);
 
                     return `left:${x1}%;top:${y1}%;width:${lenPx}px;transform:rotate(${angle}deg);`;
+                },
+                constellationPreviewPointClass(index) {
+                    const idx = Number(index);
+                    if (idx === this.activeConstellationLevel) return 'is-current';
+                    return idx <= this.activeConstellationLevel ? 'is-on' : 'is-off';
+                },
+                constellationPreviewLineClass(line) {
+                    const from = Number(line?.from || 0);
+                    const to = Number(line?.to || 0);
+                    const isOn = from <= this.activeConstellationLevel && to <= this.activeConstellationLevel;
+                    return isOn ? 'is-on' : 'is-off';
+                },
+                selectConstellationPreview(index) {
+                    this.selectedConstellationIndex = Number(index);
                 },
                 nextMapPointIndex() {
                     for (let i = 1; i <= 6; i += 1) {

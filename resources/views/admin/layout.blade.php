@@ -35,10 +35,10 @@
                 <a href="{{ route('admin.animaux.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Animaux</a>
                 <a href="{{ route('admin.cuisine.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Cuisine</a>
                 <a href="{{ route('admin.nations.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Nations</a>
-                <a href="{{ route('admin.blog.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Blog</a>
                 <a href="{{ route('admin.references.index', 'elements') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Références</a>
                 <a href="{{ route('admin.utilisateurs.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Utilisateurs</a>
                 <a href="{{ route('admin.admins.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Admins</a>
+                <a href="{{ route('admin.articles.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Articles</a>
             </nav>
         </aside>
 

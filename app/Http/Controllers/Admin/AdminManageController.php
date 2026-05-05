@@ -8,9 +8,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AdminManageController extends Controller
 {
@@ -46,9 +49,10 @@ class AdminManageController extends Controller
         ]);
 
         $data['mot_de_passe_admin'] = Hash::make($data['mot_de_passe_admin']);
-        $data['permissions'] = $data['role'] === 'super_admin'
+        $data['legacy_permissions'] = $data['role'] === 'super_admin'
             ? Admin::ALL_PERMISSIONS
             : ($data['permissions'] ?? []);
+        unset($data['permissions']);
 
         $data['photo_profil'] = $this->resolveImageInput(
             $data['photo_profil_url'] ?? null,
@@ -65,7 +69,8 @@ class AdminManageController extends Controller
 
         unset($data['photo_profil_url'], $data['banniere_admin_url']);
 
-        Admin::create($data);
+        $admin = Admin::create($data);
+        $this->syncAdminRolePermissions($admin, $data['role'], $data['permissions']);
 
         return redirect()->route('admin.admins.index')
             ->with('success', 'Admin créé avec succès.');
@@ -100,9 +105,10 @@ class AdminManageController extends Controller
             unset($data['mot_de_passe_admin']);
         }
 
-        $data['permissions'] = $data['role'] === 'super_admin'
+        $data['legacy_permissions'] = $data['role'] === 'super_admin'
             ? Admin::ALL_PERMISSIONS
             : ($data['permissions'] ?? []);
+        unset($data['permissions']);
 
         $newPhoto = $this->resolveImageInput(
             $data['photo_profil_url'] ?? null,
@@ -133,6 +139,7 @@ class AdminManageController extends Controller
         unset($data['photo_profil_url'], $data['banniere_admin_url']);
 
         $admin->update($data);
+        $this->syncAdminRolePermissions($admin, $data['role'], $data['permissions']);
 
         return redirect()->route('admin.admins.index')
             ->with('success', 'Admin mis à jour.');
@@ -204,6 +211,24 @@ class AdminManageController extends Controller
         Storage::disk('public')->put($path, $binary);
 
         return $path;
+    }
+
+    private function syncAdminRolePermissions(Admin $admin, string $role, array $permissions): void
+    {
+        $guardName = 'web';
+        $roleRecord = Role::findOrCreate($role, $guardName);
+
+        $permissionRecords = collect($permissions)
+            ->filter()
+            ->map(fn(string $permission) => Permission::findOrCreate($permission, $guardName))
+            ->all();
+
+        if ($role === 'super_admin' || $role === 'superadmin') {
+            $permissionRecords = Permission::where('guard_name', $guardName)->get()->all();
+        }
+
+        $admin->syncRoles([$roleRecord]);
+        $admin->syncPermissions($permissionRecords);
     }
 
     private function deleteStoredImageIfLocal(?string $imagePath): void

@@ -1,0 +1,78 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // ── 1. Supprimer les index avant de renommer les colonnes ────────
+        try { Schema::table('articles', fn (Blueprint $t) => $t->dropUnique(['slug'])); } catch (\Exception $e) {}
+        try { Schema::table('articles', fn (Blueprint $t) => $t->dropIndex('articles_fid_admin_index')); } catch (\Exception $e) {}
+
+        // ── 2. Renommer les colonnes (syntaxe CHANGE COLUMN pour MariaDB) ──
+        DB::statement('ALTER TABLE articles CHANGE COLUMN id_article id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+        DB::statement('ALTER TABLE articles CHANGE COLUMN titre title VARCHAR(255) NOT NULL');
+        DB::statement("ALTER TABLE articles CHANGE COLUMN fid_admin author_id BIGINT UNSIGNED NULL");
+        DB::statement("ALTER TABLE articles CHANGE COLUMN statut status ENUM('brouillon','publié') NOT NULL DEFAULT 'brouillon'");
+
+        // ── 3. Supprimer les anciennes colonnes inutiles ─────────────────
+        Schema::table('articles', function (Blueprint $table) {
+            $cols = array_column(DB::select('DESCRIBE articles'), 'Field');
+            $toDrop = array_filter(['slug', 'extrait', 'cover_image'], fn($c) => in_array($c, $cols));
+            if ($toDrop) $table->dropColumn(array_values($toDrop));
+        });
+
+        // ── 4. Migrer les valeurs de status avant de changer l'enum ──────
+        DB::statement("UPDATE articles SET status = 'published' WHERE status = 'publié'");
+        DB::statement("UPDATE articles SET status = 'draft'     WHERE status = 'brouillon'");
+        DB::statement("ALTER TABLE articles MODIFY COLUMN status ENUM('draft','published','archived') NOT NULL DEFAULT 'draft'");
+
+        // ── 5. Ajouter les nouvelles colonnes ────────────────────────────
+        Schema::table('articles', function (Blueprint $table) {
+            $cols = array_column(DB::select('DESCRIBE articles'), 'Field');
+            if (!in_array('type', $cols))
+                $table->enum('type', ['patch_note', 'annonce', 'amelioration', 'questionnaire'])
+                      ->default('annonce')
+                      ->after('author_id');
+            if (!in_array('is_pinned', $cols))
+                $table->boolean('is_pinned')->default(false)->after('content');
+            if (!in_array('pinned_until', $cols))
+                $table->timestamp('pinned_until')->nullable()->after('is_pinned');
+            if (!in_array('scheduled_at', $cols))
+                $table->timestamp('scheduled_at')->nullable()->after('pinned_until');
+            $table->index('author_id');
+            $table->index('status');
+            $table->index('type');
+        });
+    }
+
+    public function down(): void
+    {
+        // ── Inverser dans l'ordre ────────────────────────────────────────
+        Schema::table('articles', function (Blueprint $table) {
+            $table->dropIndex(['author_id']);
+            $table->dropIndex(['status']);
+            $table->dropIndex(['type']);
+            $table->dropColumn(['type', 'is_pinned', 'pinned_until', 'scheduled_at']);
+        });
+
+        DB::statement("UPDATE articles SET status = 'brouillon' WHERE status = 'draft'");
+        DB::statement("UPDATE articles SET status = 'publié'    WHERE status = 'published'");
+        DB::statement("ALTER TABLE articles CHANGE COLUMN status statut ENUM('brouillon','publié') NOT NULL DEFAULT 'brouillon'");
+
+        DB::statement("ALTER TABLE articles CHANGE COLUMN author_id fid_admin BIGINT UNSIGNED NULL");
+        DB::statement('ALTER TABLE articles CHANGE COLUMN title titre VARCHAR(255) NOT NULL');
+        DB::statement('ALTER TABLE articles CHANGE COLUMN id id_article BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+
+        Schema::table('articles', function (Blueprint $table) {
+            $table->string('slug', 255)->unique()->after('titre');
+            $table->text('extrait')->nullable()->after('slug');
+            $table->string('cover_image', 500)->nullable();
+            $table->index('fid_admin');
+        });
+    }
+};

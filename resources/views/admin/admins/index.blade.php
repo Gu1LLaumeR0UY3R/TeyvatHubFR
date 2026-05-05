@@ -16,7 +16,7 @@
     @php
         $permLabels = [
             'encyclopedie' => 'Encyclopédie',
-            'blog'         => 'Blog',
+            'articles'     => 'Articles',
             'evenements'   => 'Événements',
             'utilisateurs' => 'Utilisateurs',
             'admins'       => 'Admins',
@@ -41,7 +41,7 @@
                         : asset('storage/' . $adminUser->banniere_admin);
                 }
 
-                $permissions = (array) ($adminUser->permissions ?? []);
+                $permissions = (array) ($adminUser->legacy_permissions ?? []);
                 $isCurrentAdmin = $adminUser->id_admin === session('admin_id');
             @endphp
 

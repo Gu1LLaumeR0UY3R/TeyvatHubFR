@@ -10,7 +10,6 @@ use App\Http\Controllers\PlatController;
 use App\Http\Controllers\AnimalController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\HistoireController;
-use App\Http\Controllers\BlogController;
 use App\Http\Controllers\NationController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ImportController;
@@ -23,16 +22,16 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminTwoFactorChallengeController;
 use App\Http\Controllers\Admin\AdminTwoFactorController;
-use App\Http\Controllers\Admin\BlogArticleController;
+use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
+use App\Http\Controllers\ImprovementVoteController;
+use App\Http\Controllers\SurveyResponseController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Routes publiques encyclopédie
-Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
-Route::get('/blog/{article:slug}', [BlogController::class, 'show'])->name('blog.show');
-
 Route::get('/personnages', [PersonnageController::class, 'index'])->name('personnages.index');
 Route::get('/personnages/{personnage}', [PersonnageController::class, 'show'])->name('personnages.show');
 Route::get('/armes', [ArmeController::class, 'index'])->name('armes.index');
@@ -50,9 +49,21 @@ Route::get('/ingredients/{ingredient}', [IngredientController::class, 'show'])->
 Route::get('/histoire', [HistoireController::class, 'index'])->name('histoire.index');
 Route::get('/nations', [NationController::class, 'index'])->name('nations.index');
 Route::get('/nations/{nation}', [NationController::class, 'show'])->name('nations.show');
+// Articles publics
+Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
+Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('articles.show');
+
 // Alias legacy
 Route::get('/histoire/nations', fn() => redirect()->route('nations.index'));
 Route::get('/histoire/nations/{nation}', fn(string $nation) => redirect()->route('nations.show', $nation));
+
+// Routes joueur : votes + questionnaires
+Route::middleware(['auth', '2fa.user'])->group(function () {
+    Route::post('/amelioration/{improvement}/vote', [ImprovementVoteController::class, 'toggle'])
+         ->name('improvement.vote');
+    Route::post('/surveys/{survey}/respond', [SurveyResponseController::class, 'store'])
+         ->name('survey.respond');
+});
 
 // Jeux publics
 Route::get('/jeux/motus', [MotusController::class, 'index'])->name('jeux.motus');
@@ -241,18 +252,18 @@ Route::prefix('admin')->group(function () {
             Route::delete('/references/{type}/{id}', [\App\Http\Controllers\Admin\ReferenceController::class, 'destroy'])->name('admin.references.destroy');
         });
 
-        // ─── Blog (permission: blog) ──────────────────────────────────────
-        Route::middleware('admin.can:blog')->group(function () {
-            Route::post('/blog/slugs', [BlogArticleController::class, 'storeSlug'])->name('admin.blog.slugs.store');
-            Route::delete('/blog/slugs/{blogSlug}', [BlogArticleController::class, 'destroySlug'])->name('admin.blog.slugs.destroy');
-            Route::delete('/blog/{blog}/images/{photo}', [BlogArticleController::class, 'destroyImage'])->name('admin.blog.images.destroy');
-            Route::resource('/blog', BlogArticleController::class)->except(['show'])->names([
-                'index'   => 'admin.blog.index',
-                'create'  => 'admin.blog.create',
-                'store'   => 'admin.blog.store',
-                'edit'    => 'admin.blog.edit',
-                'update'  => 'admin.blog.update',
-                'destroy' => 'admin.blog.destroy',
+        // ─── Articles (permission: articles) ────────────────────────────
+        Route::middleware('admin.can:articles')->group(function () {
+            Route::post('/upload/image', [AdminArticleController::class, 'uploadImage'])->name('admin.upload.image');
+            Route::post('/articles/{article}/autosave', [AdminArticleController::class, 'autosave'])->name('admin.articles.autosave');
+            Route::get('/articles/calendar', [AdminArticleController::class, 'calendar'])->name('admin.articles.calendar');
+            Route::resource('/articles', AdminArticleController::class)->except(['show'])->names([
+                'index'   => 'admin.articles.index',
+                'create'  => 'admin.articles.create',
+                'store'   => 'admin.articles.store',
+                'edit'    => 'admin.articles.edit',
+                'update'  => 'admin.articles.update',
+                'destroy' => 'admin.articles.destroy',
             ]);
         });
 

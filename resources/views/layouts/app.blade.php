@@ -90,12 +90,6 @@
                         Cuisine
                     </a>
 
-                    {{-- Blog --}}
-                    <a href="{{ route('blog.index') }}"
-                       class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
-                        Blog
-                    </a>
-
                     {{-- Histoire + sous-menu régions --}}
                     <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
                         <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
@@ -169,6 +163,12 @@
                     <a href="{{ route('jeux.motus') }}"
                        class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
                         Jeux
+                    </a>
+
+                    {{-- Articles --}}
+                    <a href="{{ route('articles.index') }}"
+                       class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 hover:bg-slate-100 rounded-lg transition-colors duration-150">
+                        Articles
                     </a>
 
                 </nav>
@@ -251,7 +251,6 @@
                 <a href="{{ route('animaux.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Animaux</a>
                 <a href="{{ route('ingredients.index') }}" class="block py-2 text-sm text-slate-500 hover:text-slate-950 pl-4">↳ Ingrédients</a>
                 <a href="{{ route('cuisine.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Cuisine</a>
-                <a href="{{ route('blog.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Blog</a>
                 <a href="{{ route('histoire.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Histoire</a>
                 <a href="{{ route('nations.index') }}" class="block py-2 text-sm text-slate-500 hover:text-slate-950 pl-4">↳ Nations</a>
                 <div class="border-t border-slate-200 my-1"></div>
@@ -259,6 +258,7 @@
                 <a href="{{ route('outils.personnage-du-jour') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Personnage du jour</a>
                 <a href="{{ route('outils.quiz') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Quiz</a>
                 <a href="{{ route('jeux.motus') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Motus</a>
+                <a href="{{ route('articles.index') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Articles</a>
                 @auth
                 <a href="{{ route('outils.roulette') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Roulette</a>
                 <a href="{{ route('outils.team') }}" class="block py-2 text-sm text-slate-700 hover:text-slate-950">Équipe</a>

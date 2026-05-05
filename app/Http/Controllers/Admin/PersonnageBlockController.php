@@ -27,6 +27,52 @@ use Illuminate\Validation\Rule;
 
 class PersonnageBlockController extends Controller
 {
+    private const ARTEFACT_MAIN_STATS_SABLIER = [
+        'ATK%',
+        'HP%',
+        'DEF%',
+        'Recharge d\'energie%',
+        'Maitrise elementaire',
+    ];
+
+    private const ARTEFACT_MAIN_STATS_GOBELET = [
+        'ATK%',
+        'HP%',
+        'DEF%',
+        'Maitrise elementaire',
+        'Bonus DGT Pyro%',
+        'Bonus DGT Hydro%',
+        'Bonus DGT Electro%',
+        'Bonus DGT Cryo%',
+        'Bonus DGT Anemo%',
+        'Bonus DGT Geo%',
+        'Bonus DGT Dendro%',
+        'Bonus DGT Physiques%',
+    ];
+
+    private const ARTEFACT_MAIN_STATS_COURONNE = [
+        'ATK%',
+        'HP%',
+        'DEF%',
+        'Maitrise elementaire',
+        'Taux CRIT%',
+        'DGT CRIT%',
+        'Bonus de soin%',
+    ];
+
+    private const ARTEFACT_SUB_STATS = [
+        'ATK%',
+        'HP%',
+        'DEF%',
+        'ATK',
+        'HP',
+        'DEF',
+        'Taux CRIT%',
+        'DGT CRIT%',
+        'Recharge d\'energie%',
+        'Maitrise elementaire',
+    ];
+
     public function updateMainZone(Request $request, Personnage $personnage): JsonResponse
     {
         $nationTable = Schema::hasTable('nation')
@@ -279,7 +325,7 @@ class PersonnageBlockController extends Controller
     public function updateArmesRecommandees(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
-            'armes' => ['required', 'array', 'min:1', 'max:3'],
+            'armes' => ['required', 'array', 'min:1', 'max:6'],
             'armes.*.id_arme' => ['required', 'integer', 'exists:armes,id_arme'],
             'armes.*.rang' => ['nullable', 'integer', 'min:1', 'max:5'],
             'armes.*.is_starter' => ['nullable', 'boolean'],
@@ -365,15 +411,16 @@ class PersonnageBlockController extends Controller
     public function updateArtefactsRecommandees(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
-            'builds' => ['required', 'array', 'min:1', 'max:3'],
+            'builds' => ['required', 'array', 'min:1', 'max:6'],
             'builds.*.artefact1_id' => ['required', 'integer', 'exists:artefact,id_artefact'],
             'builds.*.pieces_1' => ['required', 'integer', Rule::in([2, 4])],
             'builds.*.artefact2_id' => ['nullable', 'integer', 'exists:artefact,id_artefact'],
             'builds.*.pieces_2' => ['nullable', 'integer', Rule::in([2])],
-            'builds.*.main_stat_sablier' => ['nullable', 'string', 'max:120'],
-            'builds.*.main_stat_gobelet' => ['nullable', 'string', 'max:120'],
-            'builds.*.main_stat_couronne' => ['nullable', 'string', 'max:120'],
-            'builds.*.sub_stats' => ['nullable', 'string', 'max:255'],
+            'builds.*.main_stat_sablier' => ['nullable', Rule::in(self::ARTEFACT_MAIN_STATS_SABLIER)],
+            'builds.*.main_stat_gobelet' => ['nullable', Rule::in(self::ARTEFACT_MAIN_STATS_GOBELET)],
+            'builds.*.main_stat_couronne' => ['nullable', Rule::in(self::ARTEFACT_MAIN_STATS_COURONNE)],
+            'builds.*.sub_stats' => ['nullable', 'array', 'max:4'],
+            'builds.*.sub_stats.*' => ['string', Rule::in(self::ARTEFACT_SUB_STATS)],
         ]);
 
         $builds = collect($data['builds'])->values();
@@ -382,6 +429,10 @@ class PersonnageBlockController extends Controller
             $pieces1 = (int) $build['pieces_1'];
             $artefact2Id = $build['artefact2_id'] ?? null;
             $pieces2 = $build['pieces_2'] ?? null;
+            $subStats = collect($build['sub_stats'] ?? [])
+                ->map(fn ($stat) => trim((string) $stat))
+                ->filter()
+                ->values();
 
             if ($pieces1 === 2 && (!$artefact2Id || (int) $pieces2 !== 2)) {
                 throw ValidationException::withMessages([
@@ -394,12 +445,28 @@ class PersonnageBlockController extends Controller
                     'builds.' . $index . '.artefact2_id' => 'Un build 2P+2P doit utiliser deux sets différents.',
                 ]);
             }
+
+            if ($subStats->count() > 4) {
+                throw ValidationException::withMessages([
+                    'builds.' . $index . '.sub_stats' => 'Maximum 4 sous-stats recommandees par build.',
+                ]);
+            }
+
+            if ($subStats->duplicates()->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'builds.' . $index . '.sub_stats' => 'Les sous-stats recommandees doivent etre uniques.',
+                ]);
+            }
         }
 
         PersonnageArtefactRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
 
         foreach ($builds as $index => $build) {
             $pieces1 = (int) $build['pieces_1'];
+            $subStats = collect($build['sub_stats'] ?? [])
+                ->map(fn ($stat) => trim((string) $stat))
+                ->filter()
+                ->values();
 
             PersonnageArtefactRecommandee::query()->create([
                 'fid_perso' => $personnage->id_perso,
@@ -410,7 +477,7 @@ class PersonnageBlockController extends Controller
                 'main_stat_sablier' => $build['main_stat_sablier'] ?? null,
                 'main_stat_gobelet' => $build['main_stat_gobelet'] ?? null,
                 'main_stat_couronne' => $build['main_stat_couronne'] ?? null,
-                'sub_stats' => $build['sub_stats'] ?? null,
+                'sub_stats' => $subStats->isNotEmpty() ? $subStats->implode(', ') : null,
                 'position' => $index + 1,
             ]);
         }

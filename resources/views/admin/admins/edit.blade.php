@@ -1,13 +1,13 @@
 @php
     $permLabels = [
         'encyclopedie' => ['label' => 'Encyclopedie', 'desc' => 'Personnages, Armes, Artefacts, Ennemis, Animaux, Cuisine, Nations'],
-        'blog' => ['label' => 'Blog', 'desc' => 'Rediger et publier des articles'],
+        'articles'     => ['label' => 'Articles', 'desc' => 'Rédiger et publier des articles'],
         'evenements' => ['label' => 'Evenements', 'desc' => 'Evenements et chronologie'],
         'utilisateurs' => ['label' => 'Utilisateurs', 'desc' => 'Gerer les comptes joueurs'],
         'admins' => ['label' => 'Admins', 'desc' => 'Creer et gerer d\'autres admins'],
         'import' => ['label' => 'Import API', 'desc' => 'Importer les donnees depuis Genshin API'],
     ];
-    $checked = is_array($adminUser->permissions ?? null) ? $adminUser->permissions : [];
+    $checked = is_array($adminUser->legacy_permissions ?? null) ? $adminUser->legacy_permissions : [];
     $photoSrc = null;
     if (!empty($adminUser->photo_profil)) {
         $photoSrc = filter_var($adminUser->photo_profil, FILTER_VALIDATE_URL)

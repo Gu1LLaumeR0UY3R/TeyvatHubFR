@@ -57,6 +57,14 @@
             padding: 1rem;
             z-index: 10;
         }
+        .constellation-frame {
+            transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+        }
+        .constellation-frame.is-glowing {
+            border-color: rgba(250, 204, 21, .9);
+            box-shadow: 0 0 0 1px rgba(250, 204, 21, .45), 0 0 24px rgba(250, 204, 21, .35), inset 0 0 18px rgba(250, 204, 21, .22);
+            transform: scale(1.01);
+        }
         /* SÃ©lecteur d'armes (modal centrÃ©) */
         .weapon-picker {
             background: #e5e7eb;
@@ -449,7 +457,8 @@
                     <div class="grid grid-cols-12 gap-4">
                         {{-- Image constellation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
                         <div class="col-span-6">
-                            <div class="h-52 rounded-lg overflow-hidden border border-neutral-400 bg-neutral-800">
+                               <div class="constellation-frame h-52 rounded-lg overflow-hidden border border-neutral-400 bg-neutral-800"
+                                   :class="constellationGlow ? 'is-glowing' : ''">
                                 <img src="{{ $constellationImage }}" alt="constellation"
                                      class="w-full h-full object-cover">
                             </div>
@@ -458,8 +467,9 @@
                         <div class="col-span-6 space-y-1.5">
                             @forelse($personnage->constellations as $constellation)
                                 <button type="button"
-                                        @click="openConstellationDetail(constellations[{{ $loop->index }}])"
+                                    @click="openConstellationDetail(constellations[{{ $loop->index }}], {{ $loop->index }})"
                                         title="Voir les détails de cette constellation"
+                                    :class="selectedConstellationIndex === {{ $loop->index }} ? 'bg-yellow-100 border-yellow-400' : ''"
                                         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg
                                                bg-neutral-200 border border-neutral-300
                                                hover:bg-neutral-300 hover:border-neutral-500
@@ -474,7 +484,8 @@
                             @empty
                                 @for($i = 0; $i < 6; $i++)
                                     <button type="button"
-                                            @click="openConstellationDetail(constellations[{{ $i }}] ?? null)"
+                                            @click="openConstellationDetail(constellations[{{ $i }}] ?? null, {{ $i }})"
+                                            :class="selectedConstellationIndex === {{ $i }} ? 'bg-yellow-100 border-yellow-400 opacity-100' : ''"
                                             class="w-full flex items-center gap-3 px-3 py-2 rounded-lg
                                                    bg-neutral-200 border border-dashed border-neutral-400
                                                    hover:bg-neutral-300 transition-all text-left opacity-60">
@@ -754,6 +765,8 @@
             constellations:          constsAll,
             constellationDetailOpen: false,
             selectedConstellation:   null,
+            selectedConstellationIndex: -1,
+            constellationGlow: false,
 
             /* â”€â”€ SÃ©lecteur d'armes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
             weaponSelectorOpen: false,
@@ -943,12 +956,30 @@
             },
 
             /* â”€â”€ Constellations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-            openConstellationDetail(c)  { if (!c) return; this.selectedConstellation = c; this.constellationDetailOpen = true; },
-            closeConstellationDetail()  { this.constellationDetailOpen = false; this.selectedConstellation = null; },
+            triggerConstellationGlow() {
+                this.constellationGlow = false;
+                this.$nextTick(() => {
+                    this.constellationGlow = true;
+                    setTimeout(() => {
+                        this.constellationGlow = false;
+                    }, 650);
+                });
+            },
+            openConstellationDetail(c, index = -1) {
+                if (!c) return;
+                this.selectedConstellation = c;
+                this.selectedConstellationIndex = index;
+                this.constellationDetailOpen = true;
+                this.triggerConstellationGlow();
+            },
+            closeConstellationDetail()  { this.constellationDetailOpen = false; this.selectedConstellation = null; this.selectedConstellationIndex = -1; },
             nextConstellation() {
                 const idx = this.constellations.indexOf(this.selectedConstellation);
-                if (idx >= 0 && idx < this.constellations.length - 1)
+                if (idx >= 0 && idx < this.constellations.length - 1) {
                     this.selectedConstellation = this.constellations[idx + 1];
+                    this.selectedConstellationIndex = idx + 1;
+                    this.triggerConstellationGlow();
+                }
             },
 
             /* â”€â”€ CompÃ©tences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */

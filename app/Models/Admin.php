@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id_admin
@@ -11,11 +12,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $email_admin
  * @property string $mot_de_passe_admin
  * @property string $role
- * @property array|null $permissions
+ * @property array|null $legacy_permissions
  */
 class Admin extends Model
 {
     use HasFactory;
+    use HasRoles;
 
     public $timestamps = false;
     protected $table = 'admin';
@@ -24,7 +26,7 @@ class Admin extends Model
     /** All available permission keys. */
     public const ALL_PERMISSIONS = [
         'encyclopedie',
-        'blog',
+        'articles',
         'evenements',
         'utilisateurs',
         'admins',
@@ -46,11 +48,13 @@ class Admin extends Model
 
     protected $hidden = ['mot_de_passe_admin', 'two_factor_secret'];
 
+    protected $guard_name = 'web';
+
     protected function casts(): array
     {
         return [
             'mot_de_passe_admin' => 'hashed',
-            'permissions'        => 'array',
+            'legacy_permissions' => 'array',
             'two_factor_enabled' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
@@ -63,7 +67,15 @@ class Admin extends Model
             return true;
         }
 
-        $permissions = (array) ($this->permissions ?? []);
+        if (method_exists($this, 'hasPermissionTo')) {
+            try {
+                return $this->hasPermissionTo($permission);
+            } catch (\Throwable) {
+                // Fallback to legacy permissions when the permission record does not exist or the package is not ready.
+            }
+        }
+
+        $permissions = (array) ($this->legacy_permissions ?? []);
 
         if ($permissions === []) {
             return true;
@@ -75,6 +87,18 @@ class Admin extends Model
     /** True if the admin holds every one of the given permissions. */
     public function canAll(array $permissions): bool
     {
+        if (in_array($this->role, ['super_admin', 'superadmin'], true)) {
+            return true;
+        }
+
+        if (method_exists($this, 'hasAllPermissions')) {
+            try {
+                return $this->hasAllPermissions($permissions);
+            } catch (\Throwable) {
+                // Fallback to legacy permissions if needed.
+            }
+        }
+
         foreach ($permissions as $perm) {
             if (!$this->can($perm)) {
                 return false;
@@ -84,3 +108,4 @@ class Admin extends Model
         return true;
     }
 }
+

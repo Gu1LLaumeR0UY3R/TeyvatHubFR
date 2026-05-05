@@ -28,8 +28,8 @@
         ['label' => 'Plats', 'count' => $stats['plats'], 'route' => 'admin.cuisine.index'],
         ['label' => 'Ingrédients', 'count' => $stats['ingredients'], 'route' => 'admin.cuisine.index'],
         ['label' => 'Nations', 'count' => $stats['nations'], 'route' => 'admin.nations.index'],
-        ['label' => 'Blog', 'count' => $stats['blog'], 'route' => 'admin.blog.index'],
         ['label' => 'Utilisateurs', 'count' => $stats['utilisateurs'], 'route' => 'admin.utilisateurs.index'],
+        ['label' => 'Articles', 'count' => $stats['articles'], 'route' => 'admin.articles.index'],
     ] as $stat)
         <a href="{{ route($stat['route']) }}"
            class="bg-hub-surface border border-hub-border rounded-xl p-4 hover:border-hub-primary transition-colors">

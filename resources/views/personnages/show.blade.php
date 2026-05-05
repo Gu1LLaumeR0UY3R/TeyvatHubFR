@@ -126,6 +126,54 @@
         })
         ->values();
 
+    $constCarte = $personnage->constellations->sortBy('id_const')->first();
+    $constellationMapPositions = [];
+    $constellationMapLines = [];
+    $constellationMapImage = '';
+
+    if ($constCarte && is_array($constCarte->positions_const)) {
+        $rawMapPayload = $constCarte->positions_const;
+        $rawPoints = is_array($rawMapPayload['points'] ?? null) ? $rawMapPayload['points'] : $rawMapPayload;
+
+        foreach ($rawPoints as $k => $point) {
+            if (!is_array($point) || !isset($point['x']) || !isset($point['y'])) {
+                continue;
+            }
+
+            $key = (string) $k;
+            if (!in_array($key, ['1', '2', '3', '4', '5', '6'], true)) {
+                continue;
+            }
+
+            $constellationMapPositions[$key] = [
+                'x' => round((float) $point['x'], 1),
+                'y' => round((float) $point['y'], 1),
+            ];
+        }
+
+        $rawLines = is_array($rawMapPayload['lines'] ?? null) ? $rawMapPayload['lines'] : [];
+        foreach ($rawLines as $line) {
+            if (!is_array($line)) {
+                continue;
+            }
+
+            $from = isset($line['from']) ? (int) $line['from'] : null;
+            $to = isset($line['to']) ? (int) $line['to'] : null;
+            if (!$from || !$to || $from === $to) {
+                continue;
+            }
+            if ($from < 1 || $from > 6 || $to < 1 || $to > 6) {
+                continue;
+            }
+
+            $constellationMapLines[] = ['from' => $from, 'to' => $to];
+        }
+    }
+
+    if ($constCarte?->photo) {
+        $constellationMapImage = $photoUrl($constCarte->photo) ?? '';
+    }
+
     $storyReferences = is_array($storyReferences ?? null) ? $storyReferences : [];
 
     $renderStoryHtml = function (?string $text) use ($storyReferences) {
@@ -238,8 +286,19 @@
     .csh-constellation-shell { margin: 0 1.5rem 1.5rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; background: linear-gradient(180deg, rgba(10, 15, 30, 0.95), rgba(5, 10, 24, 0.92)); box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32); overflow: hidden; }
     .csh-constellation-grid { display:grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); min-height: 360px; }
     .csh-constellation-media { padding: 1rem; border-right: 1px solid rgba(255,255,255,0.08); background: radial-gradient(circle at top, rgba(125, 211, 252, 0.12), rgba(15, 23, 42, 0.4)); }
-    .csh-constellation-frame { height: 100%; min-height: 300px; border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, rgba(30,41,59,0.7), rgba(15,23,42,0.92)); display:flex; align-items:center; justify-content:center; }
+    .csh-constellation-frame { height: 100%; min-height: 300px; border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, rgba(30,41,59,0.7), rgba(15,23,42,0.92)); display:flex; align-items:center; justify-content:center; position:relative; transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
+    .csh-constellation-frame.is-glowing { border-color: rgba(125, 211, 252, 0.9); box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.35), 0 0 28px rgba(56, 189, 248, 0.35), inset 0 0 24px rgba(125, 211, 252, 0.2); transform: scale(1.01); }
     .csh-constellation-frame img { width:100%; height:100%; object-fit:cover; }
+    .csh-constellation-frame.is-glowing img { animation: csh-constellation-flash .65s ease-out; filter: saturate(1.18) brightness(1.12); }
+    .csh-constellation-map-wrap { position:absolute; inset:0; pointer-events:none; }
+    .csh-constellation-map-line { position:absolute; height:2px; transform-origin:0 50%; transition: background .2s ease, box-shadow .2s ease, opacity .2s ease; }
+    .csh-constellation-map-line.is-off { background: rgba(148,163,184,.42); box-shadow: 0 0 0 1px rgba(148,163,184,.18); opacity: .55; }
+    .csh-constellation-map-line.is-on { background: linear-gradient(90deg, #7dd3fc, #38bdf8); box-shadow: 0 0 0 1px rgba(56,189,248,.25), 0 0 14px rgba(56,189,248,.45); opacity: 1; }
+    .csh-constellation-map-point { position:absolute; transform: translate(-50%, -50%); width:24px; height:24px; border-radius:999px; border:2px solid #fff; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; transition: background .2s ease, box-shadow .2s ease, transform .2s ease; }
+    .csh-constellation-map-point.is-off { background:#334155; color:#cbd5e1; box-shadow: 0 2px 8px rgba(2,6,23,.35); }
+    .csh-constellation-map-point.is-on { background:#0ea5e9; color:#e0f2fe; box-shadow: 0 0 0 2px rgba(14,165,233,.28), 0 0 16px rgba(14,165,233,.42); }
+    .csh-constellation-map-point.is-current { background:#7dd3fc; color:#082f49; transform: translate(-50%, -50%) scale(1.07); box-shadow: 0 0 0 2px rgba(125,211,252,.35), 0 0 18px rgba(125,211,252,.55); }
+    .csh-constellation-empty-media { color:#93a7cb; font-size:.82rem; text-align:center; padding:0 1rem; }
     .csh-constellation-content { padding: 1rem 1.15rem 1.15rem; display:flex; flex-direction:column; gap:.9rem; }
     .csh-constellation-tabs { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.5rem; }
     .csh-constellation-tab { border:1px solid rgba(148,163,184,0.4); border-radius:10px; padding:.45rem .55rem; color:#cbd5e1; background: rgba(15,23,42,0.55); text-align:left; font-size:.76rem; }
@@ -247,6 +306,12 @@
     .csh-constellation-detail { border:1px solid rgba(148,163,184,0.35); border-radius:12px; padding:.8rem .9rem; background: rgba(15,23,42,0.5); }
     .csh-constellation-title { color:#f1f5f9; font-size:1rem; font-weight:700; }
     .csh-constellation-desc { color:#cbd5e1; font-size:.84rem; line-height:1.45; margin-top:.45rem; white-space:pre-wrap; }
+
+    @keyframes csh-constellation-flash {
+        0% { filter: saturate(1) brightness(1); }
+        35% { filter: saturate(1.35) brightness(1.3); }
+        100% { filter: saturate(1.18) brightness(1.12); }
+    }
 
     @media (max-width: 900px) {
         .character-show-hero { grid-template-columns: 1fr; grid-template-areas: "hero" "portrait" "video" "meta"; padding:1.1rem; }
@@ -333,6 +398,12 @@ document.addEventListener('alpine:init', () => {
         selectedVideoIndex: 0,
         constellations: @json($constellations->values()),
         selectedConstellationIndex: 0,
+        constellationGlow: false,
+        constellationMapImage: @json($constellationMapImage),
+        constellationMapPositions: @json($constellationMapPositions),
+        constellationMapLines: @json($constellationMapLines),
+        constellationMapNaturalWidth: 0,
+        constellationMapNaturalHeight: 0,
         aptitudes: @json($aptitudesJson->values()),
         toEmbed(url) {
             if (!url) return '';
@@ -356,6 +427,124 @@ document.addEventListener('alpine:init', () => {
             if (!this.constellations.length) return null;
             const idx = Math.max(0, Math.min(this.selectedConstellationIndex, this.constellations.length - 1));
             return this.constellations[idx] || null;
+        },
+        get activeConstellationLevel() {
+            return Math.max(1, Math.min(6, Number(this.selectedConstellationIndex || 0) + 1));
+        },
+        roundPercent(value) {
+            const num = Number(value);
+            if (Number.isNaN(num)) return 0;
+            return Math.round(Math.max(0, Math.min(100, num)) * 10) / 10;
+        },
+        lineIsValid(line) {
+            const from = Number(line?.from);
+            const to = Number(line?.to);
+            return Number.isInteger(from)
+                && Number.isInteger(to)
+                && from >= 1
+                && from <= 6
+                && to >= 1
+                && to <= 6
+                && from !== to
+                && this.constellationMapPositions[String(from)]
+                && this.constellationMapPositions[String(to)];
+        },
+        mapMediaMetrics(refName) {
+            const canvas = this.$refs?.[refName];
+            if (!canvas) {
+                return { left: 0, top: 0, width: 0, height: 0 };
+            }
+
+            const canvasWidth = canvas.clientWidth || 0;
+            const canvasHeight = canvas.clientHeight || 0;
+            if (!canvasWidth || !canvasHeight) {
+                return { left: 0, top: 0, width: 0, height: 0 };
+            }
+
+            const naturalWidth = this.constellationMapNaturalWidth || canvasWidth;
+            const naturalHeight = this.constellationMapNaturalHeight || canvasHeight;
+            const imageRatio = naturalWidth / naturalHeight;
+            const canvasRatio = canvasWidth / canvasHeight;
+
+            let width = canvasWidth;
+            let height = canvasHeight;
+            let left = 0;
+            let top = 0;
+
+            if (canvasRatio > imageRatio) {
+                height = canvasHeight;
+                width = height * imageRatio;
+                left = (canvasWidth - width) / 2;
+            } else {
+                width = canvasWidth;
+                height = width / imageRatio;
+                top = (canvasHeight - height) / 2;
+            }
+
+            return { left, top, width, height };
+        },
+        mapMediaStyle(refName) {
+            const metrics = this.mapMediaMetrics(refName);
+            return `left:${metrics.left}px;top:${metrics.top}px;width:${metrics.width}px;height:${metrics.height}px;`;
+        },
+        mapPointStyle(index) {
+            const point = this.constellationMapPositions[String(index)];
+            const x = this.roundPercent(point?.x ?? 0);
+            const y = this.roundPercent(point?.y ?? 0);
+            return `left:${x}%;top:${y}%;`;
+        },
+        mapLineStyle(line, refName) {
+            const from = this.constellationMapPositions[String(line.from)];
+            const to = this.constellationMapPositions[String(line.to)];
+            if (!from || !to) {
+                return 'display:none;';
+            }
+
+            const metrics = this.mapMediaMetrics(refName);
+            if (!metrics.width || !metrics.height) {
+                return 'display:none;';
+            }
+
+            const x1 = this.roundPercent(from.x);
+            const y1 = this.roundPercent(from.y);
+            const x2 = this.roundPercent(to.x);
+            const y2 = this.roundPercent(to.y);
+
+            const dxPx = ((x2 - x1) / 100) * metrics.width;
+            const dyPx = ((y2 - y1) / 100) * metrics.height;
+            const lenPx = Math.sqrt((dxPx * dxPx) + (dyPx * dyPx));
+            const angle = Math.atan2(dyPx, dxPx) * (180 / Math.PI);
+
+            return `left:${x1}%;top:${y1}%;width:${lenPx}px;transform:rotate(${angle}deg);`;
+        },
+        constellationPointClass(index) {
+            const idx = Number(index);
+            if (idx === this.activeConstellationLevel) return 'is-current';
+            return idx <= this.activeConstellationLevel ? 'is-on' : 'is-off';
+        },
+        constellationLineClass(line) {
+            const from = Number(line?.from || 0);
+            const to = Number(line?.to || 0);
+            const isOn = from <= this.activeConstellationLevel && to <= this.activeConstellationLevel;
+            return isOn ? 'is-on' : 'is-off';
+        },
+        updateConstellationMapNaturalSize(event) {
+            const image = event?.target;
+            if (!image) return;
+            if (image.naturalWidth && image.naturalHeight) {
+                this.constellationMapNaturalWidth = image.naturalWidth;
+                this.constellationMapNaturalHeight = image.naturalHeight;
+            }
+        },
+        selectConstellation(index) {
+            this.selectedConstellationIndex = Number(index);
+            this.constellationGlow = false;
+            this.$nextTick(() => {
+                this.constellationGlow = true;
+                setTimeout(() => {
+                    this.constellationGlow = false;
+                }, 650);
+            });
         },
         renderDescriConst(text) {
             if (!text) return '';
@@ -537,9 +726,38 @@ document.addEventListener('alpine:init', () => {
         @if($constellations->count())
             <div class="csh-constellation-grid">
                 <div class="csh-constellation-media">
-                    <div class="csh-constellation-frame">
-                        <template x-if="activeConstellation && activeConstellation.image_url">
+                    <div class="csh-constellation-frame" x-ref="constellationPublicCanvas" :class="constellationGlow ? 'is-glowing' : ''">
+                        <template x-if="constellationMapImage">
+                            <div class="csh-constellation-map-wrap" :style="mapMediaStyle('constellationPublicCanvas')">
+                                <img :src="constellationMapImage"
+                                     alt="Carte constellation"
+                                     @load="updateConstellationMapNaturalSize($event)"
+                                     style="object-fit: contain; object-position: center;">
+
+                                <template x-for="(line, idx) in constellationMapLines" :key="`public-map-line-${idx}`">
+                                    <template x-if="lineIsValid(line)">
+                                        <div class="csh-constellation-map-line"
+                                             :class="constellationLineClass(line)"
+                                             :style="mapLineStyle(line, 'constellationPublicCanvas')"></div>
+                                    </template>
+                                </template>
+
+                                <template x-for="index in [1,2,3,4,5,6]" :key="`public-map-point-${index}`">
+                                    <template x-if="constellationMapPositions[String(index)]">
+                                        <div class="csh-constellation-map-point"
+                                             :class="constellationPointClass(index)"
+                                             :style="mapPointStyle(index)">
+                                            <span x-text="index"></span>
+                                        </div>
+                                    </template>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="!constellationMapImage && activeConstellation && activeConstellation.image_url">
                             <img :src="activeConstellation.image_url" :alt="activeConstellation.titre_const || 'Constellation'">
+                        </template>
+                        <template x-if="!constellationMapImage && !activeConstellation">
+                            <div class="csh-constellation-empty-media">Aucune constellation sélectionnée.</div>
                         </template>
                     </div>
                 </div>
@@ -550,7 +768,7 @@ document.addEventListener('alpine:init', () => {
                             <button type="button"
                                     class="csh-constellation-tab"
                                     :class="selectedConstellationIndex === index ? 'is-active' : ''"
-                                    @click="selectedConstellationIndex = index">
+                                    @click="selectConstellation(index)">
                                 <div x-text="constellation.label"></div>
                                 <div class="truncate text-[11px] opacity-80" x-text="constellation.titre_const || 'Sans titre'"></div>
                             </button>
