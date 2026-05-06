@@ -175,6 +175,15 @@
     }
 
     $storyReferences = is_array($storyReferences ?? null) ? $storyReferences : [];
+    $rotationTeams = collect($teamsRotationJson ?? [])->keyBy('tag');
+
+    $weaponOrderIndex = array_flip([1, 4, 2, 5, 3, 6]);
+    $orderedWeaponRecommendations = $personnage->armesRecommandees
+        ->sortBy(function ($item) use ($weaponOrderIndex) {
+            $position = (int) ($item->position ?? 0);
+            return $weaponOrderIndex[$position] ?? (100 + $position);
+        })
+        ->values();
 
     $renderStoryHtml = function (?string $text) use ($storyReferences) {
         $raw = (string) ($text ?? '');
@@ -264,8 +273,9 @@
     .csh-preview-panel-title { color:#e5eefc; font-size:.92rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
     .csh-preview-panel-subtitle { color:#8aa0ca; font-size:.72rem; }
 
-    .csh-preview-weapon-list { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; padding: 1.05rem 1.2rem 1.2rem; }
-    .csh-weapon-item { border:1px solid rgba(148,163,184,0.35); border-radius:0.6rem; background: linear-gradient(180deg, rgba(18, 28, 55, 0.86), rgba(10, 16, 34, 0.88)); padding:.55rem; display:flex; align-items:center; gap:.75rem; min-height:72px; }
+    .csh-preview-weapon-list { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:1rem; padding: 1.05rem 1.2rem 1.2rem; }
+    .csh-weapon-item { position:relative; border:1px solid rgba(148,163,184,0.35); border-radius:0.6rem; background: linear-gradient(180deg, rgba(18, 28, 55, 0.86), rgba(10, 16, 34, 0.88)); padding:.55rem; display:flex; align-items:center; gap:.75rem; min-height:72px; text-decoration:none; transition:border-color .2s ease, transform .2s ease; }
+    .csh-weapon-item:hover { border-color: rgba(125,211,252,.55); transform: translateY(-1px); }
     .csh-weapon-index { width:26px; height:26px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; color:#eff6ff; background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); flex-shrink:0; }
     .csh-weapon-icon-wrap { width:48px; height:48px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.22); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
     .csh-weapon-icon-wrap img { width:34px; height:34px; object-fit:contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.35)); }
@@ -273,6 +283,11 @@
     .csh-weapon-name { font-weight:700; color:#e2e8f0; }
     .csh-weapon-type { color:#98a8c7; font-size:.72rem; }
     .csh-weapon-badge { display:inline-flex; align-items:center; margin-top:.35rem; padding:.18rem .45rem; border-radius:999px; font-size:.68rem; font-weight:700; background: rgba(16, 185, 129, 0.18); color: #b9f7df; border:1px solid rgba(52, 211, 153, 0.34); }
+    .csh-weapon-tooltip { position:absolute; top:50%; right:10px; transform: translateY(-50%) translateX(10px); width:250px; border:1px solid rgba(125,211,252,.35); border-radius:12px; background: rgba(6,12,25,.98); box-shadow: 0 18px 32px rgba(2,6,23,.5); padding:.65rem .7rem; opacity:0; pointer-events:none; transition: opacity .16s ease, transform .16s ease; z-index: 15; }
+    .csh-weapon-item:hover .csh-weapon-tooltip { opacity:1; transform: translateY(-50%) translateX(0); }
+    .csh-weapon-tooltip-title { color:#e2e8f0; font-size:.76rem; font-weight:700; margin-bottom:.4rem; }
+    .csh-weapon-tooltip-row { display:flex; justify-content:space-between; gap:.55rem; font-size:.7rem; color:#bfdbfe; padding:.16rem 0; }
+    .csh-weapon-tooltip-row strong { color:#f8fafc; }
     .csh-weapon-empty, .csh-artefact-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
 
     .csh-preview-artefact-list { display:grid; gap:.85rem; padding: 1rem 1.15rem 1.15rem; }
@@ -282,6 +297,25 @@
     .csh-artefact-piece { color:#fef3c7; font-size:.72rem; font-weight:700; }
     .csh-artefact-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.35rem 0; }
     .csh-artefact-name { color:#cbd5e1; font-size:.82rem; }
+
+    .csh-rotations-shell { margin: 0 0 1.5rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; background: linear-gradient(180deg, rgba(12, 17, 34, 0.95), rgba(6, 10, 22, 0.94)); box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32); overflow: hidden; }
+    .csh-rotations-grid { padding: 1rem 1.15rem 1.2rem; display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .9rem; }
+    .csh-rotation-card { border: 1px solid rgba(148,163,184,.24); border-radius: 14px; background: rgba(15,23,42,.5); padding: .85rem; display:grid; gap:.65rem; }
+    .csh-rotation-tag { display:inline-flex; align-items:center; border-radius: 999px; padding: .16rem .56rem; font-size: .66rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; border: 1px solid transparent; }
+    .csh-rotation-tag.recommended { background: rgba(52,211,153,.18); color:#b9f7df; border-color: rgba(52,211,153,.36); }
+    .csh-rotation-tag.f2p { background: rgba(56,189,248,.18); color:#c9efff; border-color: rgba(56,189,248,.36); }
+    .csh-rotation-reaction { color:#9fb2d7; font-size:.76rem; }
+    .csh-rotation-members { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:.5rem; }
+    .csh-rotation-btn { justify-self:start; border:1px solid rgba(99,102,241,.45); background: rgba(79,70,229,.2); color:#dbe4ff; border-radius:10px; padding:.35rem .7rem; font-size:.72rem; font-weight:700; }
+    .csh-rotation-btn:hover { background: rgba(79,70,229,.34); }
+
+    .csh-rotation-modal-bg { position: fixed; inset: 0; z-index: 70; background: rgba(2,6,23,.72); backdrop-filter: blur(2px); display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .csh-rotation-modal { width: min(760px, 96vw); max-height: 90vh; overflow:auto; border: 1px solid rgba(148,163,184,.32); border-radius: 16px; background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(8,14,30,.98)); box-shadow: 0 28px 60px rgba(2,6,23,.55); padding: 1rem; }
+    .csh-rotation-modal-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; border-bottom:1px solid rgba(148,163,184,.24); padding-bottom:.7rem; margin-bottom:.8rem; }
+    .csh-rotation-close { border:1px solid rgba(148,163,184,.35); color:#cbd5e1; background: rgba(15,23,42,.65); border-radius:10px; padding:.35rem .6rem; font-size:.72rem; }
+    .csh-rotation-close:hover { background: rgba(30,41,59,.8); }
+    .csh-rotation-flow { color:#dbe4ff; font-size:.88rem; line-height:1.5; white-space:pre-wrap; border:1px solid rgba(99,102,241,.28); border-radius:12px; background: rgba(30,41,59,.42); padding:.75rem; }
+
 
     .csh-constellation-shell { margin: 0 1.5rem 1.5rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; background: linear-gradient(180deg, rgba(10, 15, 30, 0.95), rgba(5, 10, 24, 0.92)); box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32); overflow: hidden; }
     .csh-constellation-grid { display:grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); min-height: 360px; }
@@ -317,6 +351,8 @@
         .character-show-hero { grid-template-columns: 1fr; grid-template-areas: "hero" "portrait" "video" "meta"; padding:1.1rem; }
         .csh-portrait { min-height: 280px; height: auto; }
         .csh-preview-table { grid-template-columns: 1fr; margin: 0 .5rem 1rem; }
+        .csh-preview-weapon-list { grid-template-columns: 1fr; }
+        .csh-rotations-grid { grid-template-columns: 1fr; }
         .csh-constellation-grid { grid-template-columns: 1fr; }
         .csh-constellation-media { border-right:0; border-bottom:1px solid rgba(255,255,255,0.08); }
     }
@@ -395,6 +431,8 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('personnageShowData', () => ({
         videos: @json($videoUrls->values()),
+        rotationTeams: @json($rotationTeams->values()),
+        activeRotationTeam: null,
         selectedVideoIndex: 0,
         constellations: @json($constellations->values()),
         selectedConstellationIndex: 0,
@@ -422,6 +460,15 @@ document.addEventListener('alpine:init', () => {
         prevVideo() {
             if (!this.videos.length) return;
             this.selectedVideoIndex = (this.selectedVideoIndex - 1 + this.videos.length) % this.videos.length;
+        },
+        teamByTag(tag) {
+            return (this.rotationTeams || []).find(team => String(team.tag || '').toLowerCase() === String(tag || '').toLowerCase()) || null;
+        },
+        openRotation(tag) {
+            this.activeRotationTeam = this.teamByTag(tag);
+        },
+        closeRotation() {
+            this.activeRotationTeam = null;
         },
         get activeConstellation() {
             if (!this.constellations.length) return null;
@@ -643,12 +690,12 @@ document.addEventListener('alpine:init', () => {
                     <div class="csh-preview-panel-title">Armes</div>
                     <div class="csh-preview-panel-subtitle">Affichage public des recommandations</div>
                 </div>
-                <div class="text-xs text-slate-400">{{ $personnage->armesRecommandees->count() }} arme(s)</div>
+                <div class="text-xs text-slate-400">{{ $orderedWeaponRecommendations->count() }} arme(s)</div>
             </div>
 
-            @if($personnage->armesRecommandees->count())
+            @if($orderedWeaponRecommendations->count())
                 <div class="csh-preview-weapon-list">
-                    @foreach($personnage->armesRecommandees as $index => $armeRec)
+                    @foreach($orderedWeaponRecommendations as $index => $armeRec)
                         @php
                             $arme = $armeRec->arme;
                             $rarityLabel = $arme?->etoile?->libelle ?? '?★';
@@ -657,9 +704,11 @@ document.addEventListener('alpine:init', () => {
                                 $rarityStars = (int) ($arme?->fid_etoile ?? 1);
                             }
                             $weaponIcon = $photoUrl($arme?->photos->first()) ?? asset('images/placeholder.svg');
+                            $statsLvl1 = $arme?->statsNiveaux?->firstWhere('lvl_ASN', 1) ?? $arme?->statsNiveaux?->first();
+                            $statsLvl90 = $arme?->statsNiveaux?->firstWhere('lvl_ASN', 90) ?? $arme?->statsNiveaux?->last();
                         @endphp
-                        <article class="csh-weapon-item">
-                            <div class="csh-weapon-index">{{ $index + 1 }}</div>
+                        <a href="{{ $arme ? route('armes.show', $arme) : '#' }}" class="csh-weapon-item">
+                            <div class="csh-weapon-index">{{ $armeRec->position ?? ($index + 1) }}</div>
                             <div class="csh-weapon-icon-wrap th-weapon-rarity-{{ max(1, min(5, $rarityStars)) }}">
                                 <img src="{{ $weaponIcon }}" alt="{{ $arme?->nom_arme ?? 'Arme' }}">
                             </div>
@@ -670,7 +719,27 @@ document.addEventListener('alpine:init', () => {
                                     <div class="csh-weapon-badge">Starter</div>
                                 @endif
                             </div>
-                        </article>
+
+                            <div class="csh-weapon-tooltip">
+                                <div class="csh-weapon-tooltip-title">Stats de l'arme</div>
+                                <div class="csh-weapon-tooltip-row">
+                                    <span>Lvl 1 · {{ $arme?->main_stat_type ?? 'Stat principale' }}</span>
+                                    <strong>{{ $statsLvl1?->main_stat ?? '-' }}</strong>
+                                </div>
+                                <div class="csh-weapon-tooltip-row" @if(!$statsLvl1?->subs_stats) style="display:none" @endif>
+                                    <span>{{ $arme?->sub_stat_type ?? 'Sub stat' }}</span>
+                                    <strong>{{ $statsLvl1?->subs_stats ?? '-' }}</strong>
+                                </div>
+                                <div class="csh-weapon-tooltip-row">
+                                    <span>Lvl 90 · {{ $arme?->main_stat_type ?? 'Stat principale' }}</span>
+                                    <strong>{{ $statsLvl90?->main_stat ?? '-' }}</strong>
+                                </div>
+                                <div class="csh-weapon-tooltip-row" @if(!$statsLvl90?->subs_stats) style="display:none" @endif>
+                                    <span>{{ $arme?->sub_stat_type ?? 'Sub stat' }}</span>
+                                    <strong>{{ $statsLvl90?->subs_stats ?? '-' }}</strong>
+                                </div>
+                            </div>
+                        </a>
                     @endforeach
                 </div>
             @else
@@ -713,6 +782,105 @@ document.addEventListener('alpine:init', () => {
             @endif
         </div>
     </section>
+
+    <section class="csh-rotations-shell">
+        <div class="csh-preview-panel-head">
+            <div>
+                <div class="csh-preview-panel-title">Rotations de Team</div>
+                <div class="csh-preview-panel-subtitle">Deux rotations disponibles: F2P et Recommended</div>
+            </div>
+            <div class="text-xs text-slate-400" x-text="`${rotationTeams.length}/2`"></div>
+        </div>
+
+        <div class="csh-rotations-grid">
+            <template x-for="tag in ['recommended', 'f2p']" :key="`rotation-${tag}`">
+                <article class="csh-rotation-card">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="csh-rotation-tag" :class="tag" x-text="tag === 'recommended' ? 'Recommended' : 'F2P'"></span>
+                        <span class="csh-rotation-reaction" x-text="teamByTag(tag)?.type_reaction || 'Aucune réaction'"></span>
+                    </div>
+
+                    <template x-if="teamByTag(tag)">
+                        <div class="csh-rotation-members">
+                            <template x-for="member in (teamByTag(tag)?.membres || [])" :key="`rotation-member-${tag}-${member.slot}`">
+                                <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'" :alt="member.nom" :title="`${member.nom} (${member.element || 'Element'})`" />
+                            </template>
+                        </div>
+                    </template>
+
+                    <template x-if="teamByTag(tag)">
+                        <button type="button" class="csh-rotation-btn" @click="openRotation(tag)">Voir rotation</button>
+                    </template>
+
+                    <template x-if="!teamByTag(tag)">
+                        <div class="text-sm italic text-slate-400">Pas encore configurée.</div>
+                    </template>
+                </article>
+            </template>
+        </div>
+    </section>
+
+    <template x-if="activeRotationTeam">
+        <div class="csh-rotation-modal-bg" @click.self="closeRotation()">
+            <div class="csh-rotation-modal">
+                <div class="csh-rotation-modal-head">
+                    <div>
+                        <div class="csh-preview-panel-title" x-text="activeRotationTeam.tag === 'recommended' ? 'Rotation Recommended' : 'Rotation F2P'"></div>
+                        <div class="csh-preview-panel-subtitle" x-text="activeRotationTeam.type_reaction || 'Sans réaction'"></div>
+                    </div>
+                    <button type="button" class="csh-rotation-close" @click="closeRotation()">Fermer</button>
+                </div>
+
+                <div class="csh-rotation-members mb-3">
+                    <template x-for="member in (activeRotationTeam.membres || [])" :key="`rotation-modal-member-${member.slot}`">
+                        <div class="rounded-lg border border-slate-700 bg-slate-900/60 p-2">
+                            <div class="flex items-center gap-2 mb-2">
+                                <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'" :alt="member.nom"
+                                     style="width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.22);object-fit:cover;flex-shrink:0;" />
+                                <div class="text-sm font-semibold text-slate-100" x-text="member.nom"></div>
+                            </div>
+                            <template x-if="member.slot <= 4 && member.aptitudes && member.aptitudes.length > 0">
+                                <div class="flex flex-col gap-1">
+                                    <template x-for="(apt, ai) in member.aptitudes" :key="`apt-${member.slot}-${ai}`">
+                                        <div class="flex items-center gap-2">
+                                            <img :src="apt.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                 :alt="apt.titre"
+                                                 style="width:22px;height:22px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid rgba(148,163,184,.2);" />
+                                            <div class="text-xs text-slate-300 leading-tight">
+                                                <span class="text-slate-400 mr-1" x-text="apt.type + ' :'"></span>
+                                                <span x-text="apt.titre"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <template x-if="activeRotationTeam.rotationSequence && activeRotationTeam.rotationSequence.length > 0">
+                        <template x-for="(apt, idx) in activeRotationTeam.rotationSequence" :key="`rotation-step-${idx}`">
+                            <div class="relative group">
+                                <img :src="apt.icon || '{{ asset('images/placeholder.svg') }}'"
+                                     :alt="`${apt.nom_perso} - ${apt.titre}`"
+                                     style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:2px solid rgba(99,102,241,.4);cursor:pointer;transition:all 0.2s;" />
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40">
+                                    <div class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 whitespace-nowrap shadow-lg">
+                                        <div class="font-semibold text-slate-100" x-text="apt.nom_perso"></div>
+                                        <div class="text-slate-400" x-text="apt.titre"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                    <template x-if="!activeRotationTeam.rotationSequence || activeRotationTeam.rotationSequence.length === 0">
+                        <div class="text-sm text-slate-400 italic">Rotation non renseignée.</div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
 
     <section class="csh-constellation-shell">
         <div class="csh-preview-panel-head">
