@@ -75,7 +75,12 @@ class PersonnageController extends Controller
             'histoires',
             'nations',
             'typeArme',
+            'teamCompositions.membres.personnage.element',
+            'teamCompositions.membres.personnage.photos',
+            'teamCompositions.membres.personnage.aptitudes.typeApti',
+            'teamCompositions.membres.personnage.aptitudes.photos',
             'armesRecommandees.arme.typeArme.photos',
+            'armesRecommandees.arme.statsNiveaux',
             'artefactsRecommandees.artefact1',
             'artefactsRecommandees.artefact2',
         ]);
@@ -158,6 +163,58 @@ class PersonnageController extends Controller
             'boss' => $referencesBoss,
         ];
 
-        return view('personnages.show', compact('personnage', 'aptitudesJson', 'storyReferences'));
+        $teamsRotationJson = $personnage->teamCompositions
+            ->whereIn('tag', ['recommended', 'f2p'])
+            ->sortBy('id_team')
+            ->groupBy('tag')
+            ->map(function ($group) use ($resolvePhotoUrl) {
+                $team = $group->first();
+
+                $rotationSequence = [];
+                if ($team->rotation) {
+                    $decoded = json_decode($team->rotation, true);
+                    if (is_array($decoded)) {
+                        $rotationSequence = $decoded;
+                    }
+                }
+
+                return [
+                    'id_team' => (int) $team->id_team,
+                    'tag' => (string) $team->tag,
+                    'type_reaction' => (string) $team->type_reaction,
+                    'rotationSequence' => $rotationSequence,
+                    'membres' => $team->membres
+                        ->sortBy('slot')
+                        ->values()
+                        ->map(function ($membre) use ($resolvePhotoUrl) {
+                            $perso = $membre->personnage;
+
+                            $aptitudes = collect();
+                            if ($membre->slot <= 4 && $perso) {
+                                $aptitudes = $perso->aptitudes
+                                    ->filter(fn($a) => in_array($a->fid_TypeApti, [6, 7, 8]))
+                                    ->sortBy('fid_TypeApti')
+                                    ->values()
+                                    ->map(fn($a) => [
+                                        'titre' => (string) $a->titre_apti,
+                                        'type'  => (string) ($a->typeApti?->libelle_Apti ?? ''),
+                                        'icon'  => $resolvePhotoUrl($a->photos?->first()),
+                                    ]);
+                            }
+
+                            return [
+                                'slot'      => (int) $membre->slot,
+                                'nom'       => (string) ($perso?->nom_perso ?? ''),
+                                'element'   => (string) ($perso?->element?->libelle_element ?? ''),
+                                'icon'      => $resolvePhotoUrl($perso?->photos?->first()),
+                                'aptitudes' => $aptitudes->values()->all(),
+                            ];
+                        })
+                        ->all(),
+                ];
+            })
+            ->values();
+
+        return view('personnages.show', compact('personnage', 'aptitudesJson', 'storyReferences', 'teamsRotationJson'));
     }
 }
