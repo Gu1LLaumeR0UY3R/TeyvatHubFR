@@ -411,7 +411,7 @@ class PersonnageBlockController extends Controller
     public function updateArtefactsRecommandees(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
-            'builds' => ['required', 'array', 'min:1', 'max:6'],
+            'builds' => ['required', 'array', 'min:1', 'max:4'],
             'builds.*.artefact1_id' => ['required', 'integer', 'exists:artefact,id_artefact'],
             'builds.*.pieces_1' => ['required', 'integer', Rule::in([2, 4])],
             'builds.*.artefact2_id' => ['nullable', 'integer', 'exists:artefact,id_artefact'],
@@ -885,7 +885,8 @@ class PersonnageBlockController extends Controller
     {
         $data = $request->validate([
             'type_reaction' => ['required', 'string', 'max:80'],
-            'tag' => ['nullable', Rule::in(['recommended', 'f2p'])],
+            'tag' => ['required', Rule::in(['recommended', 'f2p'])],
+            'rotation' => ['nullable', 'string', 'max:5000'],
             'membres' => ['required', 'array', 'size:4'],
             'membres.*.id_perso' => ['required', 'integer', 'exists:personnage,id_perso'],
             'membres.*.slot' => ['required', 'integer', 'min:1', 'max:4'],
@@ -902,7 +903,8 @@ class PersonnageBlockController extends Controller
             $team = TeamComposition::create([
                 'fid_perso' => $personnage->id_perso,
                 'type_reaction' => trim((string) $data['type_reaction']),
-                'tag' => $data['tag'] ?? null,
+                'tag' => $data['tag'],
+                'rotation' => trim((string) $data['rotation']),
             ]);
 
             foreach ($data['membres'] as $membre) {
@@ -949,7 +951,8 @@ class PersonnageBlockController extends Controller
 
         $data = $request->validate([
             'type_reaction' => ['required', 'string', 'max:80'],
-            'tag' => ['nullable', Rule::in(['recommended', 'f2p'])],
+            'tag' => ['required', Rule::in(['recommended', 'f2p'])],
+            'rotation' => ['nullable', 'string', 'max:5000'],
             'membres' => ['required', 'array', 'size:4'],
             'membres.*.id_perso' => ['required', 'integer', 'exists:personnage,id_perso'],
             'membres.*.slot' => ['required', 'integer', 'min:1', 'max:4'],
@@ -965,7 +968,8 @@ class PersonnageBlockController extends Controller
         DB::transaction(function () use ($team, $data) {
             $team->update([
                 'type_reaction' => trim((string) $data['type_reaction']),
-                'tag' => $data['tag'] ?? null,
+                'tag' => $data['tag'],
+                'rotation' => trim((string) $data['rotation']),
             ]);
 
             $team->membres()->delete();
@@ -1013,6 +1017,94 @@ class PersonnageBlockController extends Controller
             ->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    public function getTeamAptitudes(Personnage $personnage, int $id_team): JsonResponse
+    {
+        $team = TeamComposition::where('id_team', $id_team)
+            ->where('fid_perso', $personnage->id_perso)
+            ->with('membres.personnage.aptitudes.typeApti', 'membres.personnage.aptitudes.photos')
+            ->firstOrFail();
+
+        $aptitudesByMember = [];
+
+        foreach ($team->membres->where('slot', '<=', 4) as $membre) {
+            $perso = $membre->personnage;
+            if (!$perso) {
+                continue;
+            }
+
+            $memberApts = $perso->aptitudes
+                ->filter(fn($a) => in_array($a->fid_TypeApti, [6, 7, 8]))
+                ->sortBy('fid_TypeApti')
+                ->values()
+                ->map(fn($a) => [
+                    'id_aptitude' => (int) $a->id_aptitude,
+                    'fid_perso' => (int) $perso->id_perso,
+                    'nom_perso' => (string) $perso->nom_perso,
+                    'titre' => (string) $a->titre_apti,
+                    'type' => (string) ($a->typeApti?->libelle_Apti ?? ''),
+                    'icon' => $this->getPhotoUrl($a->photos->first()),
+                ])
+                ->all();
+
+            if (!empty($memberApts)) {
+                $aptitudesByMember[] = [
+                    'slot' => (int) $membre->slot,
+                    'nom_perso' => (string) $perso->nom_perso,
+                    'icon_perso' => $this->getPhotoUrl($perso->photos->first()),
+                    'aptitudes' => $memberApts,
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'members' => $aptitudesByMember,
+        ]);
+    }
+
+    public function updateTeamRotation(Request $request, Personnage $personnage, int $id_team): JsonResponse
+    {
+        $team = TeamComposition::where('id_team', $id_team)
+            ->where('fid_perso', $personnage->id_perso)
+            ->firstOrFail();
+
+        $data = $request->validate([
+            'rotation' => ['nullable', 'json'],
+        ]);
+
+        $rotation = $data['rotation'] ? json_decode($data['rotation'], true) : [];
+
+        if (!is_array($rotation)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La rotation doit être un JSON valide.',
+            ], 422);
+        }
+
+        $team->update([
+            'rotation' => $rotation ? json_encode($rotation) : null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rotation sauvegardée avec succès.',
+        ]);
+    }
+
+    private function getPhotoUrl($photo): string
+    {
+        if (!$photo) {
+            return asset('images/placeholder.svg');
+        }
+        if ($photo->source_url) {
+            return $photo->source_url;
+        }
+        if (filter_var((string) $photo->chemin_photo, FILTER_VALIDATE_URL)) {
+            return $photo->chemin_photo;
+        }
+        return asset('storage/' . ltrim((string) $photo->chemin_photo, '/'));
     }
 
     private function validateTeamPayload(Personnage $personnage, array $data, ?int $ignoreTeamId): void
@@ -1065,22 +1157,29 @@ class PersonnageBlockController extends Controller
             $replacementKeys[$key] = true;
         }
 
-        $tag = $data['tag'] ?? null;
-        if ($tag) {
-            $conflictQuery = TeamComposition::query()
-                ->where('fid_perso', $personnage->id_perso)
-                ->where('type_reaction', trim((string) $data['type_reaction']))
-                ->where('tag', $tag);
+        $existingTeamsQuery = TeamComposition::query()->where('fid_perso', $personnage->id_perso);
+        if ($ignoreTeamId !== null) {
+            $existingTeamsQuery->where('id_team', '!=', $ignoreTeamId);
+        }
 
-            if ($ignoreTeamId !== null) {
-                $conflictQuery->where('id_team', '!=', $ignoreTeamId);
-            }
+        if ($existingTeamsQuery->count() >= 2) {
+            throw ValidationException::withMessages([
+                'tag' => 'Seulement 2 compositions sont autorisées: Recommended et F2P.',
+            ]);
+        }
 
-            if ($conflictQuery->exists()) {
-                throw ValidationException::withMessages([
-                    'tag' => "Il existe déjà une team {$tag} pour ce type de réaction.",
-                ]);
-            }
+        $conflictTagQuery = TeamComposition::query()
+            ->where('fid_perso', $personnage->id_perso)
+            ->where('tag', (string) $data['tag']);
+
+        if ($ignoreTeamId !== null) {
+            $conflictTagQuery->where('id_team', '!=', $ignoreTeamId);
+        }
+
+        if ($conflictTagQuery->exists()) {
+            throw ValidationException::withMessages([
+                'tag' => 'Cette étiquette existe déjà pour ce personnage.',
+            ]);
         }
     }
 
@@ -1090,6 +1189,7 @@ class PersonnageBlockController extends Controller
             'id_team' => (int) $team->id_team,
             'type_reaction' => $team->type_reaction,
             'tag' => $team->tag,
+            'rotation' => $team->rotation,
             'membres' => $team->membres
                 ->sortBy('slot')
                 ->values()
