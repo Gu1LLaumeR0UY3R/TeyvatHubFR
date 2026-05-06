@@ -1228,6 +1228,7 @@
                     'id_team' => (int) $team->id_team,
                     'type_reaction' => $team->type_reaction,
                     'tag' => $team->tag,
+                    'rotation' => $team->rotation,
                     'membres' => $team->membres->sortBy('slot')->values()->map(function ($m) {
                         $photo = $m->personnage?->photos->first();
                         $defaultRole = $m->personnage?->roles->first()?->libelle_role;
@@ -1356,6 +1357,8 @@
          data-store-team-url="{{ route('admin.personnage.block.teams.store', $personnage) }}"
          data-update-team-url-base="{{ route('admin.personnage.block.teams.store', $personnage) }}"
          data-delete-team-url-base="{{ route('admin.personnage.block.teams.store', $personnage) }}"
+         data-team-aptitudes-url-base="{{ route('admin.personnage.block.teams.aptitudes', [$personnage, 'id_team']) }}"
+         data-update-team-rotation-url-base="{{ route('admin.personnage.block.teams.rotation.update', [$personnage, 'id_team']) }}"
          data-showcase-url="{{ route('personnages.show', $personnage) }}"
          data-save-histoires-url="{{ route('admin.personnage.block.histoires.update', $personnage) }}"
          data-google-drive-api-key="{{ e((string) config('services.google_drive.api_key', '')) }}"
@@ -1588,7 +1591,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Armes recommandées</label>
-                        <span class="text-[11px] text-slate-500" x-text="armes.length + '/3'"></span>
+                        <span class="text-[11px] text-slate-500" x-text="armes.length + '/6'"></span>
                     </div>
 
                     <template x-if="armesError">
@@ -1707,7 +1710,7 @@
 
                     <div class="mt-3">
                         <button type="button" @click="showArmesPicker = !showArmesPicker"
-                                :disabled="armes.length >= 3"
+                                :disabled="armes.length >= 6"
                                 class="w-full rounded border border-slate-300 py-2 text-sm text-slate-800 hover:bg-slate-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50">
                             + Ajouter
                         </button>
@@ -2022,8 +2025,8 @@
                                             <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                                                 <div class="flex items-center gap-2">
                                                     <span class="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                                                          :class="team.tag === 'recommended' ? 'bg-emerald-100 text-emerald-700' : (team.tag === 'f2p' ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600')"
-                                                          x-text="team.tag === 'recommended' ? 'Recommended' : (team.tag === 'f2p' ? 'F2P' : 'Normal')"></span>
+                                                          :class="team.tag === 'recommended' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'"
+                                                          x-text="team.tag === 'recommended' ? 'Recommended' : 'F2P'"></span>
                                                     <div class="flex -space-x-2">
                                                         <template x-for="member in sortedMembers(team)" :key="`reaction-team-member-${team.id_team}-${member.slot}`">
                                                             <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'" :alt="member.nom" class="h-7 w-7 rounded-full border-2 border-white object-cover shadow-sm" />
@@ -2034,6 +2037,7 @@
                                                         <button type="button" @click="deleteTeam(team.id_team)" class="text-xs text-slate-400 hover:text-red-500">×</button>
                                                     </div>
                                                 </div>
+                                                <div class="mt-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-600" x-text="team.rotation || 'Rotation non renseignée.'"></div>
                                             </div>
                                         </template>
                                     </div>
@@ -2071,7 +2075,7 @@
             </template>
 
             <template x-if="teamFormOpen">
-                <div class="th-const-edit-overlay" @click.self="teamFormOpen = false">
+                <div class="th-const-edit-overlay" @click.self="closeTeamForm()">
                     <div class="th-apt-single-modal" style="width:min(900px,98vw)">
                         <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
                             <div class="text-base font-bold text-slate-900" x-text="teamEditingId ? 'Modifier composition' : 'Nouvelle composition'"></div>
@@ -2097,15 +2101,85 @@
                             <div class="mb-3 flex items-center gap-2">
                                 <span class="text-xs font-bold text-slate-700">Type de team</span>
                                 <div class="ml-auto flex items-center gap-2">
-                                    <button type="button" @click="teamForm.tag = ''"
-                                            :class="teamForm.tag === '' ? 'border-slate-700 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-600'"
-                                            class="rounded-full border px-3 py-1 text-[11px] font-semibold">Normal</button>
                                     <button type="button" @click="teamForm.tag = 'recommended'"
                                             :class="teamForm.tag === 'recommended' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-emerald-200 bg-white text-emerald-700'"
                                             class="rounded-full border px-3 py-1 text-[11px] font-semibold">Recommended</button>
                                     <button type="button" @click="teamForm.tag = 'f2p'"
                                             :class="teamForm.tag === 'f2p' ? 'border-sky-600 bg-sky-600 text-white' : 'border-sky-200 bg-white text-sky-700'"
                                             class="rounded-full border px-3 py-1 text-[11px] font-semibold">F2P</button>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="mb-3 flex items-center justify-between">
+                                    <label class="text-[11px] font-bold uppercase tracking-wide text-slate-500">Constructeur de rotation</label>
+                                    <template x-if="allTeamSlotsFilledValidation()">
+                                        <button type="button" @click="loadTeamAptitudes()" :disabled="teamAptitudesLoading"
+                                                class="rounded-lg border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-100 disabled:opacity-50">
+                                            <span x-show="!teamAptitudesLoading">Charger aptitudes</span>
+                                            <span x-show="teamAptitudesLoading">Chargement...</span>
+                                        </button>
+                                    </template>
+                                </div>
+
+                                {{-- Groupe d'aptitudes par perso --}}
+                                <template x-if="teamConstructorAptitudes.length > 0">
+                                    <div class="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                        <template x-for="member in teamConstructorAptitudes" :key="`apt-member-${member.slot}`">
+                                            <div>
+                                                <div class="mb-2 flex items-center gap-2">
+                                                    <img :src="member.icon_perso || '{{ asset('images/placeholder.svg') }}'"
+                                                         :alt="member.nom_perso"
+                                                         class="h-6 w-6 rounded-full border border-slate-300 object-cover" />
+                                                    <span class="text-[11px] font-bold text-slate-700" x-text="member.nom_perso"></span>
+                                                </div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    <template x-for="apt in member.aptitudes" :key="`apt-pick-${apt.id_aptitude}`">
+                                                        <button type="button" @click="addToRotationSequence(apt)"
+                                                                :title="`${apt.titre} (${apt.type})`"
+                                                                class="relative cursor-pointer transition-transform hover:scale-110">
+                                                            <img :src="apt.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                                 :alt="apt.titre"
+                                                                 class="h-10 w-10 rounded-lg border-2 border-indigo-300 object-cover hover:border-indigo-600" />
+                                                        </button>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                {{-- Séquence construite --}}
+                                <div class="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                                    <div class="mb-2 flex items-center justify-between">
+                                        <span class="text-[11px] font-bold text-slate-700">Séquence</span>
+                                        <template x-if="rotationSequence.length > 0">
+                                            <button type="button" @click="rotationSequence = []; teamForm.rotation = JSON.stringify(rotationSequence)"
+                                                    class="rounded-lg border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 hover:bg-red-100">Reset</button>
+                                        </template>
+                                    </div>
+                                    <template x-if="rotationSequence.length === 0">
+                                        <div class="text-center text-[11px] italic text-slate-400 py-4">Aucune compétence ajoutée</div>
+                                    </template>
+                                    <template x-if="rotationSequence.length > 0">
+                                        <div class="flex flex-wrap gap-2">
+                                            <template x-for="(apt, idx) in rotationSequence" :key="`seq-${idx}`">
+                                                <div class="group relative">
+                                                    <button type="button" @click="removeFromRotationSequence(idx)"
+                                                            class="absolute -right-2 -top-2 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold group-hover:flex">×</button>
+                                                    <img :src="apt.icon || '{{ asset('images/placeholder.svg') }}'"
+                                                         :alt="`${apt.nom_perso} - ${apt.titre}`"
+                                                         :title="`${apt.nom_perso} - ${apt.titre}`"
+                                                         class="h-10 w-10 rounded-lg border-2 border-emerald-400 object-cover cursor-pointer" />
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <button type="button" @click="saveRotationSequence()" :disabled="teamRotationSaving"
+                                                class="mt-3 w-full rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-2 text-[11px] font-semibold text-white hover:bg-emerald-600 disabled:opacity-60">
+                                            <span x-show="!teamRotationSaving">Enregistrer séquence</span>
+                                            <span x-show="teamRotationSaving">Enregistrement...</span>
+                                        </button>
+                                    </template>
                                 </div>
                             </div>
 
@@ -2174,7 +2248,7 @@
                         </div>
 
                         <div class="mt-5 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
-                            <button type="button" @click="teamFormOpen = false"
+                            <button type="button" @click="closeTeamForm()"
                                     class="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Annuler</button>
                             <button type="button" @click="saveTeam()" :disabled="teamSaving"
                                     class="rounded border border-indigo-500 bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-60">
@@ -2185,6 +2259,9 @@
                     </div>
                 </div>
             </template>
+
+
+            {{-- ============ MODAL WIZARD CONSTELLATIONS ============ --}}
 
 
             {{-- ============ MODAL WIZARD CONSTELLATIONS ============ --}}
@@ -3114,7 +3191,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                                 <button type="button" @click="addArtefactBuild()"
-                                    :disabled="artefactBuilds.length >= 3"
+                                    :disabled="artefactBuilds.length >= 4"
                                     class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50">+ Ajouter</button>
                             <button type="button" @click="showArtefactManager = false"
                                     class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
@@ -3378,8 +3455,8 @@
             const isFreshCreate = String(data.freshCreate || '0') === '1';
             const availableArmes = safeJsonParse(data.availableArmes, []);
             const availableArtefacts = safeJsonParse(data.availableArtefacts, []);
-            const existingArmes  = safeJsonParse(data.existingArmes, []).slice(0, 3);
-            const existingArtefacts = safeJsonParse(data.existingArtefacts, []).slice(0, 3);
+            const existingArmes  = safeJsonParse(data.existingArmes, []).slice(0, 6);
+            const existingArtefacts = safeJsonParse(data.existingArtefacts, []).slice(0, 4);
             const existingConstellations = safeJsonParse(data.constellations, []);
             const existingAptitudes = safeJsonParse(data.aptitudes, []);
             const existingHistoires = safeJsonParse(data.histoires, []);
@@ -3501,6 +3578,7 @@
                 teamForm: {
                     type_reaction: '',
                     tag: '',
+                    rotation: '',
                     membres: [
                         { slot: 1, id_perso: null, role_override: null },
                         { slot: 2, id_perso: null, role_override: null },
@@ -3511,6 +3589,10 @@
                 },
                 teamError: '',
                 teamSaving: false,
+                teamConstructorAptitudes: [],
+                rotationSequence: [],
+                teamAptitudesLoading: false,
+                teamRotationSaving: false,
                 teamSlotPickerOpen: null,
                 teamSlotPickerSearch: '',
                 teamDrawerState: {},
@@ -3879,7 +3961,7 @@
                     this.armesError = '';
                 },
                 addArme(arme) {
-                    if (this.armes.length >= 3) return;
+                    if (this.armes.length >= 6) return;
 
                     this.armes.push({
                         id_arme: arme.id,
@@ -3921,7 +4003,7 @@
                     return artefact.rarete || '';
                 },
                 addArtefactBuild() {
-                    if (this.artefactBuilds.length >= 3) return;
+                    if (this.artefactBuilds.length >= 4) return;
 
                     this.artefactBuilds.push({
                         id_build: null,
@@ -4023,10 +4105,10 @@
                     }
 
                     const payload = [];
-                    const builds = this.artefactBuilds.slice(0, 3);
+                    const builds = this.artefactBuilds.slice(0, 4);
 
-                    if (this.artefactBuilds.length > 3) {
-                        this.artefactsError = 'Maximum 3 builds artefacts.';
+                    if (this.artefactBuilds.length > 4) {
+                        this.artefactsError = 'Maximum 4 builds artefacts.';
                         return;
                     }
                     for (let index = 0; index < builds.length; index += 1) {
@@ -4386,6 +4468,13 @@
                 async saveArmes({ strict = true } = {}) {
                     if (!this.armes.length) {
                         const msg = 'Ajoute au moins une arme recommandée.';
+                        this.armesError = msg;
+                        if (strict) throw new Error(msg);
+                        return { saved: false, reason: msg };
+                    }
+
+                    if (this.armes.length > 6) {
+                        const msg = 'Maximum 6 armes recommandées.';
                         this.armesError = msg;
                         if (strict) throw new Error(msg);
                         return { saved: false, reason: msg };
@@ -5110,6 +5199,13 @@
                     this.teamSlotPickerSearch = '';
                 },
 
+                closeTeamForm() {
+                    this.teamFormOpen = false;
+                    this.teamConstructorAptitudes = [];
+                    this.rotationSequence = [];
+                    this.teamError = '';
+                },
+
                 selectFromPicker(person) {
                     const state = this.teamSlotPickerOpen;
                     if (!state) return;
@@ -5132,7 +5228,18 @@
 
                 openTeamForm(team = null, reactionName = null) {
                     this.teamError = '';
+                    this.teamConstructorAptitudes = [];
+                    this.rotationSequence = [];
+
                     if (!team) {
+                        if ((this.teams || []).length >= 2) {
+                            this.teamError = 'Seulement 2 rotations sont autorisees: Recommended et F2P.';
+                            return;
+                        }
+
+                        const existingTags = new Set((this.teams || []).map(t => String(t.tag || '').toLowerCase()));
+                        const defaultTag = existingTags.has('recommended') ? 'f2p' : 'recommended';
+
                         const reaction = String(reactionName || '').trim();
                         if (!reaction) {
                             this.showToast('Cree d\'abord un slot de reaction', 'error');
@@ -5141,7 +5248,8 @@
                         this.teamEditingId = null;
                         this.teamForm = {
                             type_reaction: reaction,
-                            tag: '',
+                            tag: defaultTag,
+                            rotation: '',
                             membres: [
                                 { slot: 1, id_perso: null, role_override: null },
                                 { slot: 2, id_perso: null, role_override: null },
@@ -5160,9 +5268,22 @@
                                 role_override: found?.role_override || null,
                             };
                         });
+                        
+                        let rotationFromDb = [];
+                        try {
+                            const parsed = JSON.parse(team.rotation || '[]');
+                            if (Array.isArray(parsed)) {
+                                rotationFromDb = parsed;
+                            }
+                        } catch (e) {
+                            // Ignore parse errors
+                        }
+                        this.rotationSequence = rotationFromDb;
+
                         this.teamForm = {
                             type_reaction: team.type_reaction || '',
                             tag: team.tag || '',
+                            rotation: team.rotation || '',
                             membres: members,
                             remplacants: (team.remplacants || []).map(r => ({
                                 slot: Number(r.slot),
@@ -5257,6 +5378,7 @@
                     const payload = {
                         type_reaction: String(this.teamForm.type_reaction || '').trim(),
                         tag: this.teamForm.tag || null,
+                        rotation: String(this.teamForm.rotation || '').trim(),
                         membres: this.teamForm.membres.map(m => ({
                             slot: Number(m.slot),
                             id_perso: m.id_perso ? Number(m.id_perso) : null,
@@ -5271,6 +5393,10 @@
 
                     if (!payload.type_reaction) {
                         this.teamError = 'Selectionne d\'abord un slot de reaction.';
+                        return;
+                    }
+                    if (!payload.tag) {
+                        this.teamError = 'Selectionne Recommended ou F2P.';
                         return;
                     }
                     if (payload.membres.some(m => !m.id_perso)) {
@@ -5326,6 +5452,104 @@
                         this.showToast('Team supprimée', 'success');
                     } catch (e) {
                         this.showToast('Erreur réseau', 'error');
+                    }
+                },
+
+                allTeamSlotsFilledValidation() {
+                    return this.teamForm.membres.every(m => m.id_perso);
+                },
+
+                async loadTeamAptitudes() {
+                    this.teamAptitudesLoading = true;
+                    try {
+                        const idTeam = this.teamEditingId;
+                        
+                        if (!idTeam) {
+                            this.teamError = 'Enregistre d\'abord la team pour charger les aptitudes.';
+                            this.teamAptitudesLoading = false;
+                            return;
+                        }
+
+                        const url = `${data.teamAptitudesUrlBase}`.replace('id_team', idTeam);
+
+                        const resp = await fetch(url, {
+                            headers: { 'X-CSRF-TOKEN': data.csrf },
+                        });
+                        const json = await resp.json().catch(() => ({}));
+                        
+                        if (!resp.ok) {
+                            this.teamError = json.message || 'Erreur chargement aptitudes.';
+                            return;
+                        }
+
+                        this.teamConstructorAptitudes = json.members || [];
+                        this.rotationSequence = [];
+                    } catch (e) {
+                        this.teamError = e?.message || 'Erreur réseau.';
+                    } finally {
+                        this.teamAptitudesLoading = false;
+                    }
+                },
+
+                addToRotationSequence(apt) {
+                    this.rotationSequence.push({
+                        id_aptitude: apt.id_aptitude,
+                        fid_perso: apt.fid_perso,
+                        nom_perso: apt.nom_perso,
+                        titre: apt.titre,
+                        type: apt.type,
+                        icon: apt.icon,
+                    });
+                },
+
+                removeFromRotationSequence(idx) {
+                    this.rotationSequence.splice(idx, 1);
+                },
+
+                async saveRotationSequence() {
+                    if (this.rotationSequence.length === 0) {
+                        this.showToast('La séquence est vide', 'error');
+                        return;
+                    }
+
+                    if (!this.teamEditingId) {
+                        this.teamError = 'Enregistre d\'abord la team.';
+                        return;
+                    }
+
+                    this.teamRotationSaving = true;
+                    try {
+                        const payload = {
+                            rotation: JSON.stringify(this.rotationSequence),
+                        };
+
+                        const url = `${data.updateTeamRotationUrlBase}`.replace('id_team', this.teamEditingId);
+
+                        const resp = await fetch(url, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': data.csrf,
+                            },
+                            body: JSON.stringify(payload),
+                        });
+
+                        const json = await resp.json().catch(() => ({}));
+                        if (!resp.ok) {
+                            this.teamError = json.message || 'Erreur sauvegarde rotation.';
+                            return;
+                        }
+
+                        const index = this.teams.findIndex(t => Number(t.id_team) === Number(this.teamEditingId));
+                        if (index !== -1) {
+                            this.teams[index].rotation = payload.rotation;
+                        }
+
+                        this.showToast('Séquence sauvegardée', 'success');
+                    } catch (e) {
+                        this.teamError = e?.message || 'Erreur réseau.';
+                    } finally {
+                        this.teamRotationSaving = false;
                     }
                 },
 
