@@ -9,6 +9,92 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->dropUnique(['slug']));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->dropIndex('articles_slug_unique'));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->dropIndex(['fid_admin']));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->dropIndex('articles_fid_admin_index'));
+            } catch (\Throwable $e) {
+            }
+
+            Schema::table('articles', function (Blueprint $table) {
+                if (Schema::hasColumn('articles', 'id_article') && !Schema::hasColumn('articles', 'id')) {
+                    $table->renameColumn('id_article', 'id');
+                }
+                if (Schema::hasColumn('articles', 'titre') && !Schema::hasColumn('articles', 'title')) {
+                    $table->renameColumn('titre', 'title');
+                }
+                if (Schema::hasColumn('articles', 'fid_admin') && !Schema::hasColumn('articles', 'author_id')) {
+                    $table->renameColumn('fid_admin', 'author_id');
+                }
+                if (Schema::hasColumn('articles', 'statut') && !Schema::hasColumn('articles', 'status')) {
+                    $table->renameColumn('statut', 'status');
+                }
+            });
+
+            Schema::table('articles', function (Blueprint $table) {
+                $toDrop = [];
+                if (Schema::hasColumn('articles', 'slug')) {
+                    $toDrop[] = 'slug';
+                }
+                if (Schema::hasColumn('articles', 'extrait')) {
+                    $toDrop[] = 'extrait';
+                }
+                if (Schema::hasColumn('articles', 'cover_image')) {
+                    $toDrop[] = 'cover_image';
+                }
+
+                if (!empty($toDrop)) {
+                    $table->dropColumn($toDrop);
+                }
+            });
+
+            DB::table('articles')->where('status', 'publié')->update(['status' => 'published']);
+            DB::table('articles')->where('status', 'brouillon')->update(['status' => 'draft']);
+
+            Schema::table('articles', function (Blueprint $table) {
+                if (!Schema::hasColumn('articles', 'type')) {
+                    $table->string('type')->default('annonce');
+                }
+                if (!Schema::hasColumn('articles', 'is_pinned')) {
+                    $table->boolean('is_pinned')->default(false);
+                }
+                if (!Schema::hasColumn('articles', 'pinned_until')) {
+                    $table->timestamp('pinned_until')->nullable();
+                }
+                if (!Schema::hasColumn('articles', 'scheduled_at')) {
+                    $table->timestamp('scheduled_at')->nullable();
+                }
+            });
+
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->index('author_id'));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->index('status'));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->index('type'));
+            } catch (\Throwable $e) {
+            }
+
+            return;
+        }
+
         // ── 1. Supprimer les index avant de renommer les colonnes ────────
         try { Schema::table('articles', fn (Blueprint $t) => $t->dropUnique(['slug'])); } catch (\Exception $e) {}
         try { Schema::table('articles', fn (Blueprint $t) => $t->dropIndex('articles_fid_admin_index')); } catch (\Exception $e) {}
@@ -52,6 +138,84 @@ return new class extends Migration
 
     public function down(): void
     {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->dropIndex(['author_id']));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->dropIndex(['status']));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->dropIndex(['type']));
+            } catch (\Throwable $e) {
+            }
+
+            Schema::table('articles', function (Blueprint $table) {
+                $toDrop = [];
+                if (Schema::hasColumn('articles', 'type')) {
+                    $toDrop[] = 'type';
+                }
+                if (Schema::hasColumn('articles', 'is_pinned')) {
+                    $toDrop[] = 'is_pinned';
+                }
+                if (Schema::hasColumn('articles', 'pinned_until')) {
+                    $toDrop[] = 'pinned_until';
+                }
+                if (Schema::hasColumn('articles', 'scheduled_at')) {
+                    $toDrop[] = 'scheduled_at';
+                }
+
+                if (!empty($toDrop)) {
+                    $table->dropColumn($toDrop);
+                }
+            });
+
+            DB::table('articles')->where('status', 'draft')->update(['status' => 'brouillon']);
+            DB::table('articles')->where('status', 'published')->update(['status' => 'publié']);
+
+            Schema::table('articles', function (Blueprint $table) {
+                if (Schema::hasColumn('articles', 'status') && !Schema::hasColumn('articles', 'statut')) {
+                    $table->renameColumn('status', 'statut');
+                }
+                if (Schema::hasColumn('articles', 'author_id') && !Schema::hasColumn('articles', 'fid_admin')) {
+                    $table->renameColumn('author_id', 'fid_admin');
+                }
+                if (Schema::hasColumn('articles', 'title') && !Schema::hasColumn('articles', 'titre')) {
+                    $table->renameColumn('title', 'titre');
+                }
+                if (Schema::hasColumn('articles', 'id') && !Schema::hasColumn('articles', 'id_article')) {
+                    $table->renameColumn('id', 'id_article');
+                }
+            });
+
+            Schema::table('articles', function (Blueprint $table) {
+                if (!Schema::hasColumn('articles', 'slug')) {
+                    $table->string('slug', 255)->nullable();
+                }
+                if (!Schema::hasColumn('articles', 'extrait')) {
+                    $table->text('extrait')->nullable();
+                }
+                if (!Schema::hasColumn('articles', 'cover_image')) {
+                    $table->string('cover_image', 500)->nullable();
+                }
+            });
+
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->unique('slug'));
+            } catch (\Throwable $e) {
+            }
+            try {
+                Schema::table('articles', fn (Blueprint $table) => $table->index('fid_admin'));
+            } catch (\Throwable $e) {
+            }
+
+            return;
+        }
+
         // ── Inverser dans l'ordre ────────────────────────────────────────
         Schema::table('articles', function (Blueprint $table) {
             $table->dropIndex(['author_id']);
