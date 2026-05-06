@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PersonnageController;
@@ -26,10 +27,8 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\ImprovementVoteController;
 use App\Http\Controllers\SurveyResponseController;
-use App\Http\Controllers\ArticleCommentController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\ArticleCommentModerationController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -59,18 +58,12 @@ Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('art
 Route::get('/histoire/nations', fn() => redirect()->route('nations.index'));
 Route::get('/histoire/nations/{nation}', fn(string $nation) => redirect()->route('nations.show', $nation));
 
-// Routes joueur : votes + questionnaires + commentaires
+// Routes joueur : votes + questionnaires
 Route::middleware(['auth', '2fa.user'])->group(function () {
     Route::post('/amelioration/{improvement}/vote', [ImprovementVoteController::class, 'toggle'])
          ->name('improvement.vote');
     Route::post('/surveys/{survey}/respond', [SurveyResponseController::class, 'store'])
          ->name('survey.respond');
-});
-
-// Commentaires articles (auth requise pour poster)
-Route::middleware(['auth', '2fa.user'])->group(function () {
-    Route::post('/articles/{article}/comments', [ArticleCommentController::class, 'store'])
-         ->name('articles.comment.store');
 });
 
 // Jeux publics
@@ -157,7 +150,6 @@ Route::prefix('admin')->group(function () {
             // Routes AJAX blocs personnage
             Route::prefix('personnages/{personnage:slug}/block')->group(function () {
                 Route::put('main-zone', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateMainZone'])->name('admin.personnage.block.main-zone.update');
-                Route::post('main-zone/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadImage'])->name('admin.personnage.block.main-zone.upload');
                 Route::get('main-zone/backgrounds', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'getBackgroundsByNation'])->name('admin.personnage.block.main-zone.backgrounds');
                 Route::put('armes-recommandees', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArmesRecommandees'])->name('admin.personnage.block.armes.update');
                 Route::delete('armes-recommandees/{id_arme}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArmeRecommandee'])->name('admin.personnage.block.armes.delete');
@@ -171,6 +163,8 @@ Route::prefix('admin')->group(function () {
                 Route::post('competences/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadAptitudeImage'])->name('admin.personnage.block.competences.upload');
                 Route::post('teams', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'storeTeam'])->name('admin.personnage.block.teams.store');
                 Route::put('teams/{id_team}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateTeam'])->name('admin.personnage.block.teams.update');
+                Route::get('teams/{id_team}/aptitudes', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'getTeamAptitudes'])->name('admin.personnage.block.teams.aptitudes');
+                Route::patch('teams/{id_team}/rotation', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateTeamRotation'])->name('admin.personnage.block.teams.rotation.update');
                 Route::delete('teams/{id_team}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteTeam'])->name('admin.personnage.block.teams.delete');
                 Route::patch('order', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateBlockOrder'])->name('admin.personnage.block.order');
             });
@@ -331,17 +325,10 @@ Route::prefix('admin')->group(function () {
                  ->name('admin.articles.survey-results');
         });
 
-        // ─── Modération commentaires (permission: articles) ──────────────
-        Route::middleware('admin.can:articles')->prefix('comments')->group(function () {
-            Route::get('/', [ArticleCommentModerationController::class, 'index'])->name('admin.comments.index');
-            Route::patch('/{comment}/approve', [ArticleCommentModerationController::class, 'approve'])->name('admin.comments.approve');
-            Route::patch('/{comment}/reject', [ArticleCommentModerationController::class, 'reject'])->name('admin.comments.reject');
-            Route::delete('/{comment}', [ArticleCommentModerationController::class, 'destroy'])->name('admin.comments.destroy');
-        });
-
         // ─── Logs d'activité (permission: manage_logs — super_admin uniquement via Spatie) ───
         Route::middleware('admin.can:manage_logs')->group(function () {
             Route::get('/logs', [ActivityLogController::class, 'index'])->name('admin.logs.index');
+            Route::get('/logs/{scope}/{category}', [ActivityLogController::class, 'show'])->name('admin.logs.show');
         });
     });
 });
