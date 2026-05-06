@@ -23,12 +23,41 @@ use Illuminate\View\View;
 
 class PersonnageController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $sort = request('sort', 'nom_asc');
+        $sort = $request->input('sort', 'nom_asc');
 
         $personnagesQuery = Personnage::query()
             ->with(['element', 'etoile', 'photos']);
+
+        if ($request->filled('search')) {
+            $search = (string) $request->input('search');
+            $personnagesQuery->where('nom_perso', 'like', '%' . $search . '%');
+        }
+
+        if ($request->filled('element')) {
+            $personnagesQuery->where('fid_element', (int) $request->input('element'));
+        }
+
+        if ($request->filled('rarete')) {
+            $personnagesQuery->where('fid_etoile', (int) $request->input('rarete'));
+        }
+
+        if ($request->filled('arme')) {
+            $personnagesQuery->where('fid_TArmes', (int) $request->input('arme'));
+        }
+
+        if ($request->filled('type_perso')) {
+            $personnagesQuery->where('fid_TP', (int) $request->input('type_perso'));
+        }
+
+        if ($request->input('photo') === 'with') {
+            $personnagesQuery->whereHas('photos');
+        }
+
+        if ($request->input('photo') === 'without') {
+            $personnagesQuery->whereDoesntHave('photos');
+        }
 
         switch ($sort) {
             case 'nom_desc':
@@ -61,32 +90,20 @@ class PersonnageController extends Controller
         $personnages = $personnagesQuery->paginate(20)->withQueryString();
         $elements = Elements::orderBy('libelle_element')->get();
         $etoiles = Etoile::whereIn('libelle', ['4★', '5★'])->orderBy('libelle')->get();
-        $typeArmes = TypeArme::all();
+        $typeArmes = TypeArme::orderBy('libelle_TArme')->get();
+        $typesPerso = TypePerso::orderBy('libelle_TP')->get();
 
-        return view('admin.personnages.index', compact('personnages', 'elements', 'etoiles', 'typeArmes', 'sort'));
+        return view('admin.personnages.index', compact('personnages', 'elements', 'etoiles', 'typeArmes', 'typesPerso', 'sort'));
     }
 
-    public function create(): RedirectResponse
+    public function create(): View
     {
-        $fidElement = Elements::query()->value('id_element');
-        $fidEtoile = Etoile::query()->value('id_etoile');
-        $fidTypeArme = TypeArme::query()->value('id_TArmes');
-        $fidTypePerso = TypePerso::query()->value('id_TP');
+        $elements = Elements::with('photos')->orderBy('libelle_element')->get();
+        $etoiles = Etoile::orderBy('libelle')->get();
+        $typesArme = TypeArme::orderBy('libelle_TArme')->get();
+        $typesPerso = TypePerso::orderBy('libelle_TP')->get();
 
-        if (!$fidElement || !$fidEtoile || !$fidTypeArme || !$fidTypePerso) {
-            return redirect()->route('admin.personnages.index')
-                ->with('error', 'Impossible d\'ouvrir un personnage vierge: certaines references (element, etoile, type arme ou type perso) sont manquantes.');
-        }
-
-        $draft = Personnage::create([
-            'nom_perso' => 'Brouillon ' . uniqid(),
-            'fid_etoile' => $fidEtoile,
-            'fid_element' => $fidElement,
-            'fid_TArmes' => $fidTypeArme,
-            'fid_TP' => $fidTypePerso,
-        ]);
-
-        return redirect()->route('admin.personnages.edit', ['personnage' => $draft, 'fresh' => 1]);
+        return view('admin.personnages.create', compact('elements', 'etoiles', 'typesArme', 'typesPerso'));
     }
 
     public function store(Request $request): RedirectResponse

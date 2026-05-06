@@ -15,10 +15,73 @@
         <div class="mb-4 p-3 bg-red-800 text-red-100 rounded">{{ session('error') }}</div>
     @endif
 
-    <form method="GET" action="{{ route('admin.personnages.index') }}" class="mb-4 flex items-end gap-3">
+    <form method="GET" action="{{ route('admin.personnages.index') }}" class="mb-4 grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3 items-end">
+        <div class="md:col-span-2 xl:col-span-2">
+            <label for="search" class="block text-hub-text-sec text-xs mb-1">Recherche nom</label>
+            <input id="search" type="text" name="search" value="{{ request('search') }}" placeholder="Ex: Furina"
+                   class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+        </div>
+
+        <div>
+            <label for="element" class="block text-hub-text-sec text-xs mb-1">Élément</label>
+            <select id="element" name="element" class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+                <option value="">Tous</option>
+                @foreach($elements as $el)
+                    <option value="{{ $el->id_element }}" @selected((string) request('element') === (string) $el->id_element)>
+                        {{ $el->libelle_element }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label for="rarete" class="block text-hub-text-sec text-xs mb-1">Rareté</label>
+            <select id="rarete" name="rarete" class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+                <option value="">Toutes</option>
+                @foreach($etoiles as $etoile)
+                    <option value="{{ $etoile->id_etoile }}" @selected((string) request('rarete') === (string) $etoile->id_etoile)>
+                        {{ $etoile->libelle }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label for="arme" class="block text-hub-text-sec text-xs mb-1">Type d'arme</label>
+            <select id="arme" name="arme" class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+                <option value="">Tous</option>
+                @foreach($typeArmes as $ta)
+                    <option value="{{ $ta->id_TArmes }}" @selected((string) request('arme') === (string) $ta->id_TArmes)>
+                        {{ $ta->libelle_TArme }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label for="type_perso" class="block text-hub-text-sec text-xs mb-1">Type perso</label>
+            <select id="type_perso" name="type_perso" class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+                <option value="">Tous</option>
+                @foreach($typesPerso as $tp)
+                    <option value="{{ $tp->id_TP }}" @selected((string) request('type_perso') === (string) $tp->id_TP)>
+                        {{ $tp->libelle_TP }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label for="photo" class="block text-hub-text-sec text-xs mb-1">Photo</label>
+            <select id="photo" name="photo" class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+                <option value="">Toutes</option>
+                <option value="with" @selected(request('photo') === 'with')>Avec photo</option>
+                <option value="without" @selected(request('photo') === 'without')>Sans photo</option>
+            </select>
+        </div>
+
         <div>
             <label for="sort" class="block text-hub-text-sec text-xs mb-1">Tri rapide</label>
-            <select id="sort" name="sort" class="bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+            <select id="sort" name="sort" class="w-full bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
                 <option value="nom_asc" @selected($sort === 'nom_asc')>Nom (A-Z)</option>
                 <option value="nom_desc" @selected($sort === 'nom_desc')>Nom (Z-A)</option>
                 <option value="element_asc" @selected($sort === 'element_asc')>Element (croissant)</option>
@@ -29,9 +92,15 @@
                 <option value="arme_desc" @selected($sort === 'arme_desc')>Type d'arme (decroissant)</option>
             </select>
         </div>
-        <button type="submit" class="px-4 py-2 bg-hub-surface-hover border border-hub-border rounded text-hub-text text-sm hover:opacity-90">
-            Trier
-        </button>
+
+        <div class="flex gap-2">
+            <button type="submit" class="px-4 py-2 bg-hub-surface-hover border border-hub-border rounded text-hub-text text-sm hover:opacity-90">
+                Filtrer
+            </button>
+            <a href="{{ route('admin.personnages.index') }}" class="px-4 py-2 border border-hub-border rounded text-hub-text text-sm hover:bg-hub-surface">
+                Réinitialiser
+            </a>
+        </div>
     </form>
 
     <div x-data="{
