@@ -65,22 +65,21 @@ class Issue52AdminCRUDTest extends TestCase
     }
 
     // ──────────────────────────────────────────────
-    // Critère 3 : création ouvre l'éditeur personnage vierge
+    // Critère 3 : création ouvre le formulaire sans créer de brouillon
     // ──────────────────────────────────────────────
-    public function test_admin_personnages_create_redirige_vers_edit_vierge(): void
+    public function test_admin_personnages_create_affiche_formulaire_sans_brouillon(): void
     {
         Etoile::create(['libelle' => '5★']);
         TypePerso::create(['libelle_TP' => 'Standard']);
         Elements::create(['libelle_element' => 'Dendro']);
         TypeArme::create(['libelle_TArme' => 'Arc']);
 
-        $response = $this->withSession($this->adminSession())
-            ->get(route('admin.personnages.create'));
+        $this->withSession($this->adminSession())
+            ->get(route('admin.personnages.create'))
+            ->assertStatus(200)
+            ->assertSeeText('Nouveau personnage');
 
-        $this->assertDatabaseCount('personnage', 1);
-        $draft = Personnage::query()->firstOrFail();
-
-        $response->assertRedirect(route('admin.personnages.edit', ['personnage' => $draft, 'fresh' => 1]));
+        $this->assertDatabaseCount('personnage', 0);
     }
 
     // ──────────────────────────────────────────────

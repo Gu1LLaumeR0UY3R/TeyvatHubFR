@@ -180,6 +180,33 @@ class Issue71BulkUpdateTest extends TestCase
             ->assertStatus(200)
             ->assertSeeInOrder(['Zhongli', 'Amber']);
     }
+
+    public function test_bulk_update_index_supports_search_filter(): void
+    {
+        Personnage::factory()->create(['nom_perso' => 'Furina']);
+        Personnage::factory()->create(['nom_perso' => 'Neuvillette']);
+
+        $this->withSession($this->adminSession())
+            ->get(route('admin.personnages.index', ['search' => 'Furi']))
+            ->assertStatus(200)
+            ->assertSeeText('Furina')
+            ->assertDontSeeText('Neuvillette');
+    }
+
+    public function test_bulk_update_index_supports_element_filter(): void
+    {
+        $pyro = Elements::firstOrCreate(['libelle_element' => 'Pyro']);
+        $hydro = Elements::firstOrCreate(['libelle_element' => 'Hydro']);
+
+        Personnage::factory()->create(['nom_perso' => 'Diluc', 'fid_element' => $pyro->id_element]);
+        Personnage::factory()->create(['nom_perso' => 'Mona', 'fid_element' => $hydro->id_element]);
+
+        $this->withSession($this->adminSession())
+            ->get(route('admin.personnages.index', ['element' => $pyro->id_element]))
+            ->assertStatus(200)
+            ->assertSeeText('Diluc')
+            ->assertDontSeeText('Mona');
+    }
 }
 
 
