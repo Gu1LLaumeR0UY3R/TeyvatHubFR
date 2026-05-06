@@ -1,87 +1,118 @@
 <x-admin-layout>
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-hub-text">Logs d'activité</h1>
-        <span class="text-hub-text-sec text-sm">{{ $total }} ligne(s) affichée(s)</span>
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-hub-text mb-2">Logs d'activité</h1>
+        <p class="text-hub-text-sec text-sm">Tableau de bord centralisé des logs d'administration et publics</p>
     </div>
 
-    {{-- Filtres --}}
-    <form method="GET" class="bg-hub-surface border border-hub-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
-
-        <div>
-            <label class="block text-xs text-hub-text-sec mb-1">Date</label>
-            <select name="date" class="bg-hub-bg border border-hub-border rounded px-2 py-1.5 text-sm text-hub-text">
-                @foreach($dates as $d)
-                    <option value="{{ $d }}" @selected($d === $selectedDate)>
-                        {{ \Carbon\Carbon::createFromFormat('Y-m-d', $d)->format('d/m/Y') }}
-                    </option>
-                @endforeach
-                @if(!$dates)
-                    <option value="{{ $selectedDate }}">{{ now()->format('d/m/Y') }}</option>
-                @endif
-            </select>
-        </div>
-
-        <div>
-            <label class="block text-xs text-hub-text-sec mb-1">Niveau</label>
-            <select name="level" class="bg-hub-bg border border-hub-border rounded px-2 py-1.5 text-sm text-hub-text">
-                <option value="">Tous</option>
-                @foreach($levels as $level)
-                    <option value="{{ $level }}" @selected(request('level') === $level)>{{ strtoupper($level) }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div>
-            <label class="block text-xs text-hub-text-sec mb-1">Recherche</label>
-            <input type="text" name="search" value="{{ request('search') }}"
-                   placeholder="email, IP, action…"
-                   class="bg-hub-bg border border-hub-border rounded px-2 py-1.5 text-sm text-hub-text w-56">
-        </div>
-
-        <div class="flex gap-2">
-            <button type="submit" class="px-4 py-1.5 bg-hub-accent text-white rounded text-sm font-medium hover:opacity-90">Filtrer</button>
-            <a href="{{ route('admin.logs.index') }}" class="px-4 py-1.5 border border-hub-border text-hub-text-sec rounded text-sm hover:bg-hub-surface-hover">Reset</a>
-        </div>
-    </form>
-
-    {{-- Lignes de log --}}
-    <div class="bg-hub-surface border border-hub-border rounded-xl overflow-hidden">
-        @if($lines)
-            <div class="overflow-x-auto">
-                <table class="w-full text-xs font-mono">
-                    <tbody class="divide-y divide-hub-border">
-                        @foreach($lines as $line)
-                            @php
-                                $isError    = str_contains($line, ' - ERROR - ')    || str_contains($line, ' - CRITICAL - ');
-                                $isWarning  = str_contains($line, ' - WARNING - ');
-                                $isCritical = str_contains($line, ' - CRITICAL - ');
-                            @endphp
-                            <tr class="@if($isCritical) bg-red-950 @elseif($isError) bg-red-950/40 @elseif($isWarning) bg-yellow-950/30 @endif hover:bg-hub-surface-hover">
-                                <td class="px-4 py-2 text-hub-text whitespace-pre-wrap break-all leading-relaxed">{{ $line }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+    {{-- ADMIN LOGS --}}
+    @if(isset($scopes['admin']) && !empty($scopes['admin']))
+        <div class="mb-8">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="text-xl">🛡️</span>
+                <h2 class="text-xl font-bold text-hub-text">ADMIN</h2>
+                <span class="px-2 py-0.5 bg-violet-600/30 border border-violet-500/40 rounded text-xs text-violet-200 font-medium">
+                    {{ count($scopes['admin']) }} catégorie(s)
+                </span>
             </div>
-
-            {{-- Pagination manuelle --}}
-            @if($total > $perPage)
-                <div class="px-4 py-3 border-t border-hub-border flex items-center gap-3 text-sm text-hub-text-sec">
-                    @if($page > 1)
-                        <a href="{{ request()->fullUrlWithQuery(['page' => $page - 1]) }}"
-                           class="px-3 py-1 border border-hub-border rounded hover:bg-hub-surface-hover text-hub-text">← Précédent</a>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                @foreach($scopes['admin'] as $cat => $data)
+                    @if($data['hasLogs'])
+                        <a href="{{ route('admin.logs.show', ['scope' => 'admin', 'category' => $cat]) }}"
+                           class="group relative p-4 bg-hub-surface border-2 rounded-lg hover:border-violet-500/60 hover:shadow-lg transition-all cursor-pointer
+                                  @if($data['highestLevel'] === 'critical') border-red-700
+                                  @elseif($data['highestLevel'] === 'error') border-red-600/60
+                                  @elseif($data['highestLevel'] === 'warning') border-yellow-600/50
+                                  @else border-hub-border
+                                  @endif">
+                            <div class="text-2xl mb-2">{{ $data['icon'] }}</div>
+                            <div class="font-medium text-hub-text text-sm mb-1">{{ $data['label'] }}</div>
+                            
+                            @if($data['highestLevel'] !== 'info')
+                                <div class="mb-2">
+                                    <span class="px-2 py-0.5 text-xs font-bold rounded
+                                          @if($data['highestLevel'] === 'critical') bg-red-900 text-red-100
+                                          @elseif($data['highestLevel'] === 'error') bg-red-800/50 text-red-200
+                                          @elseif($data['highestLevel'] === 'warning') bg-yellow-800/50 text-yellow-200
+                                          @endif">
+                                        {{ strtoupper($data['highestLevel']) }}
+                                    </span>
+                                </div>
+                            @endif
+                            
+                            <div class="text-xs text-hub-text-sec space-y-0.5">
+                                <div>📅 {{ $data['lastDate'] ?? '—' }}</div>
+                                <div>📝 {{ $data['lastCount'] }} ligne(s)</div>
+                                <div>📄 {{ count($data['dates']) }} fichier(s)</div>
+                            </div>
+                        </a>
+                    @else
+                        <div class="p-4 bg-hub-surface border border-hub-border rounded-lg opacity-50 cursor-default">
+                            <div class="text-2xl mb-2">{{ $data['icon'] }}</div>
+                            <div class="font-medium text-hub-text-sec text-sm mb-3">{{ $data['label'] }}</div>
+                            <div class="text-xs text-hub-text-sec">Aucun log</div>
+                        </div>
                     @endif
-                    <span>Page {{ $page }} / {{ ceil($total / $perPage) }}</span>
-                    @if($page * $perPage < $total)
-                        <a href="{{ request()->fullUrlWithQuery(['page' => $page + 1]) }}"
-                           class="px-3 py-1 border border-hub-border rounded hover:bg-hub-surface-hover text-hub-text">Suivant →</a>
-                    @endif
-                </div>
-            @endif
-        @else
-            <div class="px-4 py-16 text-center text-hub-text-sec">
-                Aucun log pour cette date{{ request('search') || request('level') ? ' avec ces filtres' : '' }}.
+                @endforeach
             </div>
-        @endif
-    </div>
+        </div>
+    @endif
+
+    {{-- PUBLIC LOGS --}}
+    @if(isset($scopes['public']) && !empty($scopes['public']))
+        <div>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="text-xl">🌐</span>
+                <h2 class="text-xl font-bold text-hub-text">PUBLIC</h2>
+                <span class="px-2 py-0.5 bg-sky-600/30 border border-sky-500/40 rounded text-xs text-sky-200 font-medium">
+                    {{ count($scopes['public']) }} catégorie(s)
+                </span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                @foreach($scopes['public'] as $cat => $data)
+                    @if($data['hasLogs'])
+                        <a href="{{ route('admin.logs.show', ['scope' => 'public', 'category' => $cat]) }}"
+                           class="group relative p-4 bg-hub-surface border-2 rounded-lg hover:border-sky-500/60 hover:shadow-lg transition-all cursor-pointer
+                                  @if($data['highestLevel'] === 'critical') border-red-700
+                                  @elseif($data['highestLevel'] === 'error') border-red-600/60
+                                  @elseif($data['highestLevel'] === 'warning') border-yellow-600/50
+                                  @else border-hub-border
+                                  @endif">
+                            <div class="text-2xl mb-2">{{ $data['icon'] }}</div>
+                            <div class="font-medium text-hub-text text-sm mb-1">{{ $data['label'] }}</div>
+                            
+                            @if($data['highestLevel'] !== 'info')
+                                <div class="mb-2">
+                                    <span class="px-2 py-0.5 text-xs font-bold rounded
+                                          @if($data['highestLevel'] === 'critical') bg-red-900 text-red-100
+                                          @elseif($data['highestLevel'] === 'error') bg-red-800/50 text-red-200
+                                          @elseif($data['highestLevel'] === 'warning') bg-yellow-800/50 text-yellow-200
+                                          @endif">
+                                        {{ strtoupper($data['highestLevel']) }}
+                                    </span>
+                                </div>
+                            @endif
+                            
+                            <div class="text-xs text-hub-text-sec space-y-0.5">
+                                <div>📅 {{ $data['lastDate'] ?? '—' }}</div>
+                                <div>📝 {{ $data['lastCount'] }} ligne(s)</div>
+                                <div>📄 {{ count($data['dates']) }} fichier(s)</div>
+                            </div>
+                        </a>
+                    @else
+                        <div class="p-4 bg-hub-surface border border-hub-border rounded-lg opacity-50 cursor-default">
+                            <div class="text-2xl mb-2">{{ $data['icon'] }}</div>
+                            <div class="font-medium text-hub-text-sec text-sm mb-3">{{ $data['label'] }}</div>
+                            <div class="text-xs text-hub-text-sec">Aucun log</div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    @if(!isset($scopes['admin']) || empty($scopes['admin']) && !isset($scopes['public']) || empty($scopes['public']))
+        <div class="text-center py-12">
+            <p class="text-hub-text-sec">Aucune catégorie de logs disponible. Les logs s'afficheront au fur et à mesure que des activités seront enregistrées.</p>
+        </div>
+    @endif
 </x-admin-layout>
