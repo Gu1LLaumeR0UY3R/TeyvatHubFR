@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $fid_perso
  * @property string $type_reaction
  * @property string|null $tag
+ * @property string|null $rotation
  */
 class TeamComposition extends Model
 {
@@ -22,6 +23,7 @@ class TeamComposition extends Model
         'fid_perso',
         'type_reaction',
         'tag',
+        'rotation',
     ];
 
     protected $casts = [
