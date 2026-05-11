@@ -40,6 +40,7 @@
                 <a href="{{ route('admin.admins.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Admins</a>
                 <a href="{{ route('admin.articles.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Articles</a>
                 @if(in_array(session('admin_role'), ['super_admin', 'superadmin']))
+                    <a href="{{ route('admin.snapshots.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Restauration</a>
                     <a href="{{ route('admin.logs.index') }}" class="block px-3 py-2 rounded-lg text-hub-text-sec hover:bg-hub-surface-hover text-sm">Logs activité</a>
                 @endif
             </nav>

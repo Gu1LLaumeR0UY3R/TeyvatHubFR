@@ -29,6 +29,7 @@ use App\Http\Controllers\ImprovementVoteController;
 use App\Http\Controllers\SurveyResponseController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\SnapshotRestoreController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -178,6 +179,7 @@ Route::prefix('admin')->group(function () {
                 'update'  => 'admin.armes.update',
                 'destroy' => 'admin.armes.destroy',
             ]);
+            Route::patch('/artefacts/bulk-update', [\App\Http\Controllers\Admin\ArtefactController::class, 'bulkUpdate'])->name('admin.artefacts.bulk-update');
             Route::resource('/artefacts', \App\Http\Controllers\Admin\ArtefactController::class)->except(['show'])->names([
                 'index'   => 'admin.artefacts.index',
                 'create'  => 'admin.artefacts.create',
@@ -329,6 +331,18 @@ Route::prefix('admin')->group(function () {
         Route::middleware('admin.can:manage_logs')->group(function () {
             Route::get('/logs', [ActivityLogController::class, 'index'])->name('admin.logs.index');
             Route::get('/logs/{scope}/{category}', [ActivityLogController::class, 'show'])->name('admin.logs.show');
+        });
+
+        // ─── Restauration snapshots (super_admin uniquement) ─────────────
+        Route::middleware('admin.super')->group(function () {
+            Route::get('/snapshots', [SnapshotRestoreController::class, 'globalIndex'])
+                ->name('admin.snapshots.index');
+            Route::get('/personnages/{personnage:slug}/snapshots', [SnapshotRestoreController::class, 'index'])
+                ->name('admin.personnages.snapshots.index');
+            Route::get('/snapshots/{snapshot}', [SnapshotRestoreController::class, 'show'])
+                ->name('admin.snapshots.show');
+            Route::post('/snapshots/{snapshot}/restore', [SnapshotRestoreController::class, 'restore'])
+                ->name('admin.snapshots.restore');
         });
     });
 });

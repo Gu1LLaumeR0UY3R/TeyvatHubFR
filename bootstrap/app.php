@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin'     => \App\Http\Middleware\AdminMiddleware::class,
             'admin.can' => \App\Http\Middleware\AdminCanMiddleware::class,
+            'admin.super' => \App\Http\Middleware\EnsureSuperAdmin::class,
             '2fa.user'  => \App\Http\Middleware\EnsureUserTwoFactorIsVerified::class,
             '2fa.admin' => \App\Http\Middleware\EnsureAdminTwoFactorIsVerified::class,
         ]);

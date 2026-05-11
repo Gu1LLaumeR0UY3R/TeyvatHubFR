@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Observers\PersonnageObserver;
 use App\Models\{
     Personnage, Nation, Plat, Materiaux, Ennemi, Ingredient,
     SousRegion, Elements, TypeArme, Arme, Evenement, Animal, Constellation,
@@ -46,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
             'chronologie'  => Chronologie::class,
             'constellation'=> Constellation::class,
         ]);
+
+        Personnage::observe(PersonnageObserver::class);
 
         // @adminCan('permission') … @endAdminCan
         Blade::if('adminCan', function (string $permission): bool {

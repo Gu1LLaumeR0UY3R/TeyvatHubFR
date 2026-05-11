@@ -156,6 +156,11 @@
                     <button type="submit" class="px-4 py-2 bg-hub-gold text-hub-bg rounded hover:opacity-90 font-medium text-sm">
                         Appliquer
                     </button>
+                    <button type="submit" name="action" value="delete" formnovalidate
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:opacity-90 font-medium text-sm"
+                            onclick="return confirm('Supprimer les personnages sélectionnés ?')">
+                        Supprimer la sélection
+                    </button>
                 </form>
             </div>
         </template>
@@ -193,6 +198,9 @@
                             <td class="px-4 py-3">{{ $personnage->typeArme?->libelle_TArme ?? '—' }}</td>
                             <td class="px-4 py-3 flex gap-2">
                                 <a href="{{ route('admin.personnages.edit', $personnage) }}" class="text-hub-gold hover:underline">Modifier</a>
+                                @if(in_array(session('admin_role'), ['super_admin', 'superadmin']))
+                                    <a href="{{ route('admin.personnages.snapshots.index', $personnage) }}" class="text-sky-400 hover:underline">Snapshots</a>
+                                @endif
                                 <form action="{{ route('admin.personnages.destroy', $personnage) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
                                     @csrf @method('DELETE')
                                     <button class="text-red-400 hover:underline">Supprimer</button>

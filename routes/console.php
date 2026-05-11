@@ -12,3 +12,4 @@ Artisan::command('inspire', function () {
 
 Schedule::job(new UnpinExpiredArticlesJob)->hourly();
 Schedule::job(new PublishScheduledArticlesJob)->everyFiveMinutes();
+Schedule::command('snapshots:purge')->dailyAt('03:00');

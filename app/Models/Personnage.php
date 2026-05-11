@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 /**
@@ -26,6 +27,7 @@ use Illuminate\Support\Str;
 class Personnage extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     public $timestamps = false;
 
@@ -37,7 +39,15 @@ class Personnage extends Model
         'fid_TP', 'fid_etoile', 'fid_element', 'fid_TArmes',
         'arme_icon',
         'background_actif', 'block_order',
+        'deleted_at', 'deleted_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'deleted_at' => 'datetime',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -129,6 +139,11 @@ class Personnage extends Model
     public function histoires(): HasMany
     {
         return $this->hasMany(PersonnageHistoire::class, 'fid_perso', 'id_perso')->orderBy('ordre');
+    }
+
+    public function snapshots(): HasMany
+    {
+        return $this->hasMany(Snapshot::class, 'fid_perso', 'id_perso')->orderByDesc('id_snapshot');
     }
 
     /** Résout l'URL d'une photo à partir de son objet. */

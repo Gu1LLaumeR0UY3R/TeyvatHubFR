@@ -330,6 +330,16 @@ class PersonnageController extends Controller
             return back()->with('error', 'Aucun personnage sélectionné.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            $personnages = Personnage::whereIn('id_perso', $ids)->get();
+            foreach ($personnages as $personnage) {
+                $personnage->delete();
+            }
+
+            return back()->with('success', $personnages->count() . ' personnage(s) supprimé(s).');
+        }
+
         $data = $request->validate([
             'fid_element' => ['nullable', 'exists:elements,id_element'],
             'fid_etoile'  => ['nullable', 'exists:etoile,id_etoile'],
@@ -343,8 +353,11 @@ class PersonnageController extends Controller
             return back()->with('error', 'Aucune modification à appliquer.');
         }
 
-        Personnage::whereIn('id_perso', $ids)->update($data);
+        $personnages = Personnage::whereIn('id_perso', $ids)->get();
+        foreach ($personnages as $personnage) {
+            $personnage->update($data);
+        }
 
-        return back()->with('success', count($ids) . ' personnage(s) mis à jour.');
+        return back()->with('success', $personnages->count() . ' personnage(s) mis à jour.');
     }
 }
