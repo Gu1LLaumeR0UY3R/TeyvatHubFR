@@ -108,6 +108,12 @@ class NationController extends Controller
             return back()->with('error', 'Aucune nation sélectionnée.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Nation::whereIn('id_region', $ids)->delete();
+            return back()->with('success', count($ids) . ' nation(s) supprimée(s).');
+        }
+
         $data = $request->validate([
             'descri_region' => ['nullable', 'string'],
         ]);

@@ -20,7 +20,8 @@ class Issue78ArmesRecommandeesTest extends TestCase
             'pseudo_admin' => 'AdminTest',
             'email_admin' => 'admin@test.fr',
             'mot_de_passe_admin' => Hash::make('secret123'),
-            'role' => 'admin',
+            'role' => 'super_admin',
+            'two_factor_enabled' => false,
         ]);
     }
 
@@ -28,7 +29,11 @@ class Issue78ArmesRecommandeesTest extends TestCase
     {
         $admin = $this->makeAdmin();
 
-        return ['admin_id' => $admin->id_admin];
+        return [
+            'admin_id' => $admin->id_admin,
+            'admin_role' => $admin->role,
+            'admin_2fa_passed' => true,
+        ];
     }
 
     public function test_update_armes_recommandees_insere_en_base(): void
@@ -105,6 +110,42 @@ class Issue78ArmesRecommandeesTest extends TestCase
         $this->withSession($this->adminSession())
             ->putJson(route('admin.personnage.block.armes.update', $personnage), $payload)
             ->assertStatus(422);
+    }
+
+    public function test_update_armes_recommandees_peut_enregistrer_sans_starter(): void
+    {
+        $personnage = Personnage::factory()->create();
+        $arme1 = Arme::factory()->create();
+        $arme2 = Arme::factory()->create();
+
+        $this->withSession($this->adminSession())
+            ->putJson(route('admin.personnage.block.armes.update', $personnage), [
+                'armes' => [
+                    ['id_arme' => $arme1->id_arme, 'rang' => 1, 'is_starter' => false, 'origine' => 'tirage'],
+                    ['id_arme' => $arme2->id_arme, 'rang' => 2, 'is_starter' => false, 'origine' => 'craft'],
+                ],
+            ])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertSame(0, PersonnageArmeRecommandee::query()
+            ->where('fid_perso', $personnage->id_perso)
+            ->where('starter', 1)
+            ->count());
+
+        $this->assertDatabaseHas('personnage_arme_recommandee', [
+            'fid_perso' => $personnage->id_perso,
+            'fid_arme' => $arme1->id_arme,
+            'position' => 1,
+            'starter' => 0,
+        ]);
+
+        $this->assertDatabaseHas('personnage_arme_recommandee', [
+            'fid_perso' => $personnage->id_perso,
+            'fid_arme' => $arme2->id_arme,
+            'position' => 2,
+            'starter' => 0,
+        ]);
     }
 
     public function test_suppression_arme_recommandee(): void

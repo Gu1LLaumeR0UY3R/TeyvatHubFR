@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Services\ActivityLogService;
 use App\Models\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -66,6 +68,16 @@ class Issue50AdminAuthTest extends TestCase
         ])->assertRedirect(route('admin.dashboard'));
     }
 
+    public function test_login_admin_avec_espaces_autour_des_identifiants(): void
+    {
+        $this->makeAdmin();
+
+        $this->post(route('admin.authenticate'), [
+            'email' => '  admin@teyvathub.fr  ',
+            'password' => '  secret123  ',
+        ])->assertRedirect(route('admin.dashboard'));
+    }
+
     // Critère 4 : session admin est définie après connexion
     public function test_session_admin_definie_apres_connexion(): void
     {
@@ -120,5 +132,32 @@ class Issue50AdminAuthTest extends TestCase
         $this->withSession(['admin_id' => 1, 'admin_pseudo' => 'Admin'])
              ->get(route('admin.login'))
              ->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_log_login_admin_success_non_duplique_sur_double_requete_identique(): void
+    {
+        Cache::flush();
+        $this->makeAdmin();
+
+        $logFile = storage_path('logs/activity/admin/auth/' . now()->format('Y-m-d') . '.log');
+        if (file_exists($logFile)) {
+            unlink($logFile);
+        }
+
+        $payload = [
+            'email' => 'admin@teyvathub.fr',
+            'password' => 'secret123',
+        ];
+
+        $this->post(route('admin.authenticate'), $payload)->assertRedirect(route('admin.dashboard'));
+        $this->post(route('admin.authenticate'), $payload)->assertRedirect(route('admin.dashboard'));
+
+        $this->assertFileExists($logFile);
+
+        $contents = file_get_contents($logFile);
+        $this->assertIsString($contents);
+
+        $successLines = preg_match_all('/admin_login_success/', $contents, $matches);
+        $this->assertSame(1, $successLines, 'Le log admin_login_success ne doit pas etre ecrit deux fois pour deux requetes identiques consecutives.');
     }
 }

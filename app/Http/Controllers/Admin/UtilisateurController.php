@@ -117,8 +117,13 @@ class UtilisateurController extends Controller
         }
 
         $data = $request->validate([
-            'action' => ['required', 'in:bannir,debannir'],
+            'action' => ['required', 'in:bannir,debannir,supprimer'],
         ]);
+
+        if ($data['action'] === 'supprimer') {
+            User::whereIn('id', $ids)->delete();
+            return back()->with('success', count($ids) . ' utilisateur(s) supprimé(s).');
+        }
 
         if ($data['action'] === 'bannir') {
             User::whereIn('id', $ids)->update(['banni_le' => now()]);

@@ -28,45 +28,91 @@
         </button>
     </form>
 
-    <div class="bg-hub-surface rounded-lg overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="bg-black/20 text-hub-text-sec">
-                <tr>
-                    <th class="px-3 py-3 w-14"></th>
-                    <th class="px-4 py-3 text-left">Nom</th>
-                    <th class="px-4 py-3 text-left">Rareté</th>
-                    <th class="px-4 py-3 text-left">Bonus 2P</th>
-                    <th class="px-4 py-3 text-left">Bonus 4P</th>
-                    <th class="px-4 py-3 text-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-hub-border">
-                @forelse($artefacts as $artefact)
-                    @php
-                        $photo = $artefact->photos->first();
-                        $icon = $photo?->source_url ?: ($photo?->chemin_photo ? asset('storage/'.$photo->chemin_photo) : asset('images/placeholder.webp'));
-                    @endphp
-                    <tr class="hub-surface-hover">
-                        <td class="px-3 py-2 text-center">
-                            <img src="{{ $icon }}" alt="{{ $artefact->nom_artefact }}" class="w-10 h-10 object-cover rounded-lg bg-hub-surface-hover mx-auto">
-                        </td>
-                        <td class="px-4 py-3">{{ $artefact->nom_artefact }}</td>
-                        <td class="px-4 py-3">{{ $artefact->rareté?->libelle_rareté ?? '—' }}</td>
-                        <td class="px-4 py-3 text-hub-text-sec">{{ \Illuminate\Support\Str::limit($artefact->bonus_2p, 70) ?: '—' }}</td>
-                        <td class="px-4 py-3 text-hub-text-sec">{{ \Illuminate\Support\Str::limit($artefact->bonus_4p, 70) ?: '—' }}</td>
-                        <td class="px-4 py-3 flex gap-2">
-                            <a href="{{ route('admin.artefacts.edit', $artefact) }}" class="text-hub-gold hover:underline">Modifier</a>
-                            <form action="{{ route('admin.artefacts.destroy', $artefact) }}" method="POST" onsubmit="return confirm('Supprimer cet artefact ?')">
-                                @csrf @method('DELETE')
-                                <button class="text-red-400 hover:underline">Supprimer</button>
-                            </form>
-                        </td>
+    <div x-data="{
+        selected: {},
+        get selectedCount() { return Object.values(this.selected).filter(Boolean).length; },
+        toggleAll(checked) { Object.keys(this.selected).forEach(k => this.selected[k] = checked); }
+    }" class="space-y-4">
+        <template x-if="selectedCount > 0">
+            <div class="p-4 bg-hub-gold/10 border border-hub-gold rounded-lg">
+                <h3 class="text-hub-text font-semibold mb-3">Modification en masse (<span x-text="selectedCount"></span> artefact(s) sélectionné(s))</h3>
+                <form action="{{ route('admin.artefacts.bulk-update') }}" method="POST" class="flex flex-wrap gap-3 items-end">
+                    @csrf @method('PATCH')
+
+                    <template x-for="(checked, id) in selected" :key="id">
+                        <template x-if="checked">
+                            <input type="hidden" name="ids[]" :value="id">
+                        </template>
+                    </template>
+
+                    <div>
+                        <label class="block text-hub-text-sec text-xs mb-1">Rareté</label>
+                        <select name="fid_rareté" class="bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
+                            <option value="">(ne pas changer)</option>
+                            @foreach($raretes as $rarete)
+                                <option value="{{ $rarete->id_rareté }}">{{ $rarete->libelle_rareté }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <button type="submit" class="px-4 py-2 bg-hub-gold text-hub-bg rounded hover:opacity-90 font-medium text-sm">
+                        Appliquer
+                    </button>
+                    <button type="submit" name="action" value="delete" formnovalidate
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:opacity-90 font-medium text-sm"
+                            onclick="return confirm('Supprimer les artefacts sélectionnés ?')">
+                        Supprimer la sélection
+                    </button>
+                </form>
+            </div>
+        </template>
+
+        <div class="bg-hub-surface rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-black/20 text-hub-text-sec">
+                    <tr>
+                        <th class="px-3 py-3 text-center w-8">
+                            <input type="checkbox" @change="toggleAll($event.target.checked)" class="rounded">
+                        </th>
+                        <th class="px-3 py-3 w-14"></th>
+                        <th class="px-4 py-3 text-left">Nom</th>
+                        <th class="px-4 py-3 text-left">Rareté</th>
+                        <th class="px-4 py-3 text-left">Bonus 2P</th>
+                        <th class="px-4 py-3 text-left">Bonus 4P</th>
+                        <th class="px-4 py-3 text-left">Actions</th>
                     </tr>
-                @empty
-                    <tr><td colspan="6" class="px-4 py-6 text-center text-hub-text-sec">Aucun artefact</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-hub-border">
+                    @forelse($artefacts as $artefact)
+                        @php
+                            $photo = $artefact->photos->first();
+                            $icon = $photo?->source_url ?: ($photo?->chemin_photo ? asset('storage/'.$photo->chemin_photo) : asset('images/placeholder.webp'));
+                        @endphp
+                        <tr class="hub-surface-hover">
+                            <td class="px-3 py-2 text-center">
+                                <input type="checkbox" x-model="selected['{{ $artefact->id_artefact }}']" class="rounded">
+                            </td>
+                            <td class="px-3 py-2 text-center">
+                                <img src="{{ $icon }}" alt="{{ $artefact->nom_artefact }}" class="w-10 h-10 object-cover rounded-lg bg-hub-surface-hover mx-auto">
+                            </td>
+                            <td class="px-4 py-3">{{ $artefact->nom_artefact }}</td>
+                            <td class="px-4 py-3">{{ $artefact->rareté?->libelle_rareté ?? '—' }}</td>
+                            <td class="px-4 py-3 text-hub-text-sec">{{ \Illuminate\Support\Str::limit($artefact->bonus_2p, 70) ?: '—' }}</td>
+                            <td class="px-4 py-3 text-hub-text-sec">{{ \Illuminate\Support\Str::limit($artefact->bonus_4p, 70) ?: '—' }}</td>
+                            <td class="px-4 py-3 flex gap-2">
+                                <a href="{{ route('admin.artefacts.edit', $artefact) }}" class="text-hub-gold hover:underline">Modifier</a>
+                                <form action="{{ route('admin.artefacts.destroy', $artefact) }}" method="POST" onsubmit="return confirm('Supprimer cet artefact ?')">
+                                    @csrf @method('DELETE')
+                                    <button class="text-red-400 hover:underline">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7" class="px-4 py-6 text-center text-hub-text-sec">Aucun artefact</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="mt-4">{{ $artefacts->links() }}</div>

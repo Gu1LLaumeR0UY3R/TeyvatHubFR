@@ -15,6 +15,17 @@ use App\Services\ActivityLogService;
 class LoginRequest extends FormRequest
 {
     /**
+     * Normalize credentials before validation/authentication.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'email' => trim((string) $this->input('email')),
+            'password' => trim((string) $this->input('password')),
+        ]);
+    }
+
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool

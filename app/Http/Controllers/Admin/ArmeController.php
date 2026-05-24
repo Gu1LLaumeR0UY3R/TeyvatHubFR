@@ -219,6 +219,12 @@ class ArmeController extends Controller
             return back()->with('error', 'Aucune arme sélectionnée.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Arme::whereIn('id_arme', $ids)->delete();
+            return back()->with('success', count($ids) . ' arme(s) supprimée(s).');
+        }
+
         $data = $request->validate([
             'fid_etoile' => ['nullable', 'exists:etoile,id_etoile'],
             'fid_TArmes' => ['nullable', 'exists:type_armes,id_TArmes'],

@@ -38,6 +38,26 @@ class ActivityLogService
             $req = $request ?? request();
             $now = now();
 
+            $ip = $req?->ip() ?? '-';
+
+            // Guard against accidental duplicate writes (double-submit, retry burst)
+            $fingerprint = hash('sha256', json_encode([
+                'action' => $action,
+                'level' => strtolower($level),
+                'context' => $context,
+                'userType' => $userType,
+                'userId' => $userId,
+                'userLabel' => $userLabel,
+                'subjectType' => $subjectType,
+                'subjectId' => $subjectId,
+                'ip' => $ip,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+            $dedupKey = 'activity_log_dedup:' . $fingerprint;
+            if (!Cache::add($dedupKey, 1, now()->addSeconds(2))) {
+                return;
+            }
+
             // ── Partie utilisateur ────────────────────────────────────────
             $userPart = $userType && $userId
                 ? "{$userType}:{$userId}" . ($userLabel ? " ({$userLabel})" : '')
@@ -55,7 +75,6 @@ class ActivityLogService
                 $parts[] = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
-            $ip   = $req?->ip() ?? '-';
             $line = sprintf(
                 "[%s] - %s - %s - %s - IP:%s",
                 $now->format('d/m/Y H:i:s'),
@@ -115,7 +134,7 @@ class ActivityLogService
         ?Request $request  = null,
     ): void {
         $req  = $request ?? request();
-        $user = auth()->user();
+        $user = auth('web')->user();
 
         static::log(
             action:    $action,

@@ -24,6 +24,11 @@ class AdminAuthController extends Controller
 
     public function authenticate(Request $request): RedirectResponse
     {
+        $request->merge([
+            'email' => trim((string) $request->input('email')),
+            'password' => trim((string) $request->input('password')),
+        ]);
+
         $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required'],

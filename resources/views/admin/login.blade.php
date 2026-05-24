@@ -25,7 +25,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.authenticate') }}">
+        <form method="POST" action="{{ route('admin.authenticate') }}" id="admin-login-form">
             @csrf
             <div class="mb-4">
                 <label class="block text-hub-text-sec text-sm mb-1">E-mail</label>
@@ -43,12 +43,23 @@
                        class="w-full bg-hub-surface-hover border border-hub-border rounded-xl px-4 py-2.5 text-hub-text focus:outline-none focus:border-hub-primary">
             </div>
             <button type="submit"
+                    id="admin-login-submit"
                     class="w-full py-2.5 bg-hub-primary text-white rounded-xl font-bold hover:bg-opacity-90 transition-colors">
                 Se connecter
             </button>
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('admin-login-form')?.addEventListener('submit', function () {
+    const submit = document.getElementById('admin-login-submit');
+    if (!submit) return;
+    submit.disabled = true;
+    submit.classList.add('opacity-60', 'cursor-not-allowed');
+    submit.textContent = 'Connexion...';
+});
+</script>
 
 </body>
 </html>

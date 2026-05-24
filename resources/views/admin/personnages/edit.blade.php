@@ -1340,6 +1340,7 @@
          data-default-icone="{{ e($iconePhoto ? ($iconePhoto->source_url ?? asset('storage/'.$iconePhoto->chemin_photo)) : asset('images/placeholder.svg')) }}"
          data-default-weapon="{{ e(asset('images/placeholder.svg')) }}"
          data-save-main-zone-url="{{ route('admin.personnage.block.main-zone.update', $personnage) }}"
+         data-upload-main-zone-image-url="{{ route('admin.personnage.block.main-zone.upload', $personnage) }}"
          data-save-armes-url="{{ route('admin.personnage.block.armes.update', $personnage) }}"
          data-save-artefacts-url="{{ route('admin.personnage.block.artefacts.update', $personnage) }}"
          data-save-constellations-url="{{ route('admin.personnage.block.constellations.update', $personnage) }}"
@@ -4466,22 +4467,8 @@
                     this.dropArmeIndex = null;
                 },
                 async saveArmes({ strict = true } = {}) {
-                    if (!this.armes.length) {
-                        const msg = 'Ajoute au moins une arme recommandée.';
-                        this.armesError = msg;
-                        if (strict) throw new Error(msg);
-                        return { saved: false, reason: msg };
-                    }
-
                     if (this.armes.length > 6) {
                         const msg = 'Maximum 6 armes recommandées.';
-                        this.armesError = msg;
-                        if (strict) throw new Error(msg);
-                        return { saved: false, reason: msg };
-                    }
-
-                    if (!this.armes.some(a => a.is_starter)) {
-                        const msg = 'Une arme starter est obligatoire.';
                         this.armesError = msg;
                         if (strict) throw new Error(msg);
                         return { saved: false, reason: msg };
@@ -5767,17 +5754,30 @@
                     const form = new FormData();
                     form.append('image_type', type);
                     form.append('image', file);
-                    const resp = await fetch(data.saveMainZoneUrl.replace('main-zone', 'main-zone/upload-image'), {
-                        method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': data.csrf },
-                        body: form,
-                    });
-                    if (!resp.ok) { this.showToast('Erreur upload image', 'error'); return; }
-                    const j = await resp.json();
-                    const t = Date.now();
-                    if (type === 'portrait') { this.portraitPreview = `${j.url}?t=${t}`; this.fullPreview = `${j.url}?t=${t}`; }
-                    if (type === 'full')     { this.fullPreview = `${j.url}?t=${t}`; }
-                    if (type === 'icone')    { this.iconePreview = j.url; }
+                    const uploadUrl = data.uploadMainZoneImageUrl || data.saveMainZoneUrl.replace('main-zone', 'main-zone/upload-image');
+
+                    try {
+                        const resp = await fetch(uploadUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': data.csrf, 'Accept': 'application/json' },
+                            body: form,
+                        });
+
+                        if (!resp.ok) {
+                            this.showToast('Erreur upload image', 'error');
+                            return;
+                        }
+
+                        const j = await resp.json();
+                        const t = Date.now();
+                        if (type === 'portrait') { this.portraitPreview = `${j.url}?t=${t}`; this.fullPreview = `${j.url}?t=${t}`; }
+                        if (type === 'full')     { this.fullPreview = `${j.url}?t=${t}`; }
+                        if (type === 'icone')    { this.iconePreview = `${j.url}?t=${t}`; }
+                    } catch (e) {
+                        this.showToast('Erreur upload image', 'error');
+                    } finally {
+                        event.target.value = '';
+                    }
                 },
             };
         }

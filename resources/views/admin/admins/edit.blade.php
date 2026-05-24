@@ -7,7 +7,10 @@
         'admins' => ['label' => 'Admins', 'desc' => 'Creer et gerer d\'autres admins'],
         'import' => ['label' => 'Import API', 'desc' => 'Importer les donnees depuis Genshin API'],
     ];
-    $checked = is_array($adminUser->legacy_permissions ?? null) ? $adminUser->legacy_permissions : [];
+    $checked = old('permissions', $adminUser->getPermissionNames()->toArray());
+    if (!is_array($checked) || $checked === []) {
+        $checked = is_array($adminUser->legacy_permissions ?? null) ? $adminUser->legacy_permissions : [];
+    }
     $photoSrc = null;
     if (!empty($adminUser->photo_profil)) {
         $photoSrc = filter_var($adminUser->photo_profil, FILTER_VALIDATE_URL)

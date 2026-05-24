@@ -52,6 +52,7 @@
                         <select name="action" class="bg-hub-surface border border-hub-border rounded px-3 py-2 text-hub-text text-sm">
                             <option value="bannir">Bannir</option>
                             <option value="debannir">Débannir</option>
+                            <option value="supprimer">Supprimer</option>
                         </select>
                     </div>
 

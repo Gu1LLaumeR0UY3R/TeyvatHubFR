@@ -92,6 +92,33 @@ class ArtefactController extends Controller
             ->with('success', 'Artefact supprimé.');
     }
 
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return back()->with('error', 'Aucun artefact sélectionné.');
+        }
+
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Artefact::whereIn('id_artefact', $ids)->delete();
+            return back()->with('success', count($ids) . ' artefact(s) supprimé(s).');
+        }
+
+        $data = $request->validate([
+            'fid_rareté' => ['nullable', Rule::exists((new Rarete())->getTable(), 'id_rareté')],
+        ]);
+
+        $data = array_filter($data, fn($v) => $v !== null && $v !== '');
+        if (empty($data)) {
+            return back()->with('error', 'Aucune modification à appliquer.');
+        }
+
+        Artefact::whereIn('id_artefact', $ids)->update($data);
+
+        return back()->with('success', count($ids) . ' artefact(s) mis à jour.');
+    }
+
     private function validateArtefact(Request $request): array
     {
         return $request->validate([

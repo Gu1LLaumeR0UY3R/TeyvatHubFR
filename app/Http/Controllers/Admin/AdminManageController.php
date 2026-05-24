@@ -48,10 +48,12 @@ class AdminManageController extends Controller
             'banniere_admin_url'  => ['nullable', 'url', 'max:1000'],
         ]);
 
+        $selectedPermissions = (array) ($data['permissions'] ?? []);
+
         $data['mot_de_passe_admin'] = Hash::make($data['mot_de_passe_admin']);
         $data['legacy_permissions'] = $data['role'] === 'super_admin'
             ? Admin::ALL_PERMISSIONS
-            : ($data['permissions'] ?? []);
+            : $selectedPermissions;
         unset($data['permissions']);
 
         $data['photo_profil'] = $this->resolveImageInput(
@@ -69,8 +71,10 @@ class AdminManageController extends Controller
 
         unset($data['photo_profil_url'], $data['banniere_admin_url']);
 
-        $admin = Admin::create($data);
-        $this->syncAdminRolePermissions($admin, $data['role'], $data['permissions']);
+        DB::transaction(function () use ($data, $selectedPermissions): void {
+            $admin = Admin::create($data);
+            $this->syncAdminRolePermissions($admin, $data['role'], $selectedPermissions);
+        });
 
         return redirect()->route('admin.admins.index')
             ->with('success', 'Admin créé avec succès.');
@@ -99,6 +103,8 @@ class AdminManageController extends Controller
             'banniere_admin_url' => ['nullable', 'url', 'max:1000'],
         ]);
 
+        $selectedPermissions = (array) ($data['permissions'] ?? []);
+
         if (filled($data['mot_de_passe_admin'] ?? null)) {
             $data['mot_de_passe_admin'] = Hash::make($data['mot_de_passe_admin']);
         } else {
@@ -107,7 +113,7 @@ class AdminManageController extends Controller
 
         $data['legacy_permissions'] = $data['role'] === 'super_admin'
             ? Admin::ALL_PERMISSIONS
-            : ($data['permissions'] ?? []);
+            : $selectedPermissions;
         unset($data['permissions']);
 
         $newPhoto = $this->resolveImageInput(
@@ -138,8 +144,10 @@ class AdminManageController extends Controller
 
         unset($data['photo_profil_url'], $data['banniere_admin_url']);
 
-        $admin->update($data);
-        $this->syncAdminRolePermissions($admin, $data['role'], $data['permissions']);
+        DB::transaction(function () use ($admin, $data, $selectedPermissions): void {
+            $admin->update($data);
+            $this->syncAdminRolePermissions($admin, $data['role'], $selectedPermissions);
+        });
 
         return redirect()->route('admin.admins.index')
             ->with('success', 'Admin mis à jour.');

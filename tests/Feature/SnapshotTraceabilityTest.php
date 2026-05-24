@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Elements;
+use App\Models\Etoile;
 use App\Models\Personnage;
 use App\Models\Snapshot;
+use App\Models\TypeArme;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -157,6 +160,74 @@ class SnapshotTraceabilityTest extends TestCase
             ->assertStatus(200)
             ->assertSeeText('Diff détaillé')
             ->assertSeeText('nom_perso');
+    }
+
+    public function test_main_zone_snapshot_capture_et_restore_nom_et_videos(): void
+    {
+        $admin = $this->makeAdmin('super_admin');
+        $element = Elements::firstOrCreate(['libelle_element' => 'Hydro']);
+        $etoile = Etoile::firstOrCreate(['libelle' => '5★']);
+        $typeArme = TypeArme::firstOrCreate(['libelle_TArme' => 'Epee']);
+
+        $personnage = Personnage::factory()->create([
+            'nom_perso' => 'Furina',
+            'fid_element' => $element->id_element,
+            'fid_etoile' => $etoile->id_etoile,
+            'fid_TArmes' => $typeArme->id_TArmes,
+        ]);
+
+        $personnage->videos()->create([
+            'url_video' => 'https://www.youtube.com/watch?v=old111old11',
+            'ordre' => 1,
+        ]);
+
+        $this->withSession($this->adminSession($admin))
+            ->putJson(route('admin.personnage.block.main-zone.update', $personnage), [
+                'nom_perso' => 'Furina Prime',
+                'fid_element' => $element->id_element,
+                'fid_etoile' => $etoile->id_etoile,
+                'fid_TArmes' => $typeArme->id_TArmes,
+                'videos' => [
+                    ['url_video' => 'https://www.youtube.com/watch?v=new222new22'],
+                ],
+            ])
+            ->assertStatus(200);
+
+        $snapshot = Snapshot::query()
+            ->where('fid_perso', $personnage->id_perso)
+            ->where('action_type', 'update')
+            ->latest('id_snapshot')
+            ->firstOrFail();
+
+        $modification = $snapshot->modifications()->firstOrFail();
+        $this->assertSame('Furina', $modification->old_values['nom_perso'] ?? null);
+        $this->assertSame('Furina Prime', $modification->new_values['nom_perso'] ?? null);
+        $this->assertSame('https://www.youtube.com/watch?v=old111old11', $modification->old_values['videos'][0]['url_video'] ?? null);
+        $this->assertSame('https://www.youtube.com/watch?v=new222new22', $modification->new_values['videos'][0]['url_video'] ?? null);
+
+        $this->withSession($this->adminSession($admin))
+            ->putJson(route('admin.personnage.block.main-zone.update', $personnage), [
+                'nom_perso' => 'Furina Final',
+                'fid_element' => $element->id_element,
+                'fid_etoile' => $etoile->id_etoile,
+                'fid_TArmes' => $typeArme->id_TArmes,
+                'videos' => [
+                    ['url_video' => 'https://www.youtube.com/watch?v=final333fin'],
+                ],
+            ])
+            ->assertStatus(200);
+
+        $this->withSession($this->adminSession($admin))
+            ->post(route('admin.snapshots.restore', $snapshot))
+            ->assertRedirect(route('admin.snapshots.show', $snapshot));
+
+        $restored = $personnage->fresh();
+        $this->assertSame('Furina', $restored->nom_perso);
+        $this->assertDatabaseHas('personnage_video', [
+            'fid_perso' => $personnage->id_perso,
+            'url_video' => 'https://www.youtube.com/watch?v=old111old11',
+            'ordre' => 1,
+        ]);
     }
 
     public function test_super_admin_peut_consulter_restauration_globale_groupee(): void

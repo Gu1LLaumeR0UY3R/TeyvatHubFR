@@ -38,7 +38,7 @@ class Admin extends Model
         'email_admin',
         'mot_de_passe_admin',
         'role',
-        'permissions',
+        'legacy_permissions',
         'two_factor_secret',
         'two_factor_enabled',
         'two_factor_confirmed_at',

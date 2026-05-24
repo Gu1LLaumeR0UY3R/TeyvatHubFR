@@ -64,9 +64,15 @@ class ActivityLogController extends Controller
                 $highestLevel = 'info';
                 if ($lastDate && file_exists("{$dir}/{$lastDate}.log")) {
                     $content = file_get_contents("{$dir}/{$lastDate}.log");
-                    if (str_contains($content, ' - CRITICAL - ')) $highestLevel = 'critical';
-                    elseif (str_contains($content, ' - ERROR - '))    $highestLevel = 'error';
-                    elseif (str_contains($content, ' - WARNING - '))  $highestLevel = 'warning';
+                    if (str_contains($content, ' - EXTREME - ') || str_contains($content, ' - EMERGENCY - ')
+                        || str_contains($content, ' - ALERT - ')   || str_contains($content, ' - CRITICAL - '))
+                        $highestLevel = 'critical';
+                    elseif (str_contains($content, ' - ERROR - '))
+                        $highestLevel = 'error';
+                    elseif (str_contains($content, ' - DANGER - ') || str_contains($content, ' - WARNING - '))
+                        $highestLevel = 'warning';
+                    elseif (str_contains($content, ' - SUCCESS - '))
+                        $highestLevel = 'success';
                 }
 
                 $scopeData[$cat] = [
@@ -104,9 +110,23 @@ class ActivityLogController extends Controller
         $dates = array_map(fn($f) => basename($f, '.log'), $files);
         rsort($dates);
 
-        $selectedDate = $request->filled('date') && in_array($request->date, $dates, true)
-            ? $request->date
-            : ($dates[0] ?? now()->format('Y-m-d'));
+        $from = $this->parseDateTimeFilter($request->input('from'), false);
+        $to   = $this->parseDateTimeFilter($request->input('to'), true);
+
+        if ($from && $to && $to->lessThan($from)) {
+            $to = $from->copy()->endOfDay();
+        }
+
+        $hasPeriodFilter = $from || $to;
+        $rawDate = trim((string) $request->input('date', ''));
+
+        $selectedDate = $rawDate !== '' && in_array($rawDate, $dates, true)
+            ? $rawDate
+            : '';
+
+        if (!$hasPeriodFilter && !$request->exists('date') && isset($dates[0])) {
+            $selectedDate = $dates[0];
+        }
 
         // Lecture multi-fichiers pour permettre un filtrage par période (début/fin).
         $records = [];
@@ -126,11 +146,8 @@ class ActivityLogController extends Controller
         }
 
         // ── Filtres ────────────────────────────────────────────────────────
-        $from = $this->parseDateTimeFilter($request->input('from'), false);
-        $to   = $this->parseDateTimeFilter($request->input('to'), true);
-
-        if ($request->filled('date')) {
-            $dateFilter = $request->date;
+        if (!$hasPeriodFilter && $selectedDate !== '') {
+            $dateFilter = $selectedDate;
             $records = array_values(array_filter($records, fn($r) => $r['date'] === $dateFilter));
         }
 
@@ -179,7 +196,7 @@ class ActivityLogController extends Controller
         $page    = max(1, (int) $request->input('page', 1));
         $records = array_slice($records, ($page - 1) * $perPage, $perPage);
         $lines   = array_map(fn($r) => $r['line'], $records);
-        $levels  = ['debug', 'info', 'notice', 'warning', 'error', 'critical'];
+        $levels  = ['debug', 'info', 'notice', 'success', 'warning', 'danger', 'error', 'critical', 'alert', 'emergency', 'extreme'];
 
         return view('admin.logs.show', compact(
             'lines', 'dates', 'selectedDate', 'total', 'page', 'perPage', 'levels',

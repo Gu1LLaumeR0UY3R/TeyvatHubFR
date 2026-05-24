@@ -31,7 +31,8 @@ class Issue77MainZoneUITest extends TestCase
             'pseudo_admin' => 'AdminTest',
             'email_admin' => 'admin@test.fr',
             'mot_de_passe_admin' => Hash::make('secret123'),
-            'role' => 'admin',
+            'role' => 'super_admin',
+            'two_factor_enabled' => false,
         ]);
     }
 
@@ -39,7 +40,11 @@ class Issue77MainZoneUITest extends TestCase
     {
         $admin = $this->makeAdmin();
 
-        return ['admin_id' => $admin->id_admin];
+        return [
+            'admin_id' => $admin->id_admin,
+            'admin_role' => $admin->role,
+            'admin_2fa_passed' => true,
+        ];
     }
 
     public function test_upload_portrait_stocke_fichier(): void

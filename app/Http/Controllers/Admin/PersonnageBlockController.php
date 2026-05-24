@@ -24,9 +24,14 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
+use App\Services\SnapshotService;
 
 class PersonnageBlockController extends Controller
 {
+    public function __construct(private readonly SnapshotService $snapshotService)
+    {
+    }
+
     private const ARTEFACT_MAIN_STATS_SABLIER = [
         'ATK%',
         'HP%',
@@ -75,6 +80,8 @@ class PersonnageBlockController extends Controller
 
     public function updateMainZone(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = $this->snapshotService->captureMainZoneState($personnage->fresh());
+
         $nationTable = Schema::hasTable('nation')
             ? 'nation'
             : (Schema::hasTable('région') ? 'région' : null);
@@ -87,16 +94,16 @@ class PersonnageBlockController extends Controller
         }
 
         $data = $request->validate([
-            'nom_perso' => ['required', 'string', 'max:100'],
-            'fid_element' => ['required', 'integer', 'exists:elements,id_element'],
-            'fid_etoile' => ['required', 'integer', 'exists:etoile,id_etoile'],
+            'nom_perso' => ['sometimes', 'string', 'max:100'],
+            'fid_element' => ['sometimes', 'integer', 'exists:elements,id_element'],
+            'fid_etoile' => ['sometimes', 'integer', 'exists:etoile,id_etoile'],
             'fid_TArmes' => ['nullable', 'integer', 'exists:type_armes,id_TArmes'],
             'fid_TP' => ['nullable', 'integer', 'exists:type_perso,id_TP'],
             'background_actif' => ['nullable', 'string', 'max:255'],
             'fid_nations' => $nationRules,
             'fid_nations.*' => $nationItemRules,
             'videos' => ['sometimes', 'array'],
-            'videos.*.url_video' => ['required', 'url', 'max:255'],
+            'videos.*.url_video' => ['sometimes', 'url', 'max:255'],
         ]);
 
         $armeIcon = null;
@@ -135,42 +142,73 @@ class PersonnageBlockController extends Controller
             }
         }
 
-        $updatePayload = [
-            'nom_perso' => $data['nom_perso'],
-            'fid_element' => $data['fid_element'],
-            'fid_etoile' => $data['fid_etoile'],
-            'fid_TArmes' => $data['fid_TArmes'] ?? null,
-            'fid_TP' => $data['fid_TP'] ?? $personnage->fid_TP,
-        ];
+        $updatePayload = [];
 
-        if (Schema::hasColumn('personnage', 'arme_icon')) {
-            $updatePayload['arme_icon'] = $armeIcon;
+        // Ne mettre à jour que les champs qui ont été envoyés
+        if (array_key_exists('nom_perso', $data)) {
+            $updatePayload['nom_perso'] = $data['nom_perso'];
         }
 
-        if (Schema::hasColumn('personnage', 'background_actif')) {
-            $updatePayload['background_actif'] = $data['background_actif'] ?? null;
+        if (array_key_exists('fid_element', $data)) {
+            $updatePayload['fid_element'] = $data['fid_element'];
         }
 
-        $personnage->update($updatePayload);
-
-        if (
-            array_key_exists('fid_nations', $data)
-            && $nationTable
-            && Schema::hasTable('personnage_nation')
-        ) {
-            $personnage->nations()->sync($data['fid_nations']);
+        if (array_key_exists('fid_etoile', $data)) {
+            $updatePayload['fid_etoile'] = $data['fid_etoile'];
         }
 
-        if (array_key_exists('videos', $data)) {
-            $personnage->videos()->delete();
-            foreach ($data['videos'] as $index => $video) {
-                PersonnageVideo::query()->create([
-                    'fid_perso' => $personnage->id_perso,
-                    'url_video' => $video['url_video'],
-                    'ordre' => $index + 1,
-                ]);
+        if (array_key_exists('fid_TArmes', $data)) {
+            $updatePayload['fid_TArmes'] = $data['fid_TArmes'] ?? null;
+        }
+
+        if (array_key_exists('fid_TP', $data)) {
+            $updatePayload['fid_TP'] = $data['fid_TP'] ?? null;
+        }
+
+        if (array_key_exists('fid_TArmes', $data) && $armeIcon) {
+            if (Schema::hasColumn('personnage', 'arme_icon')) {
+                $updatePayload['arme_icon'] = $armeIcon;
             }
         }
+
+        if (array_key_exists('background_actif', $data)) {
+            if (Schema::hasColumn('personnage', 'background_actif')) {
+                $updatePayload['background_actif'] = $data['background_actif'] ?? null;
+            }
+        }
+
+        SnapshotService::withoutRecording(function () use ($personnage, $updatePayload, $data, $nationTable): void {
+            if (!empty($updatePayload)) {
+                $personnage->update($updatePayload);
+            }
+
+            if (
+                array_key_exists('fid_nations', $data)
+                && $nationTable
+                && Schema::hasTable('personnage_nation')
+            ) {
+                $personnage->nations()->sync($data['fid_nations']);
+            }
+
+            if (array_key_exists('videos', $data)) {
+                $personnage->videos()->delete();
+                foreach ($data['videos'] as $index => $video) {
+                    PersonnageVideo::query()->create([
+                        'fid_perso' => $personnage->id_perso,
+                        'url_video' => $video['url_video'],
+                        'ordre' => $index + 1,
+                    ]);
+                }
+            }
+        });
+
+        $newSnapshotState = $this->snapshotService->captureMainZoneState($personnage->fresh());
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
 
         return response()->json([
             'success' => true,
@@ -180,6 +218,8 @@ class PersonnageBlockController extends Controller
 
     public function uploadImage(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = ['photos' => $this->snapshotService->captureMainZoneState($personnage->fresh())['photos']];
+
         $data = $request->validate([
             'image_type' => ['required', 'string', Rule::in(['icone', 'portrait', 'full'])],
             'image' => ['required', 'image', 'max:4096'],
@@ -191,28 +231,40 @@ class PersonnageBlockController extends Controller
             ? 'photos/personnages/personnage_full'
             : 'photos/personnages/icones_personnage';
 
-        $oldPath = $personnage->photos()->where('type', $storageType)->value('chemin_photo');
-        if ($oldPath && !filter_var($oldPath, FILTER_VALIDATE_URL)) {
-            Storage::disk('public')->delete($oldPath);
-        }
-        $personnage->photos()->where('type', $storageType)->delete();
+        SnapshotService::withoutRecording(function () use ($personnage, $storageType, $request, $dir, $imageType): void {
+            $oldPath = $personnage->photos()->where('type', $storageType)->value('chemin_photo');
+            if ($oldPath && !filter_var($oldPath, FILTER_VALIDATE_URL)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+            $personnage->photos()->where('type', $storageType)->delete();
 
-        $extension = strtolower($request->file('image')->getClientOriginalExtension() ?: $request->file('image')->extension() ?: 'png');
-        $filename = $storageType === 'portrait'
-            ? $personnage->slug . '-full.' . $extension
-            : $personnage->slug . '-icon.' . $extension;
+            $extension = strtolower($request->file('image')->getClientOriginalExtension() ?: $request->file('image')->extension() ?: 'png');
+            $filename = $storageType === 'portrait'
+                ? $personnage->slug . '-full.' . $extension
+                : $personnage->slug . '-icon.' . $extension;
 
-        $path = $this->storeResizedImage(
-            $request->file('image'),
-            $dir,
-            $filename,
-            $imageType === 'portrait' ? 1600 : 512
+            $path = $this->storeResizedImage(
+                $request->file('image'),
+                $dir,
+                $filename,
+                $imageType === 'portrait' ? 1600 : 512
+            );
+            $personnage->photos()->create([
+                'chemin_photo' => $path,
+                'source_url' => null,
+                'type' => $storageType,
+            ]);
+        });
+
+        $newSnapshotState = ['photos' => $this->snapshotService->captureMainZoneState($personnage->fresh())['photos']];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
         );
-        $personnage->photos()->create([
-            'chemin_photo' => $path,
-            'source_url' => null,
-            'type' => $storageType,
-        ]);
+
+        $path = $personnage->fresh('photos')->photos->where('type', $storageType)->first()?->chemin_photo;
 
         return response()->json([
             'success' => true,
@@ -325,12 +377,33 @@ class PersonnageBlockController extends Controller
     public function updateArmesRecommandees(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
-            'armes' => ['required', 'array', 'min:1', 'max:6'],
+            'armes' => ['sometimes', 'array', 'max:6'],
             'armes.*.id_arme' => ['required', 'integer', 'exists:armes,id_arme'],
             'armes.*.rang' => ['nullable', 'integer', 'min:1', 'max:5'],
             'armes.*.is_starter' => ['nullable', 'boolean'],
-            'armes.*.origine' => ['nullable', Rule::in(['tirage', 'evenement', 'craft', 'achat'])],
+            'armes.*.origine' => ['nullable', Rule::in(['tirage', 'pull', 'evenement', 'craft', 'achat'])],
         ]);
+
+        // Si aucune arme n'est envoyée, supprimer les existantes mais enregistrer quand meme le snapshot.
+        if (!array_key_exists('armes', $data) || empty($data['armes'])) {
+            $oldSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
+
+            SnapshotService::withoutRecording(function () use ($personnage): void {
+                PersonnageArmeRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
+            });
+
+            $this->snapshotService->createManualUpdate(
+                $personnage,
+                $oldSnapshotState,
+                ['armes_recommandees' => []],
+                $this->resolveAdminId(),
+            );
+
+            return response()->json([
+                'success' => true,
+                'armes' => [],
+            ]);
+        }
 
         $armes = collect($data['armes'])->values();
 
@@ -347,7 +420,9 @@ class PersonnageBlockController extends Controller
             }
         }
 
-        // Keep only the first starter weapon as starter=true.
+        $oldSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
+
+        // Keep only the first starter weapon as starter=true, but allow saving without any starter.
         $starterAssigned = false;
         $armes = $armes->map(function (array $arme) use (&$starterAssigned): array {
             $isStarter = (bool) ($arme['is_starter'] ?? false);
@@ -362,32 +437,31 @@ class PersonnageBlockController extends Controller
                 'id_arme' => (int) $arme['id_arme'],
                 'rang' => (int) ($arme['rang'] ?? 1),
                 'is_starter' => $isStarter,
-                'origine' => $arme['origine'] ?? null,
+                'origine' => (($arme['origine'] ?? null) === 'pull') ? 'tirage' : ($arme['origine'] ?? null),
             ];
+        })->values();
+
+        SnapshotService::withoutRecording(function () use ($personnage, $armes): void {
+            PersonnageArmeRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
+
+            foreach ($armes as $index => $arme) {
+                PersonnageArmeRecommandee::query()->create([
+                    'fid_perso' => $personnage->id_perso,
+                    'fid_arme' => $arme['id_arme'],
+                    'position' => $index + 1,
+                    'origine' => $arme['origine'],
+                    'starter' => $arme['is_starter'] ? 1 : 0,
+                ]);
+            }
         });
 
-        if (!$armes->contains(fn (array $arme): bool => $arme['is_starter'] === true)) {
-            throw ValidationException::withMessages([
-                'armes' => 'Une arme starter est obligatoire.',
-            ]);
-        }
-
-        // Force le starter en derniere position quel que soit l'ordre saisi.
-        $starterWeapon = $armes->first(fn (array $arme): bool => $arme['is_starter'] === true);
-        $nonStarterWeapons = $armes->filter(fn (array $arme): bool => $arme['is_starter'] === false)->values();
-        $armes = $starterWeapon ? $nonStarterWeapons->push($starterWeapon)->values() : $nonStarterWeapons;
-
-        PersonnageArmeRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
-
-        foreach ($armes as $index => $arme) {
-            PersonnageArmeRecommandee::query()->create([
-                'fid_perso' => $personnage->id_perso,
-                'fid_arme' => $arme['id_arme'],
-                'position' => $index + 1,
-                'origine' => $arme['origine'],
-                'starter' => $arme['is_starter'] ? 1 : 0,
-            ]);
-        }
+        $newSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
 
         return response()->json([
             'success' => true,
@@ -408,12 +482,21 @@ class PersonnageBlockController extends Controller
         ]);
     }
 
+    private function resolveAdminId(): ?int
+    {
+        $adminId = session('admin_id');
+
+        return $adminId ? (int) $adminId : null;
+    }
+
     public function updateArtefactsRecommandees(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = ['artefacts_recommandes' => $this->snapshotService->captureRecommendedArtefactsState($personnage->fresh())];
+
         $data = $request->validate([
-            'builds' => ['required', 'array', 'min:1', 'max:4'],
-            'builds.*.artefact1_id' => ['required', 'integer', 'exists:artefact,id_artefact'],
-            'builds.*.pieces_1' => ['required', 'integer', Rule::in([2, 4])],
+            'builds' => ['sometimes', 'array', 'max:4'],
+            'builds.*.artefact1_id' => ['sometimes', 'integer', 'exists:artefact,id_artefact'],
+            'builds.*.pieces_1' => ['sometimes', 'integer', Rule::in([2, 4])],
             'builds.*.artefact2_id' => ['nullable', 'integer', 'exists:artefact,id_artefact'],
             'builds.*.pieces_2' => ['nullable', 'integer', Rule::in([2])],
             'builds.*.main_stat_sablier' => ['nullable', Rule::in(self::ARTEFACT_MAIN_STATS_SABLIER)],
@@ -422,6 +505,22 @@ class PersonnageBlockController extends Controller
             'builds.*.sub_stats' => ['nullable', 'array', 'max:4'],
             'builds.*.sub_stats.*' => ['string', Rule::in(self::ARTEFACT_SUB_STATS)],
         ]);
+
+        // Si aucun build n'est envoyé, supprimer les existants et enregistrer un snapshot.
+        if (!array_key_exists('builds', $data) || empty($data['builds'])) {
+            SnapshotService::withoutRecording(function () use ($personnage): void {
+                PersonnageArtefactRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
+            });
+
+            $this->snapshotService->createManualUpdate(
+                $personnage,
+                $oldSnapshotState,
+                ['artefacts_recommandes' => []],
+                $this->resolveAdminId(),
+            );
+
+            return response()->json(['success' => true]);
+        }
 
         $builds = collect($data['builds'])->values();
 
@@ -459,28 +558,38 @@ class PersonnageBlockController extends Controller
             }
         }
 
-        PersonnageArtefactRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
+        SnapshotService::withoutRecording(function () use ($personnage, $builds): void {
+            PersonnageArtefactRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
 
-        foreach ($builds as $index => $build) {
-            $pieces1 = (int) $build['pieces_1'];
-            $subStats = collect($build['sub_stats'] ?? [])
-                ->map(fn ($stat) => trim((string) $stat))
-                ->filter()
-                ->values();
+            foreach ($builds as $index => $build) {
+                $pieces1 = (int) $build['pieces_1'];
+                $subStats = collect($build['sub_stats'] ?? [])
+                    ->map(fn ($stat) => trim((string) $stat))
+                    ->filter()
+                    ->values();
 
-            PersonnageArtefactRecommandee::query()->create([
-                'fid_perso' => $personnage->id_perso,
-                'fid_artefact_1' => (int) $build['artefact1_id'],
-                'pieces_1' => $pieces1 === 4 ? '4p' : '2p',
-                'fid_artefact_2' => $pieces1 === 2 ? (int) $build['artefact2_id'] : null,
-                'pieces_2' => $pieces1 === 2 ? '2p' : null,
-                'main_stat_sablier' => $build['main_stat_sablier'] ?? null,
-                'main_stat_gobelet' => $build['main_stat_gobelet'] ?? null,
-                'main_stat_couronne' => $build['main_stat_couronne'] ?? null,
-                'sub_stats' => $subStats->isNotEmpty() ? $subStats->implode(', ') : null,
-                'position' => $index + 1,
-            ]);
-        }
+                PersonnageArtefactRecommandee::query()->create([
+                    'fid_perso' => $personnage->id_perso,
+                    'fid_artefact_1' => (int) $build['artefact1_id'],
+                    'pieces_1' => $pieces1 === 4 ? '4p' : '2p',
+                    'fid_artefact_2' => $pieces1 === 2 ? (int) $build['artefact2_id'] : null,
+                    'pieces_2' => $pieces1 === 2 ? '2p' : null,
+                    'main_stat_sablier' => $build['main_stat_sablier'] ?? null,
+                    'main_stat_gobelet' => $build['main_stat_gobelet'] ?? null,
+                    'main_stat_couronne' => $build['main_stat_couronne'] ?? null,
+                    'sub_stats' => $subStats->isNotEmpty() ? $subStats->implode(', ') : null,
+                    'position' => $index + 1,
+                ]);
+            }
+        });
+
+        $newSnapshotState = ['artefacts_recommandes' => $this->snapshotService->captureRecommendedArtefactsState($personnage->fresh())];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
 
         return response()->json(['success' => true]);
     }
@@ -500,41 +609,58 @@ class PersonnageBlockController extends Controller
 
     public function updateConstellations(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = ['constellations_data' => $this->snapshotService->captureConstellationsState($personnage->fresh())];
+
         $data = $request->validate([
-            'constellations' => ['required', 'array', 'min:1'],
+            'constellations' => ['sometimes', 'array'],
             'constellations.*.id_const' => ['nullable', 'integer', 'exists:constellation,id_const'],
             'constellations.*.index' => ['nullable', 'integer', 'min:1', 'max:6'],
             'constellations.*.titre_const' => ['nullable', 'string', 'max:200'],
             'constellations.*.descri_const' => ['nullable', 'string'],
         ]);
 
-        foreach ($data['constellations'] as $rowIndex => $payload) {
-            $title = trim((string) ($payload['titre_const'] ?? ''));
-            $desc = trim((string) ($payload['descri_const'] ?? ''));
-            $idConst = isset($payload['id_const']) ? (int) $payload['id_const'] : null;
-            $index = isset($payload['index']) ? (int) $payload['index'] : ((int) $rowIndex + 1);
-
-            if ($idConst) {
-                Constellation::query()
-                    ->where('id_const', $idConst)
-                    ->where('fid_perso', $personnage->id_perso)
-                    ->update([
-                        'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
-                        'descri_const' => $desc !== '' ? $desc : null,
-                    ]);
-                continue;
-            }
-
-            if ($title === '' && $desc === '') {
-                continue;
-            }
-
-            Constellation::create([
-                'fid_perso' => $personnage->id_perso,
-                'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
-                'descri_const' => $desc !== '' ? $desc : null,
-            ]);
+        // Si aucune constellation n'est envoyée, retourner succès directement
+        if (!array_key_exists('constellations', $data) || empty($data['constellations'])) {
+            return response()->json(['success' => true, 'constellations' => []]);
         }
+
+        SnapshotService::withoutRecording(function () use ($data, $personnage): void {
+            foreach ($data['constellations'] as $rowIndex => $payload) {
+                $title = trim((string) ($payload['titre_const'] ?? ''));
+                $desc = trim((string) ($payload['descri_const'] ?? ''));
+                $idConst = isset($payload['id_const']) ? (int) $payload['id_const'] : null;
+                $index = isset($payload['index']) ? (int) $payload['index'] : ((int) $rowIndex + 1);
+
+                if ($idConst) {
+                    Constellation::query()
+                        ->where('id_const', $idConst)
+                        ->where('fid_perso', $personnage->id_perso)
+                        ->update([
+                            'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
+                            'descri_const' => $desc !== '' ? $desc : null,
+                        ]);
+                    continue;
+                }
+
+                if ($title === '' && $desc === '') {
+                    continue;
+                }
+
+                Constellation::create([
+                    'fid_perso' => $personnage->id_perso,
+                    'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
+                    'descri_const' => $desc !== '' ? $desc : null,
+                ]);
+            }
+        });
+
+        $newSnapshotState = ['constellations_data' => $this->snapshotService->captureConstellationsState($personnage->fresh())];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
 
         $constellationImageFor = function (string $slug, int $index): string {
             $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
@@ -569,6 +695,8 @@ class PersonnageBlockController extends Controller
 
     public function uploadConstellationImage(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = ['constellations_data' => $this->snapshotService->captureConstellationsState($personnage->fresh())];
+
         $data = $request->validate([
             'image' => ['required', 'image', 'max:4096'],
             'constellation_index' => ['required', 'integer', 'min:1', 'max:6'],
@@ -588,32 +716,42 @@ class PersonnageBlockController extends Controller
 
         $path = $request->file('image')->storeAs($dir, $filename, 'public');
 
-        $constellations = $personnage->constellations()
-            ->orderBy('id_const')
-            ->get()
-            ->values();
+        SnapshotService::withoutRecording(function () use ($personnage, $index, $path): void {
+            $constellations = $personnage->constellations()
+                ->orderBy('id_const')
+                ->get()
+                ->values();
 
-        while ($constellations->count() < $index) {
-            $nextIndex = $constellations->count() + 1;
-            $constellations->push(Constellation::create([
-                'fid_perso' => $personnage->id_perso,
-                'titre_const' => 'Constellation C' . $nextIndex,
-                'descri_const' => null,
-            ]));
-        }
+            while ($constellations->count() < $index) {
+                $nextIndex = $constellations->count() + 1;
+                $constellations->push(Constellation::create([
+                    'fid_perso' => $personnage->id_perso,
+                    'titre_const' => 'Constellation C' . $nextIndex,
+                    'descri_const' => null,
+                ]));
+            }
 
-        $constellation = $constellations->get($index - 1);
+            $constellation = $constellations->get($index - 1);
 
-        $oldPhoto = $constellation->photo;
-        if ($oldPhoto && $oldPhoto->chemin_photo !== $path && !filter_var((string) $oldPhoto->chemin_photo, FILTER_VALIDATE_URL)) {
-            Storage::disk('public')->delete($oldPhoto->chemin_photo);
-        }
+            $oldPhoto = $constellation->photo;
+            if ($oldPhoto && $oldPhoto->chemin_photo !== $path && !filter_var((string) $oldPhoto->chemin_photo, FILTER_VALIDATE_URL)) {
+                Storage::disk('public')->delete($oldPhoto->chemin_photo);
+            }
 
-        $constellation->photo()->updateOrCreate([], [
-            'chemin_photo' => $path,
-            'source_url' => null,
-            'type' => 'icon',
-        ]);
+            $constellation->photo()->updateOrCreate([], [
+                'chemin_photo' => $path,
+                'source_url' => null,
+                'type' => 'icon',
+            ]);
+        });
+
+        $newSnapshotState = ['constellations_data' => $this->snapshotService->captureConstellationsState($personnage->fresh())];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
 
         return response()->json([
             'success' => true,
@@ -727,49 +865,83 @@ class PersonnageBlockController extends Controller
 
     public function updateCompetences(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = ['competences_data' => $this->snapshotService->captureCompetencesState($personnage->fresh())];
+
         $data = $request->validate([
-            'competences' => ['required', 'array', 'min:1'],
+            'competences' => ['sometimes', 'array'],
             'competences.*.id_aptitude' => ['nullable', 'integer', 'exists:aptitude,id_aptitude'],
-            'competences.*.titre_apti' => ['required', 'string', 'max:200'],
+            'competences.*.titre_apti' => ['sometimes', 'string', 'max:200'],
             'competences.*.descri_apti' => ['nullable', 'string'],
             'competences.*.lvl_apt' => ['nullable', 'integer', 'min:1', 'max:15'],
             'competences.*.sub_Apt' => ['nullable', 'string'],
-            'competences.*.fid_TypeApti' => ['required', 'integer', 'exists:type_apti,id_TypeApti'],
+            'competences.*.fid_TypeApti' => ['sometimes', 'integer', 'exists:type_apti,id_TypeApti'],
         ]);
+
+        // Si aucune compétence n'est envoyée, supprimer les existantes et enregistrer un snapshot.
+        if (!array_key_exists('competences', $data) || empty($data['competences'])) {
+            SnapshotService::withoutRecording(function () use ($personnage): void {
+                Aptitude::query()
+                    ->where('fid_perso', $personnage->id_perso)
+                    ->delete();
+            });
+
+            $this->snapshotService->createManualUpdate(
+                $personnage,
+                $oldSnapshotState,
+                ['competences_data' => []],
+                $this->resolveAdminId(),
+            );
+
+            return response()->json([
+                'success'          => true,
+                'competences_ids'  => [],
+                'competences_count'=> 0,
+            ]);
+        }
 
         $keptIds = [];
 
-        foreach ($data['competences'] as $payload) {
-            $attributes = [
-                'titre_apti' => $payload['titre_apti'],
-                'descri_apti' => $payload['descri_apti'] ?? null,
-                'lvl_apt' => (int) ($payload['lvl_apt'] ?? 1),
-                'sub_Apt' => $payload['sub_Apt'] ?? null,
-                'fid_TypeApti' => (int) $payload['fid_TypeApti'],
-                'fid_perso' => $personnage->id_perso,
-            ];
+        SnapshotService::withoutRecording(function () use ($data, $personnage, &$keptIds): void {
+            foreach ($data['competences'] as $payload) {
+                $attributes = [
+                    'titre_apti' => $payload['titre_apti'],
+                    'descri_apti' => $payload['descri_apti'] ?? null,
+                    'lvl_apt' => (int) ($payload['lvl_apt'] ?? 1),
+                    'sub_Apt' => $payload['sub_Apt'] ?? null,
+                    'fid_TypeApti' => (int) $payload['fid_TypeApti'],
+                    'fid_perso' => $personnage->id_perso,
+                ];
 
-            if (!empty($payload['id_aptitude'])) {
-                $aptitude = Aptitude::query()
-                    ->where('id_aptitude', (int) $payload['id_aptitude'])
-                    ->where('fid_perso', $personnage->id_perso)
-                    ->first();
+                if (!empty($payload['id_aptitude'])) {
+                    $aptitude = Aptitude::query()
+                        ->where('id_aptitude', (int) $payload['id_aptitude'])
+                        ->where('fid_perso', $personnage->id_perso)
+                        ->first();
 
-                if ($aptitude) {
-                    $aptitude->update($attributes);
-                    $keptIds[] = $aptitude->id_aptitude;
-                    continue;
+                    if ($aptitude) {
+                        $aptitude->update($attributes);
+                        $keptIds[] = $aptitude->id_aptitude;
+                        continue;
+                    }
                 }
+
+                $created = Aptitude::query()->create($attributes);
+                $keptIds[] = $created->id_aptitude;
             }
 
-            $created = Aptitude::query()->create($attributes);
-            $keptIds[] = $created->id_aptitude;
-        }
+            Aptitude::query()
+                ->where('fid_perso', $personnage->id_perso)
+                ->whereNotIn('id_aptitude', $keptIds)
+                ->delete();
+        });
 
-        Aptitude::query()
-            ->where('fid_perso', $personnage->id_perso)
-            ->whereNotIn('id_aptitude', $keptIds)
-            ->delete();
+        $newSnapshotState = ['competences_data' => $this->snapshotService->captureCompetencesState($personnage->fresh())];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
 
         return response()->json([
             'success'          => true,
@@ -780,44 +952,78 @@ class PersonnageBlockController extends Controller
 
     public function updateHistoires(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = ['histoires_data' => $this->snapshotService->captureHistoiresState($personnage->fresh())];
+
         $data = $request->validate([
-            'histoires' => ['required', 'array', 'min:1'],
+            'histoires' => ['sometimes', 'array'],
             'histoires.*.id_histoire' => ['nullable', 'integer', 'exists:histoire,id_histoire'],
-            'histoires.*.titre_histoire' => ['required', 'string', 'max:200'],
-            'histoires.*.histoire' => ['required', 'string'],
+            'histoires.*.titre_histoire' => ['sometimes', 'string', 'max:200'],
+            'histoires.*.histoire' => ['sometimes', 'string'],
         ]);
+
+        // Si aucune histoire n'est envoyée, supprimer les existantes et enregistrer un snapshot.
+        if (!array_key_exists('histoires', $data) || empty($data['histoires'])) {
+            SnapshotService::withoutRecording(function () use ($personnage): void {
+                PersonnageHistoire::query()
+                    ->where('fid_perso', $personnage->id_perso)
+                    ->delete();
+            });
+
+            $this->snapshotService->createManualUpdate(
+                $personnage,
+                $oldSnapshotState,
+                ['histoires_data' => []],
+                $this->resolveAdminId(),
+            );
+
+            return response()->json([
+                'success' => true,
+                'histoires_ids' => [],
+                'histoires_count' => 0,
+            ]);
+        }
 
         $keptIds = [];
 
-        foreach ($data['histoires'] as $index => $payload) {
-            $attributes = [
-                'fid_perso' => $personnage->id_perso,
-                'titre_histoire' => trim((string) $payload['titre_histoire']),
-                'histoire' => trim((string) $payload['histoire']),
-                'ordre' => $index + 1,
-            ];
+        SnapshotService::withoutRecording(function () use ($data, $personnage, &$keptIds): void {
+            foreach ($data['histoires'] as $index => $payload) {
+                $attributes = [
+                    'fid_perso' => $personnage->id_perso,
+                    'titre_histoire' => trim((string) $payload['titre_histoire']),
+                    'histoire' => trim((string) $payload['histoire']),
+                    'ordre' => $index + 1,
+                ];
 
-            if (!empty($payload['id_histoire'])) {
-                $histoire = PersonnageHistoire::query()
-                    ->where('id_histoire', (int) $payload['id_histoire'])
-                    ->where('fid_perso', $personnage->id_perso)
-                    ->first();
+                if (!empty($payload['id_histoire'])) {
+                    $histoire = PersonnageHistoire::query()
+                        ->where('id_histoire', (int) $payload['id_histoire'])
+                        ->where('fid_perso', $personnage->id_perso)
+                        ->first();
 
-                if ($histoire) {
-                    $histoire->update($attributes);
-                    $keptIds[] = (int) $histoire->id_histoire;
-                    continue;
+                    if ($histoire) {
+                        $histoire->update($attributes);
+                        $keptIds[] = (int) $histoire->id_histoire;
+                        continue;
+                    }
                 }
+
+                $created = PersonnageHistoire::query()->create($attributes);
+                $keptIds[] = (int) $created->id_histoire;
             }
 
-            $created = PersonnageHistoire::query()->create($attributes);
-            $keptIds[] = (int) $created->id_histoire;
-        }
+            PersonnageHistoire::query()
+                ->where('fid_perso', $personnage->id_perso)
+                ->whereNotIn('id_histoire', $keptIds)
+                ->delete();
+        });
 
-        PersonnageHistoire::query()
-            ->where('fid_perso', $personnage->id_perso)
-            ->whereNotIn('id_histoire', $keptIds)
-            ->delete();
+        $newSnapshotState = ['histoires_data' => $this->snapshotService->captureHistoiresState($personnage->fresh())];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
 
         return response()->json([
             'success' => true,
@@ -828,6 +1034,8 @@ class PersonnageBlockController extends Controller
 
     public function uploadAptitudeImage(Request $request, Personnage $personnage): JsonResponse
     {
+        $oldSnapshotState = ['competences_data' => $this->snapshotService->captureCompetencesState($personnage->fresh())];
+
         $data = $request->validate([
             'image'        => ['required', 'image', 'max:4096'],
             'id_aptitude'  => ['required', 'integer', 'exists:aptitude,id_aptitude'],
@@ -856,6 +1064,14 @@ class PersonnageBlockController extends Controller
             'source_url'   => null,
         ]);
 
+        $newSnapshotState = ['competences_data' => $this->snapshotService->captureCompetencesState($personnage->fresh())];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
+
         return response()->json([
             'success'      => true,
             'path'         => $path,
@@ -867,17 +1083,20 @@ class PersonnageBlockController extends Controller
     public function updateBlockOrder(Request $request, Personnage $personnage): JsonResponse
     {
         $data = $request->validate([
-            'block_order' => ['required', 'array', 'min:1'],
-            'block_order.*' => ['required', 'string', 'in:main_zone,armes,artefacts,constellations,competences,histoires'],
+            'block_order' => ['sometimes', 'array'],
+            'block_order.*' => ['sometimes', 'string', 'in:main_zone,armes,artefacts,constellations,competences,histoires'],
         ]);
 
-        $personnage->update([
-            'block_order' => implode(',', $data['block_order']),
-        ]);
+        // Si block_order est envoyé, le mettre à jour
+        if (array_key_exists('block_order', $data) && !empty($data['block_order'])) {
+            $personnage->update([
+                'block_order' => implode(',', $data['block_order']),
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'block_order' => $data['block_order'],
+            'block_order' => $data['block_order'] ?? [],
         ]);
     }
 

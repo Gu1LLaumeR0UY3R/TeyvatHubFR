@@ -92,6 +92,12 @@ class RoleController extends Controller
             return back()->with('error', 'Aucun rôle sélectionné.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Role::whereIn('id_role', $ids)->delete();
+            return back()->with('success', count($ids) . ' rôle(s) supprimé(s).');
+        }
+
         $data = $request->validate([
             'descri_role' => ['nullable', 'string'],
         ]);

@@ -114,6 +114,12 @@ class AnimalController extends Controller
             return back()->with('error', 'Aucun animal sélectionné.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Animal::whereIn('id_animal', $ids)->delete();
+            return back()->with('success', count($ids) . ' animal(aux) supprimé(s).');
+        }
+
         $data = $request->validate([
             'fid_TAnimal' => ['nullable', 'exists:type_animal,id_TAnimal'],
         ]);

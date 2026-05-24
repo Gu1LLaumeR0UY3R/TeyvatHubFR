@@ -126,6 +126,12 @@ class EnnemiController extends Controller
             return back()->with('error', 'Aucun ennemi sélectionné.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Ennemi::whereIn('id_ennemi', $ids)->delete();
+            return back()->with('success', count($ids) . ' ennemi(s) supprimé(s).');
+        }
+
         $data = $request->validate([
             'fid_typeEnne' => ['nullable', 'exists:type_ennemi,id_typeEnnemi'],
             'fid_element' => ['nullable', 'exists:elements,id_element'],

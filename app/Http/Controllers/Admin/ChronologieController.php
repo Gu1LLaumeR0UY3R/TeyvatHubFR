@@ -112,6 +112,12 @@ class ChronologieController extends Controller
             return back()->with('error', 'Aucune entrée sélectionnée.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Chronologie::whereIn('id_chrono', $ids)->delete();
+            return back()->with('success', count($ids) . ' entrée(s) supprimée(s).');
+        }
+
         $data = $request->validate([
             'periode' => ['nullable', 'string', 'max:100'],
             'fid_region' => ['nullable', 'exists:région,id_region'],

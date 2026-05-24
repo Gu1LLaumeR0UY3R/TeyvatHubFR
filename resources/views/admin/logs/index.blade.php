@@ -21,18 +21,21 @@
                            class="group relative p-4 bg-hub-surface border-2 rounded-lg hover:border-violet-500/60 hover:shadow-lg transition-all cursor-pointer
                                   @if($data['highestLevel'] === 'critical') border-red-700
                                   @elseif($data['highestLevel'] === 'error') border-red-600/60
-                                  @elseif($data['highestLevel'] === 'warning') border-yellow-600/50
+                                  @elseif($data['highestLevel'] === 'warning') border-orange-600/50
+                                  @elseif($data['highestLevel'] === 'success') border-green-600/50
                                   @else border-hub-border
                                   @endif">
                             <div class="text-2xl mb-2">{{ $data['icon'] }}</div>
                             <div class="font-medium text-hub-text text-sm mb-1">{{ $data['label'] }}</div>
-                            
-                            @if($data['highestLevel'] !== 'info')
+
+                            @if(!in_array($data['highestLevel'], ['info', 'debug']))
                                 <div class="mb-2">
                                     <span class="px-2 py-0.5 text-xs font-bold rounded
                                           @if($data['highestLevel'] === 'critical') bg-red-900 text-red-100
                                           @elseif($data['highestLevel'] === 'error') bg-red-800/50 text-red-200
-                                          @elseif($data['highestLevel'] === 'warning') bg-yellow-800/50 text-yellow-200
+                                          @elseif($data['highestLevel'] === 'warning') bg-orange-800/50 text-orange-200
+                                          @elseif($data['highestLevel'] === 'success') bg-green-800/50 text-green-200
+                                          @else bg-hub-surface text-hub-text-sec
                                           @endif">
                                         {{ strtoupper($data['highestLevel']) }}
                                     </span>
@@ -74,18 +77,21 @@
                            class="group relative p-4 bg-hub-surface border-2 rounded-lg hover:border-sky-500/60 hover:shadow-lg transition-all cursor-pointer
                                   @if($data['highestLevel'] === 'critical') border-red-700
                                   @elseif($data['highestLevel'] === 'error') border-red-600/60
-                                  @elseif($data['highestLevel'] === 'warning') border-yellow-600/50
+                                  @elseif($data['highestLevel'] === 'warning') border-orange-600/50
+                                  @elseif($data['highestLevel'] === 'success') border-green-600/50
                                   @else border-hub-border
                                   @endif">
                             <div class="text-2xl mb-2">{{ $data['icon'] }}</div>
                             <div class="font-medium text-hub-text text-sm mb-1">{{ $data['label'] }}</div>
-                            
-                            @if($data['highestLevel'] !== 'info')
+
+                            @if(!in_array($data['highestLevel'], ['info', 'debug']))
                                 <div class="mb-2">
                                     <span class="px-2 py-0.5 text-xs font-bold rounded
                                           @if($data['highestLevel'] === 'critical') bg-red-900 text-red-100
                                           @elseif($data['highestLevel'] === 'error') bg-red-800/50 text-red-200
-                                          @elseif($data['highestLevel'] === 'warning') bg-yellow-800/50 text-yellow-200
+                                          @elseif($data['highestLevel'] === 'warning') bg-orange-800/50 text-orange-200
+                                          @elseif($data['highestLevel'] === 'success') bg-green-800/50 text-green-200
+                                          @else bg-hub-surface text-hub-text-sec
                                           @endif">
                                         {{ strtoupper($data['highestLevel']) }}
                                     </span>

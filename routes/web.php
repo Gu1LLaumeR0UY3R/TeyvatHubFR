@@ -151,6 +151,7 @@ Route::prefix('admin')->group(function () {
             // Routes AJAX blocs personnage
             Route::prefix('personnages/{personnage:slug}/block')->group(function () {
                 Route::put('main-zone', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateMainZone'])->name('admin.personnage.block.main-zone.update');
+                Route::post('main-zone/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadImage'])->name('admin.personnage.block.main-zone.upload');
                 Route::get('main-zone/backgrounds', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'getBackgroundsByNation'])->name('admin.personnage.block.main-zone.backgrounds');
                 Route::put('armes-recommandees', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArmesRecommandees'])->name('admin.personnage.block.armes.update');
                 Route::delete('armes-recommandees/{id_arme}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArmeRecommandee'])->name('admin.personnage.block.armes.delete');

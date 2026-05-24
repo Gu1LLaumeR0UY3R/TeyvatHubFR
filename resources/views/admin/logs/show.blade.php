@@ -1,4 +1,6 @@
 <x-admin-layout>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+
     {{-- ── Fil d'ariane ─────────────────────────────────────────────────── --}}
     <div class="flex items-center gap-2 text-sm text-hub-text-sec mb-6">
         <a href="{{ route('admin.logs.index') }}" class="hover:text-hub-text">Logs</a>
@@ -17,33 +19,43 @@
     </div>
 
     {{-- ── Filtres ────────────────────────────────────────────────────────── --}}
-    <form method="GET"
+    <form id="log-filter-form" method="GET"
           class="bg-hub-surface border border-hub-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
 
         <div>
             <label class="block text-xs text-hub-text-sec mb-1">Date</label>
-            <select name="date"
+                <select id="single-date-filter" name="date"
                     class="bg-hub-bg border border-hub-border rounded px-2 py-1.5 text-sm text-hub-text">
+                <option value="" @selected($selectedDate === '')>
+                    Toutes les dates
+                </option>
                 @forelse($dates as $d)
                     <option value="{{ $d }}" @selected($d === $selectedDate)>
                         {{ \Carbon\Carbon::createFromFormat('Y-m-d', $d)->format('d/m/Y') }}
                     </option>
                 @empty
-                    <option value="{{ $selectedDate }}">{{ now()->format('d/m/Y') }}</option>
+                    <option value="" selected>Toutes les dates</option>
                 @endforelse
             </select>
         </div>
 
         <div>
             <label class="block text-xs text-hub-text-sec mb-1">Début</label>
-            <input type="date" name="from" value="{{ request('from') }}"
+            <input id="from-date" type="date" name="from" value="{{ request('from') }}"
                    class="bg-hub-bg border border-hub-border rounded px-2 py-1.5 text-sm text-hub-text">
         </div>
 
         <div>
             <label class="block text-xs text-hub-text-sec mb-1">Fin</label>
-            <input type="date" name="to" value="{{ request('to') }}"
+            <input id="to-date" type="date" name="to" value="{{ request('to') }}"
                    class="bg-hub-bg border border-hub-border rounded px-2 py-1.5 text-sm text-hub-text">
+        </div>
+
+        <div class="w-full mt-2">
+            <p class="text-xs text-hub-text-sec mb-2">
+                Calendrier: clic = 1 jour, glisser = plage. Quand une plage est choisie, le filtre Date est ignore.
+            </p>
+            <div id="logs-range-calendar" class="bg-hub-bg border border-hub-border rounded-lg p-2"></div>
         </div>
 
         <div>
@@ -107,18 +119,53 @@
                     <tbody class="divide-y divide-hub-border">
                         @foreach($lines as $line)
                             @php
-                                $isCritical = str_contains($line, ' - CRITICAL - ');
-                                $isError    = !$isCritical && str_contains($line, ' - ERROR - ');
-                                $isWarning  = !$isCritical && !$isError && str_contains($line, ' - WARNING - ');
+                                $isRed    = str_contains($line, ' - CRITICAL - ')  || str_contains($line, ' - EXTREME - ')
+                                         || str_contains($line, ' - EMERGENCY - ') || str_contains($line, ' - ALERT - ')
+                                         || str_contains($line, ' - ERROR - ');
+                                $isOrange = !$isRed && (str_contains($line, ' - WARNING - ') || str_contains($line, ' - DANGER - '));
+                                $isGreen  = !$isRed && !$isOrange && str_contains($line, ' - SUCCESS - ');
+                                $isBlue   = !$isRed && !$isOrange && !$isGreen && str_contains($line, ' - INFO - ');
+
+                                $colored = preg_replace_callback(
+                                    '/ - (ERROR|CRITICAL|ALERT|EMERGENCY|EXTREME|WARNING|DANGER|SUCCESS|INFO|NOTICE|DEBUG) - /',
+                                    function ($m) {
+                                        return match ($m[1]) {
+                                            'EXTREME', 'EMERGENCY', 'ALERT', 'CRITICAL'
+                                                => ' - <span class="font-bold text-red-300 bg-red-900/60 px-1 rounded">' . $m[1] . '</span> - ',
+                                            'ERROR'
+                                                => ' - <span class="font-bold text-red-400 bg-red-900/40 px-1 rounded">' . $m[1] . '</span> - ',
+                                            'WARNING', 'DANGER'
+                                                => ' - <span class="font-bold text-orange-300 bg-orange-900/50 px-1 rounded">' . $m[1] . '</span> - ',
+                                            'SUCCESS'
+                                                => ' - <span class="font-bold text-green-300 bg-green-900/40 px-1 rounded">' . $m[1] . '</span> - ',
+                                            'INFO'
+                                                => ' - <span class="font-bold text-sky-300 bg-sky-900/30 px-1 rounded">' . $m[1] . '</span> - ',
+                                            'NOTICE'
+                                                => ' - <span class="font-bold text-blue-300">' . $m[1] . '</span> - ',
+                                            'DEBUG'
+                                                => ' - <span class="text-gray-500">' . $m[1] . '</span> - ',
+                                            default => $m[0],
+                                        };
+                                    },
+                                    e($line)
+                                );
                             @endphp
                             <tr class="
-                                @if($isCritical) bg-red-950
-                                @elseif($isError) bg-red-950/40
-                                @elseif($isWarning) bg-yellow-950/30
+                                @if($isRed) bg-red-900 border-l-4 border-red-500
+                                @elseif($isOrange) bg-orange-900 border-l-4 border-orange-500
+                                @elseif($isGreen) bg-green-900 border-l-4 border-green-500
+                                @elseif($isBlue) bg-sky-900 border-l-4 border-sky-500
+                                @else border-l-4 border-transparent
                                 @endif
-                                hover:bg-hub-surface-hover">
-                                <td class="px-4 py-2 text-hub-text whitespace-pre-wrap break-all leading-relaxed">
-                                    {{ $line }}
+                                hover:opacity-90 transition-opacity">
+                                <td class="pl-0 pr-3 py-1 text-xs whitespace-pre-wrap break-all leading-snug
+                                    @if($isRed) text-red-100
+                                    @elseif($isOrange) text-orange-100
+                                    @elseif($isGreen) text-green-100
+                                    @elseif($isBlue) text-sky-100
+                                    @else text-hub-text
+                                    @endif">
+                                    {!! $colored !!}
                                 </td>
                             </tr>
                         @endforeach
@@ -158,4 +205,134 @@
             ← Retour aux logs
         </a>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('logs-range-calendar');
+            const form = document.getElementById('log-filter-form');
+            const singleDateSelect = document.getElementById('single-date-filter');
+            const fromInput = document.getElementById('from-date');
+            const toInput = document.getElementById('to-date');
+
+            if (!calendarEl || !form || !singleDateSelect || !fromInput || !toInput) {
+                return;
+            }
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const toYmd = (date) => date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+            const addDays = (value, days) => {
+                const date = new Date(value + 'T00:00:00');
+                date.setDate(date.getDate() + days);
+                return toYmd(date);
+            };
+
+            const syncDateBounds = () => {
+                if (fromInput.value) {
+                    toInput.min = fromInput.value;
+                    if (toInput.value && toInput.value < fromInput.value) {
+                        toInput.value = fromInput.value;
+                    }
+                } else {
+                    toInput.removeAttribute('min');
+                }
+            };
+
+            let calendarSelection = null;
+
+            const updateCalendarHighlight = (calendar) => {
+                const existing = calendar.getEventById('range-selected');
+                if (existing) {
+                    existing.remove();
+                }
+
+                if (!fromInput.value) {
+                    calendarSelection = null;
+                    return;
+                }
+
+                const endValue = toInput.value || fromInput.value;
+                calendarSelection = { from: fromInput.value, to: endValue };
+
+                calendar.addEvent({
+                    id: 'range-selected',
+                    start: calendarSelection.from,
+                    end: addDays(calendarSelection.to, 1),
+                    display: 'background',
+                    backgroundColor: '#0ea5e9',
+                });
+            };
+
+            const initialDate = fromInput.value || toInput.value || singleDateSelect.value || '{{ now()->format('Y-m-d') }}';
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                initialDate,
+                locale: 'fr',
+                selectable: true,
+                selectMirror: true,
+                height: 'auto',
+                firstDay: 1,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth'
+                },
+                dateClick: function (info) {
+                    fromInput.value = info.dateStr;
+                    toInput.value = info.dateStr;
+                    singleDateSelect.value = '';
+                    syncDateBounds();
+                    updateCalendarHighlight(calendar);
+                },
+                select: function (info) {
+                    const from = info.startStr;
+                    const toExclusive = info.endStr;
+                    const to = addDays(toExclusive, -1);
+
+                    fromInput.value = from;
+                    toInput.value = to;
+                    singleDateSelect.value = '';
+                    syncDateBounds();
+                    updateCalendarHighlight(calendar);
+                }
+            });
+
+            calendar.render();
+            syncDateBounds();
+            updateCalendarHighlight(calendar);
+
+            fromInput.addEventListener('change', function () {
+                syncDateBounds();
+                if (fromInput.value || toInput.value) {
+                    singleDateSelect.value = '';
+                }
+                updateCalendarHighlight(calendar);
+            });
+
+            toInput.addEventListener('change', function () {
+                syncDateBounds();
+                if (fromInput.value || toInput.value) {
+                    singleDateSelect.value = '';
+                }
+                updateCalendarHighlight(calendar);
+            });
+
+            singleDateSelect.addEventListener('change', function () {
+                if (singleDateSelect.value !== '') {
+                    fromInput.value = '';
+                    toInput.value = '';
+                }
+                syncDateBounds();
+                updateCalendarHighlight(calendar);
+            });
+
+            form.addEventListener('submit', function (event) {
+                if (fromInput.value && toInput.value && toInput.value < fromInput.value) {
+                    event.preventDefault();
+                    toInput.value = fromInput.value;
+                }
+            });
+        });
+    </script>
 </x-admin-layout>

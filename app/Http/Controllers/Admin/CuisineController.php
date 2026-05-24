@@ -116,6 +116,12 @@ class CuisineController extends Controller
             return back()->with('error', 'Aucun plat sélectionné.');
         }
 
+        $action = (string) $request->input('action', 'update');
+        if ($action === 'delete') {
+            Plat::whereIn('id_plat', $ids)->delete();
+            return back()->with('success', count($ids) . ' plat(s) supprimé(s).');
+        }
+
         $data = $request->validate([
             'fid_rareté' => ['nullable', 'exists:rareté,id_rareté'],
         ]);

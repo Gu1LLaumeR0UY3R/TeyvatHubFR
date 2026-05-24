@@ -53,6 +53,11 @@
                     <button type="submit" class="px-4 py-2 bg-hub-gold text-hub-bg rounded hover:opacity-90 font-medium text-sm">
                         Appliquer
                     </button>
+                    <button type="submit" name="action" value="delete" formnovalidate
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:opacity-90 font-medium text-sm"
+                            onclick="return confirm('Supprimer les rôles sélectionnés ?')">
+                        Supprimer la sélection
+                    </button>
                 </form>
             </div>
         </template>
