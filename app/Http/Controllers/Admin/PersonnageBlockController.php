@@ -1376,19 +1376,24 @@ class PersonnageBlockController extends Controller
             $replacementKeys[$key] = true;
         }
 
-        $existingTeamsQuery = TeamComposition::query()->where('fid_perso', $personnage->id_perso);
+        $typeReaction = trim((string) $data['type_reaction']);
+
+        $existingTeamsQuery = TeamComposition::query()
+            ->where('fid_perso', $personnage->id_perso)
+            ->where('type_reaction', $typeReaction);
         if ($ignoreTeamId !== null) {
             $existingTeamsQuery->where('id_team', '!=', $ignoreTeamId);
         }
 
         if ($existingTeamsQuery->count() >= 2) {
             throw ValidationException::withMessages([
-                'tag' => 'Seulement 2 compositions sont autorisées: Recommended et F2P.',
+                'tag' => 'Seulement 2 compositions sont autorisées par réaction: Recommended et F2P.',
             ]);
         }
 
         $conflictTagQuery = TeamComposition::query()
             ->where('fid_perso', $personnage->id_perso)
+            ->where('type_reaction', $typeReaction)
             ->where('tag', (string) $data['tag']);
 
         if ($ignoreTeamId !== null) {
@@ -1397,7 +1402,7 @@ class PersonnageBlockController extends Controller
 
         if ($conflictTagQuery->exists()) {
             throw ValidationException::withMessages([
-                'tag' => 'Cette étiquette existe déjà pour ce personnage.',
+                'tag' => 'Cette étiquette existe déjà pour cette réaction sur ce personnage.',
             ]);
         }
     }
@@ -1464,4 +1469,3 @@ class PersonnageBlockController extends Controller
     }
 
 }
-
