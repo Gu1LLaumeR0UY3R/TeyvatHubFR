@@ -11,7 +11,7 @@ return new class extends Migration {
         if (!Schema::hasTable('team_composition')) {
             Schema::create('team_composition', function (Blueprint $table) {
                 $table->id('id_team');
-                $table->unsignedBigInteger('fid_perso');
+                $table->unsignedInteger('fid_perso');
                 $table->string('type_reaction', 80);
                 $table->enum('tag', ['recommended', 'f2p'])->nullable();
                 $table->timestamps();

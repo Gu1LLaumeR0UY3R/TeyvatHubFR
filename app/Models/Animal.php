@@ -52,7 +52,7 @@ class Animal extends Model
     {
         $photo = $this->photos->first();
         if (!$photo) {
-            return asset('images/placeholder.webp');
+            return asset('images/placeholder.svg');
         }
         if ($photo->source_url) {
             return $photo->source_url;

@@ -4829,8 +4829,9 @@
                     this.aptitudeFormData._pendingFile = file;
                     this.aptitudeFormData.image_url = URL.createObjectURL(file);
                 },
-                removeAptitude(index) {
+                async removeAptitude(index) {
                     this.aptitudes.splice(index, 1);
+                    await this.saveCompetences();
                 },
 
                 openHistoireForm(index) {
@@ -5607,7 +5608,7 @@
                             sub_Apt: a.sub_Apt || null,
                         })).filter(a => a.titre_apti && a.fid_TypeApti);
 
-                        if (!payload.length) {
+                        if (this.aptitudes.length > 0 && !payload.length) {
                             this.showToast('Aucune compétence valide à enregistrer', 'error');
                             return;
                         }

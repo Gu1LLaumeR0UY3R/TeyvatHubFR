@@ -165,7 +165,7 @@ class Personnage extends Model
                  ?? $this->photos->whereNull('type')->first()
                  ?? $this->photos->first();
         if (!$photo) {
-            return asset('images/placeholder.webp');
+            return asset('images/placeholder.svg');
         }
         return $this->resolvePhotoUrl($photo);
     }
@@ -177,7 +177,7 @@ class Personnage extends Model
                  ?? $this->photos->where('type', 'icone')->first()
                  ?? $this->photos->first();
         if (!$photo) {
-            return asset('images/placeholder.webp');
+            return asset('images/placeholder.svg');
         }
         return $this->resolvePhotoUrl($photo);
     }

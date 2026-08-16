@@ -13,7 +13,7 @@ return new class extends Migration {
                 $table->id('id_rpl');
                 $table->unsignedBigInteger('fid_team');
                 $table->unsignedTinyInteger('slot');
-                $table->unsignedBigInteger('fid_perso_remplacant');
+                $table->unsignedInteger('fid_perso_remplacant');
                 $table->string('role_override', 100)->nullable();
 
                 $table->unique(['fid_team', 'slot', 'fid_perso_remplacant'], 'uk_team_rpl_team_slot_perso');

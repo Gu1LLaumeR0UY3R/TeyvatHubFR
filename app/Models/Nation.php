@@ -83,7 +83,7 @@ class Nation extends Model
         // Fallback à photo en base de données
         $photo = $this->photos->first();
         if (!$photo) {
-            return asset('images/placeholder.webp');
+            return asset('images/placeholder.svg');
         }
         if ($photo->source_url) {
             return $photo->source_url;
