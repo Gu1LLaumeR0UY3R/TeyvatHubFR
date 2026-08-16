@@ -63,7 +63,7 @@
         <template x-for="item in items" :key="item.id">
             <div class="flex items-center gap-4 px-6 py-3 hover:bg-hub-surface-hover transition-colors">
 
-                <img :src="item.icon_url || '{{ asset('images/placeholder.webp') }}'"
+                <img :src="item.icon_url || '{{ asset('images/placeholder.svg') }}'"
                      alt=""
                      class="h-9 w-9 rounded-lg border border-hub-border object-cover flex-shrink-0">
 

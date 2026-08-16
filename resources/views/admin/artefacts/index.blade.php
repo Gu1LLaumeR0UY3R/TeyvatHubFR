@@ -86,7 +86,7 @@
                     @forelse($artefacts as $artefact)
                         @php
                             $photo = $artefact->photos->first();
-                            $icon = $photo?->source_url ?: ($photo?->chemin_photo ? asset('storage/'.$photo->chemin_photo) : asset('images/placeholder.webp'));
+                            $icon = $photo?->source_url ?: ($photo?->chemin_photo ? asset('storage/'.$photo->chemin_photo) : asset('images/placeholder.svg'));
                         @endphp
                         <tr class="hub-surface-hover">
                             <td class="px-3 py-2 text-center">
