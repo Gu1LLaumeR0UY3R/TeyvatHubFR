@@ -12,7 +12,7 @@ return new class extends Migration {
             Schema::create('team_composition_membre', function (Blueprint $table) {
                 $table->id('id_membre');
                 $table->unsignedBigInteger('fid_team');
-                $table->unsignedBigInteger('fid_perso');
+                $table->unsignedInteger('fid_perso');
                 $table->unsignedTinyInteger('slot');
                 $table->string('role_override', 100)->nullable();
 
@@ -36,7 +36,7 @@ return new class extends Migration {
 
         Schema::table('team_composition_membre', function (Blueprint $table) {
             if (!Schema::hasColumn('team_composition_membre', 'fid_perso')) {
-                $table->unsignedBigInteger('fid_perso')->nullable()->after('fid_team');
+                $table->unsignedInteger('fid_perso')->nullable()->after('fid_team');
             }
             if (!Schema::hasColumn('team_composition_membre', 'role_override')) {
                 $table->string('role_override', 100)->nullable()->after('slot');
