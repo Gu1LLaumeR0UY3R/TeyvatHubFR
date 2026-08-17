@@ -125,4 +125,13 @@ class Issue62MorphMapTest extends TestCase
         ]);
         $this->assertCount(1, $arme->fresh()->photos);
     }
+
+    public function test_photo_normalise_les_types_morph_legacy_vers_alias(): void
+    {
+        $this->assertSame('personnage', Photo::normalizeMorphType(Personnage::class));
+        $this->assertSame('nation', Photo::normalizeMorphType(Nation::class));
+        $this->assertSame('arme', Photo::normalizeMorphType('arme'));
+        $this->assertSame('personnage', Photo::normalizeMorphType('App\\Models\\Personnage'));
+        $this->assertSame('nation', Photo::normalizeMorphType('App\\Models\\Nation'));
+    }
 }
