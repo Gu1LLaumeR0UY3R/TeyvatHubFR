@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -166,7 +167,7 @@ class ReferenceController extends Controller
 
             $item->photos()->updateOrCreate(
                 [
-                    'photoable_type' => get_class($item),
+                    'photoable_type' => Relation::getMorphAlias($item::class),
                     'photoable_id' => $item->getKey(),
                 ],
                 [
@@ -197,7 +198,7 @@ class ReferenceController extends Controller
 
         $item->photos()->updateOrCreate(
             [
-                'photoable_type' => get_class($item),
+                'photoable_type' => Relation::getMorphAlias($item::class),
                 'photoable_id' => $item->getKey(),
             ],
             [
