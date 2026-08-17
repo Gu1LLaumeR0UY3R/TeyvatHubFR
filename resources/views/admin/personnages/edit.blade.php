@@ -3026,7 +3026,7 @@
                     <div class="csh-aptitudes-empty">Aucune team enregistrée pour ce personnage.</div>
                 </template>
 
-                <template x-for="group in teamGroups" :key="`team-group-${group.key}`">
+                <template x-for="group in (teamGroups || [])" :key="`team-group-${group.key}`">
                     <div class="csh-team-group">
                         <div class="csh-team-group-head">
                             <div>
@@ -3046,7 +3046,7 @@
                                             @click="toggleRecommendedReplacements(group.recommended.id_team)">⇄ remplaçants</button>
                                 </div>
                                 <div class="csh-team-slots">
-                                    <template x-for="member in sortedMembers(group.recommended)" :key="`team-rec-member-${group.recommended.id_team}-${member.slot}`">
+                                    <template x-for="member in sortedMembers(group.recommended || [])" :key="`team-rec-member-${group.recommended?.id_team || 'unknown'}-${member.slot}`">
                                         <div class="csh-team-slot">
                                             <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'"
                                                  :alt="member.nom"
@@ -3056,11 +3056,11 @@
 
                                             <template x-if="recommendedReplacementsOpen(group.recommended.id_team)">
                                                 <div class="csh-team-remplacants">
-                                                    <template x-if="slotRemplacants(group.recommended, member.slot).length">
+                                                    <template x-if="(slotRemplacants(group.recommended, member.slot) || []).length">
                                                         <div class="csh-team-remplacant-row">
                                                             <div class="csh-team-remplacant-head" x-text="`Slot ${member.slot} - remplaçants`"></div>
                                                             <div class="csh-team-remplacant-list">
-                                                                <template x-for="alt in slotRemplacants(group.recommended, member.slot)" :key="`team-rec-alt-${group.recommended.id_team}-${member.slot}-${alt.id_perso}`">
+                                                                <template x-for="alt in (slotRemplacants(group.recommended, member.slot) || [])" :key="`team-rec-alt-${group.recommended?.id_team || 'unknown'}-${member.slot}-${alt.id_perso}`">
                                                                     <div class="csh-team-remplacant-item" :title="alt.role || 'Rôle non défini'">
                                                                         <img :src="alt.icon || '{{ asset('images/placeholder.svg') }}'" :alt="alt.nom" />
                                                                     </div>
@@ -3085,7 +3085,7 @@
                                     </div>
                                 </div>
                                 <div class="csh-team-slots">
-                                    <template x-for="member in sortedMembers(group.f2p)" :key="`team-f2p-member-${group.f2p.id_team}-${member.slot}`">
+                                    <template x-for="member in sortedMembers(group.f2p || [])" :key="`team-f2p-member-${group.f2p?.id_team || 'unknown'}-${member.slot}`">
                                         <div class="csh-team-slot">
                                             <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'"
                                                  :alt="member.nom"
@@ -3106,13 +3106,13 @@
                                     <span class="csh-team-drawer-count" x-text="`${group.others.length} autres teams`"></span>
                                 </button>
                                 <div class="csh-team-others" x-show="groupDrawerOpen(group.key)">
-                                    <template x-for="team in group.others" :key="`team-other-${team.id_team}`">
+                                    <template x-for="team in (group.others || [])" :key="`team-other-${team?.id_team || 'unknown'}`">
                                         <article class="csh-team-card">
                                             <div class="csh-team-card-head">
-                                                <div class="text-xs text-slate-300" x-text="team.type_reaction"></div>
+                                                <div class="text-xs text-slate-300" x-text="team?.type_reaction || 'Team vide'"></div>
                                             </div>
                                             <div class="csh-team-slots">
-                                                <template x-for="member in sortedMembers(team)" :key="`team-other-member-${team.id_team}-${member.slot}`">
+                                                <template x-for="member in sortedMembers(team || [])" :key="`team-other-member-${team?.id_team || 'unknown'}-${member.slot}`">
                                                     <div class="csh-team-slot">
                                                         <img :src="member.icon || '{{ asset('images/placeholder.svg') }}'"
                                                              :alt="member.nom"
@@ -3568,8 +3568,8 @@
                 aptitudes: existingAptitudes,
                 histoires: Array.isArray(existingHistoires) ? existingHistoires : [],
                 typesApti: existingTypesApti,
-                teams: existingTeams,
-                teamPool: existingTeamPool,
+                teams: Array.isArray(existingTeams) ? existingTeams.filter(team => team && typeof team === 'object') : [],
+                teamPool: Array.isArray(existingTeamPool) ? existingTeamPool.filter(person => person && typeof person === 'object') : [],
                 teamReactions: existingReactions,
                 teamManagerOpen: false,
                 reactionSlotPickerOpen: false,
@@ -3635,8 +3635,13 @@
                 get draggedArme() {
                     return this.dragArmeIndex === null ? null : (this.armes[this.dragArmeIndex] || null);
                 },
+                get normalizedTeams() {
+                    return Array.isArray(this.teams)
+                        ? this.teams.filter(team => team && typeof team === 'object')
+                        : [];
+                },
                 get teamReactionSlots() {
-                    const existing = (this.teams || []).map(team => String(team.type_reaction || '').trim()).filter(Boolean);
+                    const existing = (this.normalizedTeams || []).map(team => String(team?.type_reaction || '').trim()).filter(Boolean);
                     const merged = [...existing, ...(this.teamReactionSlotDrafts || [])]
                         .map(name => String(name || '').trim())
                         .filter(Boolean)
@@ -3670,18 +3675,18 @@
                 },
                 get teamGroups() {
                     const grouped = {};
-                    (this.teams || []).forEach(team => {
-                        const reaction = String(team.type_reaction || 'Sans réaction').trim() || 'Sans réaction';
+                    (this.normalizedTeams || []).forEach(team => {
+                        const reaction = String(team?.type_reaction || 'Sans réaction').trim() || 'Sans réaction';
                         if (!grouped[reaction]) grouped[reaction] = [];
                         grouped[reaction].push(team);
                     });
 
                     return Object.entries(grouped)
                         .map(([reaction, teams]) => {
-                            const recommended = teams.find(t => t.tag === 'recommended') || null;
-                            const f2p = teams.find(t => t.tag === 'f2p') || null;
-                            const others = teams.filter(t => t.id_team !== recommended?.id_team && t.id_team !== f2p?.id_team);
-                            return { key: reaction.toLowerCase(), reaction, teams, recommended, f2p, others };
+                            const recommended = (teams || []).find(t => t?.tag === 'recommended') || null;
+                            const f2p = (teams || []).find(t => t?.tag === 'f2p') || null;
+                            const others = (teams || []).filter(t => t?.id_team !== recommended?.id_team && t?.id_team !== f2p?.id_team);
+                            return { key: reaction.toLowerCase(), reaction, teams: teams || [], recommended, f2p, others };
                         })
                         .sort((a, b) => a.reaction.localeCompare(b.reaction, 'fr', { sensitivity: 'base' }));
                 },
@@ -5170,7 +5175,7 @@
                 },
 
                 teamsForReaction(reactionName) {
-                    return (this.teams || []).filter(team => String(team.type_reaction || '').toLowerCase() === String(reactionName || '').toLowerCase());
+                    return (this.normalizedTeams || []).filter(team => String(team?.type_reaction || '').toLowerCase() === String(reactionName || '').toLowerCase());
                 },
 
                 reactionMeta(reactionName) {
@@ -5218,21 +5223,24 @@
                     this.teamError = '';
                     this.teamConstructorAptitudes = [];
                     this.rotationSequence = [];
+                    const safeTeams = Array.isArray(this.teams) ? this.teams.filter(t => t && typeof t === 'object') : [];
 
                     if (!team) {
-                        if ((this.teams || []).length >= 2) {
-                            this.teamError = 'Seulement 2 rotations sont autorisees: Recommended et F2P.';
-                            return;
-                        }
-
-                        const existingTags = new Set((this.teams || []).map(t => String(t.tag || '').toLowerCase()));
-                        const defaultTag = existingTags.has('recommended') ? 'f2p' : 'recommended';
-
                         const reaction = String(reactionName || '').trim();
                         if (!reaction) {
                             this.showToast('Cree d\'abord un slot de reaction', 'error');
                             return;
                         }
+
+                        const reactionTeams = safeTeams.filter(t => String(t?.type_reaction || '').trim().toLowerCase() === reaction.toLowerCase());
+                        if (reactionTeams.length >= 2) {
+                            this.teamError = 'Maximum 2 équipes par réaction: Recommended et F2P.';
+                            return;
+                        }
+
+                        const existingTags = new Set(reactionTeams.map(t => String(t.tag || '').toLowerCase()));
+                        const defaultTag = existingTags.has('recommended') ? 'f2p' : 'recommended';
+
                         this.teamEditingId = null;
                         this.teamForm = {
                             type_reaction: reaction,
@@ -5411,10 +5419,17 @@
                             return;
                         }
 
-                        const savedTeam = json.team;
-                        const index = this.teams.findIndex(t => Number(t.id_team) === Number(savedTeam.id_team));
-                        if (index === -1) this.teams.push(savedTeam);
-                        else this.teams.splice(index, 1, savedTeam);
+                        const savedTeam = json && typeof json === 'object' && json.team && typeof json.team === 'object' ? json.team : null;
+                        if (!savedTeam) {
+                            this.teamError = json?.message || 'Réponse serveur invalide lors de la sauvegarde de la team.';
+                            return;
+                        }
+
+                        const safeTeams = Array.isArray(this.teams)
+                            ? this.teams.filter(team => team && typeof team === 'object')
+                            : [];
+                        const index = safeTeams.findIndex(t => Number(t?.id_team) === Number(savedTeam.id_team));
+                        this.teams = index === -1 ? [...safeTeams, savedTeam] : safeTeams.map((team, i) => i === index ? savedTeam : team);
 
                         this.teamFormOpen = false;
                         this.showToast(isEdit ? 'Team mise à jour' : 'Team créée', 'success');
@@ -5436,7 +5451,10 @@
                             this.showToast('Erreur suppression team', 'error');
                             return;
                         }
-                        this.teams = this.teams.filter(t => Number(t.id_team) !== Number(idTeam));
+                        const safeTeams = Array.isArray(this.teams)
+                            ? this.teams.filter(team => team && typeof team === 'object')
+                            : [];
+                        this.teams = safeTeams.filter(t => Number(t?.id_team) !== Number(idTeam));
                         this.showToast('Team supprimée', 'success');
                     } catch (e) {
                         this.showToast('Erreur réseau', 'error');
@@ -5528,9 +5546,12 @@
                             return;
                         }
 
-                        const index = this.teams.findIndex(t => Number(t.id_team) === Number(this.teamEditingId));
+                        const safeTeams = Array.isArray(this.teams)
+                            ? this.teams.filter(team => team && typeof team === 'object')
+                            : [];
+                        const index = safeTeams.findIndex(t => Number(t?.id_team) === Number(this.teamEditingId));
                         if (index !== -1) {
-                            this.teams[index].rotation = payload.rotation;
+                            this.teams = safeTeams.map((team, i) => i === index ? { ...team, rotation: payload.rotation } : team);
                         }
 
                         this.showToast('Séquence sauvegardée', 'success');
@@ -5542,11 +5563,13 @@
                 },
 
                 sortedMembers(team) {
-                    return [...(team?.membres || [])].sort((a, b) => Number(a.slot) - Number(b.slot));
+                    const members = Array.isArray(team?.membres) ? team.membres.filter(member => member && typeof member === 'object') : [];
+                    return [...members].sort((a, b) => Number(a.slot) - Number(b.slot));
                 },
 
                 slotRemplacants(team, slot) {
-                    return (team?.remplacants || []).filter(r => Number(r.slot) === Number(slot));
+                    const list = Array.isArray(team?.remplacants) ? team.remplacants.filter(item => item && typeof item === 'object') : [];
+                    return list.filter(r => Number(r.slot) === Number(slot));
                 },
 
                 teamReactionEmoji(reaction) {

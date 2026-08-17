@@ -1387,7 +1387,7 @@ class PersonnageBlockController extends Controller
 
         if ($existingTeamsQuery->count() >= 2) {
             throw ValidationException::withMessages([
-                'tag' => 'Seulement 2 compositions sont autorisées par réaction: Recommended et F2P.',
+                'tag' => 'Maximum 2 équipes par réaction: Recommended et F2P.',
             ]);
         }
 
