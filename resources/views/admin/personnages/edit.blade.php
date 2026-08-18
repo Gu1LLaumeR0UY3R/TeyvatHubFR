@@ -1230,7 +1230,7 @@
                     'tag' => $team->tag,
                     'rotation' => $team->rotation,
                     'membres' => $team->membres->sortBy('slot')->values()->map(function ($m) {
-                        $photo = $m->personnage?->photos->first();
+                        $photo = $m->personnage?->photos->where('type', 'icone')->first() ?? $m->personnage?->photos->first();
                         $defaultRole = $m->personnage?->roles->first()?->libelle_role;
 
                         return [
@@ -1250,7 +1250,7 @@
                         ];
                     })->all(),
                     'remplacants' => $team->alternatives->values()->map(function ($r) {
-                        $photo = $r->personnage?->photos->first();
+                        $photo = $r->personnage?->photos->where('type', 'icone')->first() ?? $r->personnage?->photos->first();
                         $defaultRole = $r->personnage?->roles->first()?->libelle_role;
 
                         return [
@@ -1277,7 +1277,7 @@
             ->orderBy('nom_perso')
             ->get()
             ->map(function ($p) {
-                $photo = $p->photos->first();
+                $photo = $p->photos->where('type', 'icone')->first() ?? $p->photos->first();
                 return [
                     'id_perso' => (int) $p->getKey(),
                     'nom' => $p->nom_perso,

@@ -44,7 +44,7 @@ class ArmeController extends Controller
 
         $armes = $armesQuery->paginate(20)->withQueryString();
         $typesArme = TypeArme::all();
-        $etoiles = Etoile::whereIn('libelle', ['1★', '2★', '3★', '4★', '5★'])->orderBy('libelle')->get();
+        $etoiles = Etoile::whereIn('id_etoile', [1, 2, 3, 4, 5])->orderBy('id_etoile')->get();
 
         return view('admin.armes.index', compact('armes', 'typesArme', 'etoiles', 'sort'));
     }
@@ -52,7 +52,7 @@ class ArmeController extends Controller
     public function create(): View
     {
         $typesArme = TypeArme::all();
-        $etoiles   = Etoile::whereIn('libelle', ['1★', '2★', '3★', '4★', '5★'])->orderBy('libelle')->get();
+        $etoiles = Etoile::whereIn('id_etoile', [1, 2, 3, 4, 5])->orderBy('id_etoile')->get();
         return view('admin.armes.create', compact('typesArme', 'etoiles'));
     }
 
@@ -112,7 +112,7 @@ class ArmeController extends Controller
     {
         $arme->load(['statsNiveaux', 'statsRangs']);
         $typesArme = TypeArme::all();
-        $etoiles   = Etoile::whereIn('libelle', ['1★', '2★', '3★', '4★', '5★'])->orderBy('libelle')->get();
+        $etoiles   = Etoile::whereIn('id_etoile', [1, 2, 3, 4, 5])->orderBy('id_etoile')->get();
         return view('admin.armes.edit', compact('arme', 'typesArme', 'etoiles'));
     }
 
