@@ -35,11 +35,12 @@ class Personnage extends Model
     protected $primaryKey = 'id_perso';
 
     protected $fillable = [
-        'nom_perso', 'slug', 'affinite_perso',
-        'fid_TP', 'fid_etoile', 'fid_element', 'fid_TArmes',
-        'arme_icon',
-        'background_actif', 'block_order',
-        'deleted_at', 'deleted_by',
+    'nom_perso', 'slug', 'affinite_perso',
+    'fid_TP', 'fid_etoile', 'fid_element', 'fid_TArmes',
+    'versatilite',
+    'arme_icon',
+    'background_actif', 'block_order',
+    'deleted_at', 'deleted_by',
     ];
 
     protected function casts(): array

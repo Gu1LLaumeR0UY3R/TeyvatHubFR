@@ -122,6 +122,7 @@
             overflow: hidden;
             min-height: 100%;
         }
+        .csh-versatility-panel { min-height: 0; }
         .csh-preview-panel-head {
             display:flex;
             align-items:center;
@@ -928,15 +929,16 @@
         }
 
         $mainZoneJson = json_encode([
-            'nom_perso' => $personnage->nom_perso,
-            'fid_element'=> (string)$personnage->fid_element,
-            'fid_etoile' => (string)$personnage->fid_etoile,
-            'fid_TArmes' => $personnage->fid_TArmes ? (string)$personnage->fid_TArmes : '',
-            'fid_TP' => $personnage->fid_TP ? (string)$personnage->fid_TP : '',
-            'fid_nation' => $personnage->nations->first()?->id_region ? (string) $personnage->nations->first()->id_region : '',
-            'arme_icon' => $personnage->arme_icon ?? null,
-            'background_actif' => $personnage->background_actif ?? '',
-            'videos' => $personnage->videos->map(fn($v)=>['url_video'=>$v->url_video])->values(),
+        'nom_perso' => $personnage->nom_perso,
+        'fid_element'=> (string)$personnage->fid_element,
+        'fid_etoile' => (string)$personnage->fid_etoile,
+        'fid_TArmes' => $personnage->fid_TArmes ? (string)$personnage->fid_TArmes : '',
+        'fid_TP' => $personnage->fid_TP ? (string)$personnage->fid_TP : '',
+        'fid_nation' => $personnage->nations->first()?->id_region ? (string) $personnage->nations->first()->id_region : '',
+        'versatilite' => $personnage->versatilite,
+        'arme_icon' => $personnage->arme_icon ?? null,
+        'background_actif' => $personnage->background_actif ?? '',
+        'videos' => $personnage->videos->map(fn($v)=>['url_video'=>$v->url_video])->values(),
         ]);
 
         $availableArmesJson = $armesDisponibles->map(function ($a) {
@@ -1450,6 +1452,17 @@
                             <option value="{{ $et->id_etoile }}">{{ $et->libelle }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div>
+                    <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide mb-1">
+                        Versatilité <span class="text-slate-400 font-normal normal-case">(0 = P2W, 10 = très versatile)</span>
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <input type="range" x-model.number="mainZone.versatilite" min="0" max="10" step="1"
+                               class="flex-1 accent-blue-600">
+                        <span class="w-8 text-center font-bold text-slate-800" x-text="mainZone.versatilite ?? '—'"></span>
+                    </div>
                 </div>
 
                 <div>
@@ -2793,6 +2806,20 @@
                 </div>
             </div>
 
+            <section class="csh-preview-panel csh-versatility-panel mx-6 mb-6" style="padding: 1rem 1.15rem;">
+                <div class="csh-preview-panel-head" style="padding: 0 0 .75rem 0; border: none;">
+                    <div>
+                        <div class="csh-preview-panel-title">Versatilité</div>
+                        <div class="csh-preview-panel-subtitle">P2W (0) à très versatile (10)</div>
+                    </div>
+                    <div class="text-xs text-slate-400" x-text="mainZone.versatilite !== null ? mainZone.versatilite + ' / 10' : 'Non renseigné'"></div>
+                </div>
+                <div style="position:relative; height:8px; border-radius:999px; background:rgba(255,255,255,0.1);">
+                    <div style="position:absolute; top:0; left:0; height:100%; border-radius:999px; background:#6fd0be;"
+                         :style="`width:${((mainZone.versatilite ?? 0) / 10) * 100}%`"></div>
+                </div>
+            </section>
+
             <section class="csh-preview-table mx-6">
                 <div class="csh-preview-panel">
                     <div class="csh-preview-panel-head">
@@ -3488,6 +3515,7 @@
                     fid_TArmes: isFreshCreate ? '' : (parsedMain.fid_TArmes || data.fidTarmes || ''),
                     fid_TP:     parsedMain.fid_TP || data.fidTp || '',
                     fid_nation: isFreshCreate ? '' : (parsedMain.fid_nation || data.fidNation || ''),
+                    versatilite: isFreshCreate ? null : (parsedMain.versatilite ?? null),
                     arme_icon:  parsedMain.arme_icon  || data.armeIcon || '',
                     background_actif: isFreshCreate ? '' : (parsedMain.background_actif || ''),
                     videos:     isFreshCreate ? [] : (parsedMain.videos || []),
@@ -4531,6 +4559,7 @@
                                 fid_etoile:  this.mainZone.fid_etoile,
                                 fid_TArmes:  this.mainZone.fid_TArmes,
                                 fid_TP:      this.mainZone.fid_TP,
+                                versatilite: this.mainZone.versatilite,
                                 fid_nations: this.mainZone.fid_nation ? [this.mainZone.fid_nation] : [],
                                 background_actif: this.mainZone.background_actif || null,
                                 videos:      videosPayload,
