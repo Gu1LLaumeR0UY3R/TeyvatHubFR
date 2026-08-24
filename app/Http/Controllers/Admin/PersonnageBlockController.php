@@ -94,16 +94,17 @@ class PersonnageBlockController extends Controller
         }
 
         $data = $request->validate([
-            'nom_perso' => ['sometimes', 'string', 'max:100'],
-            'fid_element' => ['sometimes', 'integer', 'exists:elements,id_element'],
-            'fid_etoile' => ['sometimes', 'integer', 'exists:etoile,id_etoile'],
-            'fid_TArmes' => ['nullable', 'integer', 'exists:type_armes,id_TArmes'],
-            'fid_TP' => ['nullable', 'integer', 'exists:type_perso,id_TP'],
-            'background_actif' => ['nullable', 'string', 'max:255'],
-            'fid_nations' => $nationRules,
-            'fid_nations.*' => $nationItemRules,
-            'videos' => ['sometimes', 'array'],
-            'videos.*.url_video' => ['sometimes', 'url', 'max:255'],
+        'nom_perso' => ['sometimes', 'string', 'max:100'],
+        'fid_element' => ['sometimes', 'integer', 'exists:elements,id_element'],
+        'fid_etoile' => ['sometimes', 'integer', 'exists:etoile,id_etoile'],
+        'fid_TArmes' => ['nullable', 'integer', 'exists:type_armes,id_TArmes'],
+        'fid_TP' => ['nullable', 'integer', 'exists:type_perso,id_TP'],
+        'versatilite' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10'],
+        'background_actif' => ['nullable', 'string', 'max:255'],
+        'fid_nations' => $nationRules,
+        'fid_nations.*' => $nationItemRules,
+        'videos' => ['sometimes', 'array'],
+        'videos.*.url_video' => ['sometimes', 'url', 'max:255'],
         ]);
 
         $armeIcon = null;
@@ -163,6 +164,14 @@ class PersonnageBlockController extends Controller
 
         if (array_key_exists('fid_TP', $data)) {
             $updatePayload['fid_TP'] = $data['fid_TP'] ?? null;
+        }
+
+        if (array_key_exists('fid_TP', $data)) {
+            $updatePayload['fid_TP'] = $data['fid_TP'] ?? null;
+        }
+
+        if (array_key_exists('versatilite', $data)) {
+            $updatePayload['versatilite'] = $data['versatilite'] ?? null;
         }
 
         if (array_key_exists('fid_TArmes', $data) && $armeIcon) {

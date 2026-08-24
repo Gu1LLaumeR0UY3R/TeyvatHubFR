@@ -122,6 +122,17 @@
             overflow: hidden;
             min-height: 100%;
         }
+        .csh-versatility-panel { min-height: 0; }
+        .versatility-bar { margin-inline: auto; }
+        .versatility-filler, .versatility-frame {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: contain; pointer-events: none; user-select: none;
+        }
+        .versatility-filler {
+            clip-path: inset(0 calc(11.5% + var(--versatility-empty, 100%)) 0 11.5%);
+            transition: clip-path .35s cubic-bezier(.22, 1, .36, 1);
+        }
+        
         .csh-preview-panel-head {
             display:flex;
             align-items:center;
@@ -866,6 +877,24 @@
                 ? asset('storage/photos/regions/icones/' . $nationSlug . '.png')
                 : ($nation->icone_url ?? asset('images/placeholder.svg'));
         }
+        
+        $nationBarFrames = [];
+        foreach ($nations as $nation) {
+            $nationSlug = $nation->slug ?? \Illuminate\Support\Str::slug($nation->nom_region);
+            $barPath = public_path('images/versatility-bars/' . $nationSlug . '.png');
+            $nationBarFrames[$nation->id_region] = file_exists($barPath)
+                ? asset('images/versatility-bars/' . $nationSlug . '.png')
+                : asset('images/versatility-bars/default.png');
+        }
+
+        $nationBarFillers = [];
+foreach ($nations as $nation) {
+    $nationSlug = $nation->slug ?? \Illuminate\Support\Str::slug($nation->nom_region);
+    $fillerPath = public_path('images/versatility-bars/' . $nationSlug . '-filler.png');
+    $nationBarFillers[$nation->id_region] = file_exists($fillerPath)
+        ? asset('images/versatility-bars/' . $nationSlug . '-filler.png')
+        : asset('images/versatility-bars/filler.png');
+}
 
         $weaponTypeIcons = [];
         foreach ($typesArme as $ta) {
@@ -928,15 +957,18 @@
         }
 
         $mainZoneJson = json_encode([
-            'nom_perso' => $personnage->nom_perso,
-            'fid_element'=> (string)$personnage->fid_element,
-            'fid_etoile' => (string)$personnage->fid_etoile,
-            'fid_TArmes' => $personnage->fid_TArmes ? (string)$personnage->fid_TArmes : '',
-            'fid_TP' => $personnage->fid_TP ? (string)$personnage->fid_TP : '',
-            'fid_nation' => $personnage->nations->first()?->id_region ? (string) $personnage->nations->first()->id_region : '',
-            'arme_icon' => $personnage->arme_icon ?? null,
-            'background_actif' => $personnage->background_actif ?? '',
-            'videos' => $personnage->videos->map(fn($v)=>['url_video'=>$v->url_video])->values(),
+        'nom_perso' => $personnage->nom_perso,
+        'fid_element'=> (string)$personnage->fid_element,
+        'fid_etoile' => (string)$personnage->fid_etoile,
+        'fid_TArmes' => $personnage->fid_TArmes ? (string)$personnage->fid_TArmes : '',
+        'fid_TP' => $personnage->fid_TP ? (string)$personnage->fid_TP : '',
+        'fid_nation' => $personnage->nations->first()?->id_region ? (string) $personnage->nations->first()->id_region : '',
+        'versatilite' => $personnage->versatilite,
+        'arme_icon' => $personnage->arme_icon ?? null,
+        'background_actif' => $personnage->background_actif ?? '',
+        'videos' => $personnage->videos->map(fn($v)=>['url_video'=>$v->url_video])->values(),
+        'nationBarFillers' => $nationBarFillers,
+        'nationBarFrames' => $nationBarFrames,
         ]);
 
         $availableArmesJson = $armesDisponibles->map(function ($a) {
@@ -1318,6 +1350,8 @@
          data-fid-tp="{{ e($personnage->fid_TP) }}"
          data-fid-nation="{{ e($personnage->nations->first()?->id_region ?? '') }}"
          data-arme-icon="{{ e($personnage->arme_icon ?? '') }}"
+         data-nation-bar-frames="{{ e(json_encode($nationBarFrames)) }}"
+         data-nation-bar-fillers="{{ e(json_encode($nationBarFillers)) }}"
          data-available-armes="{{ e(json_encode($availableArmesJson)) }}"
          data-available-artefacts="{{ e(json_encode($availableArtefactsJson)) }}"
          data-existing-armes="{{ e(json_encode($existingArmesJson)) }}"
@@ -1450,6 +1484,17 @@
                             <option value="{{ $et->id_etoile }}">{{ $et->libelle }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div>
+                    <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide mb-1">
+                        Versatilité <span class="text-slate-400 font-normal normal-case">(0 = P2W, 10 = très versatile)</span>
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <input type="range" x-model.number="mainZone.versatilite" min="0" max="10" step="1"
+                               class="flex-1 accent-blue-600">
+                        <span class="w-8 text-center font-bold text-slate-800" x-text="mainZone.versatilite ?? '—'"></span>
+                    </div>
                 </div>
 
                 <div>
@@ -2793,6 +2838,21 @@
                 </div>
             </div>
 
+            <section class="csh-preview-panel csh-versatility-panel mx-6 mb-6" style="padding: 1rem 1.15rem;">
+                <div class="csh-preview-panel-head" style="padding: 0 0 .75rem 0; border: none;">
+                    <div>
+                        <div class="csh-preview-panel-title">Versatilité</div>
+                        <div class="csh-preview-panel-subtitle">P2W (0) à très versatile (10)</div>
+                    </div>
+                    <div class="text-xs text-slate-400" x-text="mainZone.versatilite !== null ? mainZone.versatilite + ' / 10' : 'Non renseigné'"></div>
+                </div>
+                <div class="versatility-bar" style="position:relative; width:100%; max-width:900px; aspect-ratio: 2084 / 754;">
+                    <img class="versatility-filler" :src="versatilityBarFiller"
+                        :style="`--versatility-empty: ${(100 - ((mainZone.versatilite ?? 0) / 10 * 100)) * 0.77}%`" alt="" />
+                    <img class="versatility-frame" :src="versatilityBarFrame" alt="Versatilité" />
+                </div>
+            </section>
+
             <section class="csh-preview-table mx-6">
                 <div class="csh-preview-panel">
                     <div class="csh-preview-panel-head">
@@ -3470,6 +3530,8 @@
             const existingConstellationMapLines = safeJsonParse(data.constMapLines, []);
             const elementIcons   = safeJsonParse(data.elementIcons, {});
             const nationIcons    = safeJsonParse(data.nationIcons, {});
+            const nationBarFrames = safeJsonParse(data.nationBarFrames, {});
+            const nationBarFillers = safeJsonParse(data.nationBarFillers, {});
             const weaponTypeIcons = safeJsonParse(data.weaponTypeIcons, {});
             const elementLabels   = safeJsonParse(data.elementLabels, {});
             const nationLabels    = safeJsonParse(data.nationLabels, {});
@@ -3488,6 +3550,7 @@
                     fid_TArmes: isFreshCreate ? '' : (parsedMain.fid_TArmes || data.fidTarmes || ''),
                     fid_TP:     parsedMain.fid_TP || data.fidTp || '',
                     fid_nation: isFreshCreate ? '' : (parsedMain.fid_nation || data.fidNation || ''),
+                    versatilite: isFreshCreate ? null : (parsedMain.versatilite ?? null),
                     arme_icon:  parsedMain.arme_icon  || data.armeIcon || '',
                     background_actif: isFreshCreate ? '' : (parsedMain.background_actif || ''),
                     videos:     isFreshCreate ? [] : (parsedMain.videos || []),
@@ -3617,6 +3680,8 @@
                 histoiresError: '',
                 elementIcons,
                 nationIcons,
+                nationBarFrames,
+                nationBarFillers,
                 weaponTypeIcons,
                 elementLabels,
                 nationLabels,
@@ -3748,6 +3813,14 @@
                 get selectedNationIcon() {
                     const key = String(this.mainZone.fid_nation || '');
                     return this.nationIcons[key] || this.nationIcons[Number(key)] || defaultWeapon;
+                },
+                get versatilityBarFrame() {
+                    const key = String(this.mainZone.fid_nation || '');
+                    return this.nationBarFrames[key] || this.nationBarFrames[Number(key)] || '{{ asset("images/versatility-bars/default.png") }}';
+                },
+                get versatilityBarFiller() {
+                    const key = String(this.mainZone.fid_nation || '');
+                    return this.nationBarFillers[key] || this.nationBarFillers[Number(key)] || '{{ asset("images/versatility-bars/filler.png") }}';
                 },
                 get selectedElementLabel()   { return this.elementLabels[this.mainZone.fid_element]     || ''; },
                 get selectedNationLabel() {
@@ -4531,6 +4604,7 @@
                                 fid_etoile:  this.mainZone.fid_etoile,
                                 fid_TArmes:  this.mainZone.fid_TArmes,
                                 fid_TP:      this.mainZone.fid_TP,
+                                versatilite: this.mainZone.versatilite,
                                 fid_nations: this.mainZone.fid_nation ? [this.mainZone.fid_nation] : [],
                                 background_actif: this.mainZone.background_actif || null,
                                 videos:      videosPayload,
