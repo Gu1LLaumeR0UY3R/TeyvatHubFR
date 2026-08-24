@@ -123,6 +123,16 @@
             min-height: 100%;
         }
         .csh-versatility-panel { min-height: 0; }
+        .versatility-bar { margin-inline: auto; }
+        .versatility-filler, .versatility-frame {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: contain; pointer-events: none; user-select: none;
+        }
+        .versatility-filler {
+            clip-path: inset(0 calc(11.5% + var(--versatility-empty, 100%)) 0 11.5%);
+            transition: clip-path .35s cubic-bezier(.22, 1, .36, 1);
+        }
+        
         .csh-preview-panel-head {
             display:flex;
             align-items:center;
@@ -867,6 +877,24 @@
                 ? asset('storage/photos/regions/icones/' . $nationSlug . '.png')
                 : ($nation->icone_url ?? asset('images/placeholder.svg'));
         }
+        
+        $nationBarFrames = [];
+        foreach ($nations as $nation) {
+            $nationSlug = $nation->slug ?? \Illuminate\Support\Str::slug($nation->nom_region);
+            $barPath = public_path('images/versatility-bars/' . $nationSlug . '.png');
+            $nationBarFrames[$nation->id_region] = file_exists($barPath)
+                ? asset('images/versatility-bars/' . $nationSlug . '.png')
+                : asset('images/versatility-bars/default.png');
+        }
+
+        $nationBarFillers = [];
+foreach ($nations as $nation) {
+    $nationSlug = $nation->slug ?? \Illuminate\Support\Str::slug($nation->nom_region);
+    $fillerPath = public_path('images/versatility-bars/' . $nationSlug . '-filler.png');
+    $nationBarFillers[$nation->id_region] = file_exists($fillerPath)
+        ? asset('images/versatility-bars/' . $nationSlug . '-filler.png')
+        : asset('images/versatility-bars/filler.png');
+}
 
         $weaponTypeIcons = [];
         foreach ($typesArme as $ta) {
@@ -939,6 +967,8 @@
         'arme_icon' => $personnage->arme_icon ?? null,
         'background_actif' => $personnage->background_actif ?? '',
         'videos' => $personnage->videos->map(fn($v)=>['url_video'=>$v->url_video])->values(),
+        'nationBarFillers' => $nationBarFillers,
+        'nationBarFrames' => $nationBarFrames,
         ]);
 
         $availableArmesJson = $armesDisponibles->map(function ($a) {
@@ -1320,6 +1350,8 @@
          data-fid-tp="{{ e($personnage->fid_TP) }}"
          data-fid-nation="{{ e($personnage->nations->first()?->id_region ?? '') }}"
          data-arme-icon="{{ e($personnage->arme_icon ?? '') }}"
+         data-nation-bar-frames="{{ e(json_encode($nationBarFrames)) }}"
+         data-nation-bar-fillers="{{ e(json_encode($nationBarFillers)) }}"
          data-available-armes="{{ e(json_encode($availableArmesJson)) }}"
          data-available-artefacts="{{ e(json_encode($availableArtefactsJson)) }}"
          data-existing-armes="{{ e(json_encode($existingArmesJson)) }}"
@@ -2814,9 +2846,10 @@
                     </div>
                     <div class="text-xs text-slate-400" x-text="mainZone.versatilite !== null ? mainZone.versatilite + ' / 10' : 'Non renseigné'"></div>
                 </div>
-                <div style="position:relative; height:8px; border-radius:999px; background:rgba(255,255,255,0.1);">
-                    <div style="position:absolute; top:0; left:0; height:100%; border-radius:999px; background:#6fd0be;"
-                         :style="`width:${((mainZone.versatilite ?? 0) / 10) * 100}%`"></div>
+                <div class="versatility-bar" style="position:relative; width:100%; max-width:900px; aspect-ratio: 2084 / 754;">
+                    <img class="versatility-filler" :src="versatilityBarFiller"
+                        :style="`--versatility-empty: ${(100 - ((mainZone.versatilite ?? 0) / 10 * 100)) * 0.77}%`" alt="" />
+                    <img class="versatility-frame" :src="versatilityBarFrame" alt="Versatilité" />
                 </div>
             </section>
 
@@ -3497,6 +3530,8 @@
             const existingConstellationMapLines = safeJsonParse(data.constMapLines, []);
             const elementIcons   = safeJsonParse(data.elementIcons, {});
             const nationIcons    = safeJsonParse(data.nationIcons, {});
+            const nationBarFrames = safeJsonParse(data.nationBarFrames, {});
+            const nationBarFillers = safeJsonParse(data.nationBarFillers, {});
             const weaponTypeIcons = safeJsonParse(data.weaponTypeIcons, {});
             const elementLabels   = safeJsonParse(data.elementLabels, {});
             const nationLabels    = safeJsonParse(data.nationLabels, {});
@@ -3645,6 +3680,8 @@
                 histoiresError: '',
                 elementIcons,
                 nationIcons,
+                nationBarFrames,
+                nationBarFillers,
                 weaponTypeIcons,
                 elementLabels,
                 nationLabels,
@@ -3776,6 +3813,14 @@
                 get selectedNationIcon() {
                     const key = String(this.mainZone.fid_nation || '');
                     return this.nationIcons[key] || this.nationIcons[Number(key)] || defaultWeapon;
+                },
+                get versatilityBarFrame() {
+                    const key = String(this.mainZone.fid_nation || '');
+                    return this.nationBarFrames[key] || this.nationBarFrames[Number(key)] || '{{ asset("images/versatility-bars/default.png") }}';
+                },
+                get versatilityBarFiller() {
+                    const key = String(this.mainZone.fid_nation || '');
+                    return this.nationBarFillers[key] || this.nationBarFillers[Number(key)] || '{{ asset("images/versatility-bars/filler.png") }}';
                 },
                 get selectedElementLabel()   { return this.elementLabels[this.mainZone.fid_element]     || ''; },
                 get selectedNationLabel() {
