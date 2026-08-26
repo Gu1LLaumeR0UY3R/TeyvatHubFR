@@ -223,6 +223,10 @@
             padding:.85rem .95rem;
             background: linear-gradient(180deg, rgba(17, 24, 39, 0.9), rgba(9, 14, 27, 0.92));
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+            display:grid;
+            grid-template-columns:minmax(0, 1fr) minmax(150px, .72fr);
+            column-gap:1rem;
+            row-gap:.35rem;
         }
         .csh-artefact-head {
             display:flex;
@@ -230,6 +234,7 @@
             justify-content:space-between;
             gap:.75rem;
             margin-bottom:.5rem;
+            grid-column:1 / -1;
         }
         .csh-artefact-title { color:#e2e8f0; font-size:.9rem; font-weight:700; }
         .csh-artefact-piece { color:#fef3c7; font-size:.72rem; font-weight:700; }
@@ -261,6 +266,12 @@
         .csh-artefact-name { color:#cbd5e1; font-size:.82rem; }
         .csh-artefact-meta { color:#94a3b8; font-size:.72rem; }
         .csh-artefact-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
+        .csh-substats-priority { grid-column:2; grid-row:2 / span 2; align-self:stretch; margin-top:0; padding:.55rem .7rem; border:1px dashed rgba(148,163,184,0.28); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.15rem; }
+        .csh-substats-priority-title { font-size:.66rem; text-transform:uppercase; letter-spacing:.05em; color:#8aa0ca; margin-bottom:.35rem; }
+        .csh-substats-priority-row { display:flex; flex-direction:column; align-items:center; gap:.15rem; }
+        .csh-substats-priority-rank { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:999px; background:rgba(250,204,21,0.16); color:#fde68a; border:1px solid rgba(250,204,21,0.3); font-size:.65rem; font-weight:700; }
+        .csh-substats-priority-name { font-size:.76rem; color:#e2e8f0; font-weight:600; }
+        .csh-substats-priority-arrow { color:#64748b; font-size:.8rem; line-height:1; }
         .csh-weapon-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
         .csh-constellation-shell {
             margin: 0 1.5rem 1.5rem;
@@ -841,6 +852,11 @@
             .csh-constellation-grid { grid-template-columns: 1fr; }
             .csh-constellation-media { border-right:0; border-bottom:1px solid rgba(255,255,255,0.08); }
         }
+        @media (max-width: 640px) {
+            .csh-artefact-item { grid-template-columns:1fr; }
+            .csh-artefact-head, .csh-substats-priority { grid-column:1; }
+            .csh-substats-priority { grid-row:auto; }
+        }
     </style>
 
     @php
@@ -1097,7 +1113,9 @@ foreach ($nations as $nation) {
                 'main_stat_sablier' => $build->main_stat_sablier,
                 'main_stat_gobelet' => $build->main_stat_gobelet,
                 'main_stat_couronne' => $build->main_stat_couronne,
-                'sub_stats' => $build->sub_stats,
+                'sub_stats' => $build->sub_stats
+                    ? array_map('trim', explode(',', $build->sub_stats))
+                    : [],
                 'position' => (int) $build->position,
             ];
         })->values();
@@ -2951,6 +2969,20 @@ foreach ($nations as $nation) {
                                             </div>
                                         </div>
                                     </template>
+                                    <template x-if="build.sub_stats && build.sub_stats.length">
+                                        <div class="csh-substats-priority">
+                                            <div class="csh-substats-priority-title">Sous-stats prioritaires</div>
+                                            <template x-for="(stat, sIdx) in build.sub_stats" :key="`substat-${build.id_build || index}-${sIdx}`">
+                                                <div class="csh-substats-priority-row">
+                                                    <span class="csh-substats-priority-rank" x-text="sIdx + 1"></span>
+                                                    <span class="csh-substats-priority-name" x-text="stat"></span>
+                                                    <template x-if="sIdx < build.sub_stats.length - 1">
+                                                        <span class="csh-substats-priority-arrow">↓</span>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </article>
                             </template>
                         </div>
@@ -3325,23 +3357,36 @@ foreach ($nations as $nation) {
                                 <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                                     <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Stats recommandees</div>
                                     <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
-                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
-                                            <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500" title="Sablier">
-                                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <path d="M7 3h10"></path><path d="M7 21h10"></path><path d="M8 3c0 4 3 5 4 6-1 1-4 2-4 6"></path><path d="M16 3c0 4-3 5-4 6 1 1 4 2 4 6"></path>
-                                                </svg>
-                                            </span>
-                                            <input type="text" x-model.trim="build.main_stat_sablier" placeholder="Sablier (ATK%, ER, EM...)"
-                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        <label class="rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                            <div class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Subs stats (max 4, ordre = priorité)</div>
+                                            <div class="grid grid-cols-2 gap-1">
+                                                <template x-for="stat in subStatsOptions" :key="stat">
+                                                    <label class="flex items-center gap-1.5 text-[11px] text-slate-700">
+                                                        <input type="checkbox"
+                                                               :value="stat"
+                                                               :checked="build.sub_stats.includes(stat)"
+                                                               :disabled="build.sub_stats.length >= 4 && !build.sub_stats.includes(stat)"
+                                                               @change="toggleSubStat(build, stat, $event.target.checked)">
+                                                        <span x-text="stat"></span>
+                                                        <span x-show="build.sub_stats.includes(stat)"
+                                                              x-text="build.sub_stats.indexOf(stat) + 1"
+                                                              class="text-amber-600 font-bold"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
                                         </label>
-                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
-                                            <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500" title="Gobelet">
-                                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <path d="M7 3h10l-1 8a4 4 0 0 1-8 0L7 3Z"></path><path d="M10 15h4"></path><path d="M9 21h6"></path><path d="M12 15v6"></path>
-                                                </svg>
-                                            </span>
-                                            <input type="text" x-model.trim="build.main_stat_gobelet" placeholder="Gobelet (DGT Elem, PV%...)"
-                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        <label class="rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                            <div class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Gobelet</div>
+                                            <div class="grid grid-cols-2 gap-1">
+                                                <template x-for="stat in mainStatsGobeletOptions" :key="stat">
+                                                    <label class="flex items-center gap-1.5 text-[11px] text-slate-700">
+                                                        <input type="radio" :name="`gobelet-${build.id_build || index}`"
+                                                               :value="stat" :checked="build.main_stat_gobelet === stat"
+                                                               @change="build.main_stat_gobelet = stat">
+                                                        <span x-text="stat"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
                                         </label>
                                         <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
                                             <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500" title="Couronne">
@@ -3349,13 +3394,19 @@ foreach ($nations as $nation) {
                                                     <path d="M4 8l4 3 4-6 4 6 4-3-2 9H6L4 8Z"></path><path d="M8 20h8"></path>
                                                 </svg>
                                             </span>
-                                            <input type="text" x-model.trim="build.main_stat_couronne" placeholder="Couronne (Crit, Soin, EM...)"
-                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
-                                        </label>
-                                        <label class="rounded-lg border border-slate-200 bg-white px-2 py-1.5">
-                                            <div class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Subs stats</div>
-                                            <input type="text" x-model.trim="build.sub_stats" placeholder="Ex: Crit Rate, Crit DMG, ER, ATK%"
-                                                   class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                            <label class="rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                                <div class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Couronne</div>
+                                                <div class="grid grid-cols-2 gap-1">
+                                                    <template x-for="stat in mainStatsCouronneOptions" :key="stat">
+                                                        <label class="flex items-center gap-1.5 text-[11px] text-slate-700">
+                                                            <input type="radio" :name="`couronne-${build.id_build || index}`"
+                                                                   :value="stat" :checked="build.main_stat_couronne === stat"
+                                                                   @change="build.main_stat_couronne = stat">
+                                                            <span x-text="stat"></span>
+                                                        </label>
+                                                    </template>
+                                                </div>
+                                            </label>
                                         </label>
                                     </div>
                                 </div>
@@ -4081,6 +4132,16 @@ foreach ($nations as $nation) {
 
                     return artefact.rarete || '';
                 },
+
+                subStatsOptions: ['ATK%', 'HP%', 'DEF%', 'ATK', 'HP', 'DEF', 'Taux CRIT%', 'DGT CRIT%', 'Recharge d\'energie%', 'Maitrise elementaire'],
+                mainStatsSablierOptions: ['ATK%', 'HP%', 'DEF%', 'Recharge d\'energie%', 'Maitrise elementaire'],
+                mainStatsGobeletOptions: ['ATK%', 'HP%', 'DEF%', 'Maitrise elementaire', 'Bonus DGT Pyro%', 'Bonus DGT Hydro%', 'Bonus DGT Electro%', 'Bonus DGT Cryo%', 'Bonus DGT Anemo%', 'Bonus DGT Geo%', 'Bonus DGT Dendro%', 'Bonus DGT Physiques%'],
+                mainStatsCouronneOptions: ['ATK%', 'HP%', 'DEF%', 'Maitrise elementaire', 'Taux CRIT%', 'DGT CRIT%', 'Bonus de soin%'],
+                toggleSubStat(build, stat, checked) {
+                    if (checked) { if (build.sub_stats.length < 4) build.sub_stats.push(stat); }
+                    else { build.sub_stats = build.sub_stats.filter(s => s !== stat); }
+                },
+
                 addArtefactBuild() {
                     if (this.artefactBuilds.length >= 4) return;
 
@@ -4101,7 +4162,7 @@ foreach ($nations as $nation) {
                         main_stat_sablier: '',
                         main_stat_gobelet: '',
                         main_stat_couronne: '',
-                        sub_stats: '',
+                        sub_stats: [],
                         position: this.artefactBuilds.length + 1,
                     });
                     this.artefactsError = '';
@@ -4216,7 +4277,7 @@ foreach ($nations as $nation) {
                             main_stat_sablier: String(build.main_stat_sablier || '').trim() || null,
                             main_stat_gobelet: String(build.main_stat_gobelet || '').trim() || null,
                             main_stat_couronne: String(build.main_stat_couronne || '').trim() || null,
-                            sub_stats: String(build.sub_stats || '').trim() || null,
+                            sub_stats: build.sub_stats.length ? build.sub_stats : null,
                         });
                     }
 
