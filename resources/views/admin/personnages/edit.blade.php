@@ -3388,6 +3388,28 @@ foreach ($nations as $nation) {
                                                 </template>
                                             </div>
                                         </label>
+
+                                        <label class="rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                                            <div class="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                <span class="inline-flex h-4 w-4 items-center justify-center" title="Sablier">
+                                                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M7 3h10"></path><path d="M7 21h10"></path><path d="M8 3c0 4 3 5 4 6-1 1-4 2-4 6"></path><path d="M16 3c0 4-3 5-4 6 1 1 4 2 4 6"></path>
+                                                    </svg>
+                                                </span>
+                                                Sablier
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1">
+                                                <template x-for="stat in mainStatsSablierOptions" :key="stat">
+                                                    <label class="flex items-center gap-1.5 text-[11px] text-slate-700">
+                                                        <input type="radio" :name="`sablier-${build.id_build || index}`"
+                                                               :value="stat" :checked="build.main_stat_sablier === stat"
+                                                               @change="build.main_stat_sablier = stat">
+                                                        <span x-text="stat"></span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </label>
+
                                         <label class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
                                             <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500" title="Couronne">
                                                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -3407,7 +3429,6 @@ foreach ($nations as $nation) {
                                                     </template>
                                                 </div>
                                             </label>
-                                        </label>
                                     </div>
                                 </div>
                             </div>
