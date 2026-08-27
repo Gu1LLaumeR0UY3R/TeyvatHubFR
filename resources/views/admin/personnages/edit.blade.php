@@ -266,7 +266,11 @@
         .csh-artefact-name { color:#cbd5e1; font-size:.82rem; }
         .csh-artefact-meta { color:#94a3b8; font-size:.72rem; }
         .csh-artefact-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
-        .csh-substats-priority { grid-column:2; grid-row:2 / span 2; align-self:stretch; margin-top:0; padding:.55rem .7rem; border:1px dashed rgba(148,163,184,0.28); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.15rem; }
+        .csh-mainstats-summary { grid-column:2; align-self:start; padding:.5rem .7rem; border:1px solid rgba(148,163,184,0.2); border-radius:10px; background:rgba(15,23,42,0.35); display:flex; flex-direction:column; gap:.3rem; margin-bottom:.4rem; }
+        .csh-mainstats-row { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
+        .csh-mainstats-label { font-size:.66rem; text-transform:uppercase; letter-spacing:.04em; color:#8aa0ca; }
+        .csh-mainstats-value { font-size:.74rem; font-weight:700; color:#e2e8f0; text-align:right; }
+        .csh-substats-priority { grid-column:2; grid-row:3 / span 2; align-self:stretch; margin-top:0; padding:.55rem .7rem; border:1px dashed rgba(148,163,184,0.28); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.15rem; }
         .csh-substats-priority-title { font-size:.66rem; text-transform:uppercase; letter-spacing:.05em; color:#8aa0ca; margin-bottom:.35rem; }
         .csh-substats-priority-row { display:flex; flex-direction:column; align-items:center; gap:.15rem; }
         .csh-substats-priority-rank { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:999px; background:rgba(250,204,21,0.16); color:#fde68a; border:1px solid rgba(250,204,21,0.3); font-size:.65rem; font-weight:700; }
@@ -854,7 +858,7 @@
         }
         @media (max-width: 640px) {
             .csh-artefact-item { grid-template-columns:1fr; }
-            .csh-artefact-head, .csh-substats-priority { grid-column:1; }
+            .csh-artefact-head, .csh-mainstats-summary, .csh-substats-priority { grid-column:1; }
             .csh-substats-priority { grid-row:auto; }
         }
     </style>
@@ -2967,6 +2971,28 @@ foreach ($nations as $nation) {
                                                 <span class="csh-artefact-name" x-text="build.artefact2_nom"></span>
                                                 <span class="csh-artefact-meta">Second set</span>
                                             </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="build.main_stat_sablier || build.main_stat_gobelet || build.main_stat_couronne">
+                                        <div class="csh-mainstats-summary">
+                                            <template x-if="build.main_stat_sablier">
+                                                <div class="csh-mainstats-row">
+                                                    <span class="csh-mainstats-label">Sablier</span>
+                                                    <span class="csh-mainstats-value" x-text="build.main_stat_sablier"></span>
+                                                </div>
+                                            </template>
+                                            <template x-if="build.main_stat_gobelet">
+                                                <div class="csh-mainstats-row">
+                                                    <span class="csh-mainstats-label">Gobelet</span>
+                                                    <span class="csh-mainstats-value" x-text="build.main_stat_gobelet"></span>
+                                                </div>
+                                            </template>
+                                            <template x-if="build.main_stat_couronne">
+                                                <div class="csh-mainstats-row">
+                                                    <span class="csh-mainstats-label">Couronne</span>
+                                                    <span class="csh-mainstats-value" x-text="build.main_stat_couronne"></span>
+                                                </div>
+                                            </template>
                                         </div>
                                     </template>
                                     <template x-if="build.sub_stats && build.sub_stats.length">
