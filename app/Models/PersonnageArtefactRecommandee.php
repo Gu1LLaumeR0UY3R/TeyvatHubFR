@@ -13,6 +13,7 @@ class PersonnageArtefactRecommandee extends Model
 
     protected $fillable = [
         'fid_perso',
+        'nom_build',
         'fid_artefact_1',
         'pieces_1',
         'fid_artefact_2',

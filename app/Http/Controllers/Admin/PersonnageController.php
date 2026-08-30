@@ -144,6 +144,7 @@ class PersonnageController extends Controller
             'videos',
             'histoires',
             'nations',
+            'roles',
             'armesRecommandees.arme',
             'artefactsRecommandees.artefact1',
             'artefactsRecommandees.artefact1.photos',

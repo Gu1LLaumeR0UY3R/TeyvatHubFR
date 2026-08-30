@@ -383,114 +383,6 @@ class PersonnageBlockController extends Controller
         return response()->json(['backgrounds' => $backgrounds]);
     }
 
-    public function updateArmesRecommandees(Request $request, Personnage $personnage): JsonResponse
-    {
-        $data = $request->validate([
-            'armes' => ['sometimes', 'array', 'max:6'],
-            'armes.*.id_arme' => ['required', 'integer', 'exists:armes,id_arme'],
-            'armes.*.rang' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'armes.*.is_starter' => ['nullable', 'boolean'],
-            'armes.*.origine' => ['nullable', Rule::in(['tirage', 'pull', 'evenement', 'craft', 'achat'])],
-        ]);
-
-        // Si aucune arme n'est envoyée, supprimer les existantes mais enregistrer quand meme le snapshot.
-        if (!array_key_exists('armes', $data) || empty($data['armes'])) {
-            $oldSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
-
-            SnapshotService::withoutRecording(function () use ($personnage): void {
-                PersonnageArmeRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
-            });
-
-            $this->snapshotService->createManualUpdate(
-                $personnage,
-                $oldSnapshotState,
-                ['armes_recommandees' => []],
-                $this->resolveAdminId(),
-            );
-
-            return response()->json([
-                'success' => true,
-                'armes' => [],
-            ]);
-        }
-
-        $armes = collect($data['armes'])->values();
-
-        // Verifie le type d'arme du personnage si défini
-        $expectedTypeId = $personnage->fid_TArmes;
-        if ($expectedTypeId) {
-            foreach ($armes as $index => $armeData) {
-                $armeModel = Arme::find($armeData['id_arme']);
-                if (!$armeModel || $armeModel->fid_TArmes !== $expectedTypeId) {
-                    throw ValidationException::withMessages([
-                        'armes.' . $index . '.id_arme' => 'Cette arme n\'est pas compatible avec le type d\'arme du personnage.',
-                    ]);
-                }
-            }
-        }
-
-        $oldSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
-
-        // Keep only the first starter weapon as starter=true, but allow saving without any starter.
-        $starterAssigned = false;
-        $armes = $armes->map(function (array $arme) use (&$starterAssigned): array {
-            $isStarter = (bool) ($arme['is_starter'] ?? false);
-            if ($isStarter && $starterAssigned) {
-                $isStarter = false;
-            }
-            if ($isStarter) {
-                $starterAssigned = true;
-            }
-
-            return [
-                'id_arme' => (int) $arme['id_arme'],
-                'rang' => (int) ($arme['rang'] ?? 1),
-                'is_starter' => $isStarter,
-                'origine' => (($arme['origine'] ?? null) === 'pull') ? 'tirage' : ($arme['origine'] ?? null),
-            ];
-        })->values();
-
-        SnapshotService::withoutRecording(function () use ($personnage, $armes): void {
-            PersonnageArmeRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
-
-            foreach ($armes as $index => $arme) {
-                PersonnageArmeRecommandee::query()->create([
-                    'fid_perso' => $personnage->id_perso,
-                    'fid_arme' => $arme['id_arme'],
-                    'position' => $index + 1,
-                    'origine' => $arme['origine'],
-                    'starter' => $arme['is_starter'] ? 1 : 0,
-                ]);
-            }
-        });
-
-        $newSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
-        $this->snapshotService->createManualUpdate(
-            $personnage,
-            $oldSnapshotState,
-            $newSnapshotState,
-            $this->resolveAdminId(),
-        );
-
-        return response()->json([
-            'success' => true,
-            'armes' => $armes,
-        ]);
-    }
-
-    public function deleteArmeRecommandee(Personnage $personnage, int $id_arme): JsonResponse
-    {
-        PersonnageArmeRecommandee::query()
-            ->where('fid_perso', $personnage->id_perso)
-            ->where('fid_arme', $id_arme)
-            ->delete();
-
-        return response()->json([
-            'success' => true,
-            'id_arme' => $id_arme,
-        ]);
-    }
-
     private function resolveAdminId(): ?int
     {
         $adminId = session('admin_id');
@@ -503,6 +395,7 @@ class PersonnageBlockController extends Controller
         $oldSnapshotState = ['artefacts_recommandes' => $this->snapshotService->captureRecommendedArtefactsState($personnage->fresh())];
 
         $data = $request->validate([
+            'nom_build' => ['sometimes', 'nullable', 'string', 'max:100'],
             'builds' => ['sometimes', 'array', 'max:4'],
             'builds.*.artefact1_id' => ['sometimes', 'integer', 'exists:artefact,id_artefact'],
             'builds.*.pieces_1' => ['sometimes', 'integer', Rule::in([2, 4])],
@@ -515,10 +408,14 @@ class PersonnageBlockController extends Controller
             'builds.*.sub_stats.*' => ['string', Rule::in(self::ARTEFACT_SUB_STATS)],
         ]);
 
-        // Si aucun build n'est envoyé, supprimer les existants et enregistrer un snapshot.
+        $nomBuild = trim((string) ($data['nom_build'] ?? ''));
+
         if (!array_key_exists('builds', $data) || empty($data['builds'])) {
-            SnapshotService::withoutRecording(function () use ($personnage): void {
-                PersonnageArtefactRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
+            SnapshotService::withoutRecording(function () use ($personnage, $nomBuild): void {
+                PersonnageArtefactRecommandee::query()
+                    ->where('fid_perso', $personnage->id_perso)
+                    ->where('nom_build', $nomBuild)
+                    ->delete();
             });
 
             $this->snapshotService->createManualUpdate(
@@ -567,8 +464,11 @@ class PersonnageBlockController extends Controller
             }
         }
 
-        SnapshotService::withoutRecording(function () use ($personnage, $builds): void {
-            PersonnageArtefactRecommandee::query()->where('fid_perso', $personnage->id_perso)->delete();
+        SnapshotService::withoutRecording(function () use ($personnage, $builds, $nomBuild): void {
+            PersonnageArtefactRecommandee::query()
+                ->where('fid_perso', $personnage->id_perso)
+                ->where('nom_build', $nomBuild)
+                ->delete();
 
             foreach ($builds as $index => $build) {
                 $pieces1 = (int) $build['pieces_1'];
@@ -579,6 +479,7 @@ class PersonnageBlockController extends Controller
 
                 PersonnageArtefactRecommandee::query()->create([
                     'fid_perso' => $personnage->id_perso,
+                    'nom_build' => $nomBuild,
                     'fid_artefact_1' => (int) $build['artefact1_id'],
                     'pieces_1' => $pieces1 === 4 ? '4p' : '2p',
                     'fid_artefact_2' => $pieces1 === 2 ? (int) $build['artefact2_id'] : null,
@@ -603,7 +504,7 @@ class PersonnageBlockController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function deleteArtefactRecommande(Personnage $personnage, int $id_build): JsonResponse
+    public function deleteArtefactRecommande(Request $request, Personnage $personnage, int $id_build): JsonResponse
     {
         PersonnageArtefactRecommandee::query()
             ->where('fid_perso', $personnage->id_perso)
@@ -613,6 +514,125 @@ class PersonnageBlockController extends Controller
         return response()->json([
             'success' => true,
             'id_build' => $id_build,
+        ]);
+    }
+
+    public function updateArmesRecommandees(Request $request, Personnage $personnage): JsonResponse
+    {
+        $data = $request->validate([
+            'nom_build' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'armes' => ['sometimes', 'array', 'max:6'],
+            'armes.*.id_arme' => ['required', 'integer', 'exists:armes,id_arme'],
+            'armes.*.rang' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'armes.*.is_starter' => ['nullable', 'boolean'],
+            'armes.*.origine' => ['nullable', Rule::in(['tirage', 'pull', 'evenement', 'craft', 'achat'])],
+        ]);
+
+        $nomBuild = trim((string) ($data['nom_build'] ?? ''));
+
+        if (!array_key_exists('armes', $data) || empty($data['armes'])) {
+            $oldSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
+
+            SnapshotService::withoutRecording(function () use ($personnage, $nomBuild): void {
+                PersonnageArmeRecommandee::query()
+                    ->where('fid_perso', $personnage->id_perso)
+                    ->where('nom_build', $nomBuild)
+                    ->delete();
+            });
+
+            $this->snapshotService->createManualUpdate(
+                $personnage,
+                $oldSnapshotState,
+                ['armes_recommandees' => []],
+                $this->resolveAdminId(),
+            );
+
+            return response()->json([
+                'success' => true,
+                'armes' => [],
+            ]);
+        }
+
+        $armes = collect($data['armes'])->values();
+
+        $expectedTypeId = $personnage->fid_TArmes;
+        if ($expectedTypeId) {
+            foreach ($armes as $index => $armeData) {
+                $armeModel = Arme::find($armeData['id_arme']);
+                if (!$armeModel || $armeModel->fid_TArmes !== $expectedTypeId) {
+                    throw ValidationException::withMessages([
+                        'armes.' . $index . '.id_arme' => 'Cette arme n\'est pas compatible avec le type d\'arme du personnage.',
+                    ]);
+                }
+            }
+        }
+
+        $oldSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
+
+        $starterAssigned = false;
+        $armes = $armes->map(function (array $arme) use (&$starterAssigned): array {
+            $isStarter = (bool) ($arme['is_starter'] ?? false);
+            if ($isStarter && $starterAssigned) {
+                $isStarter = false;
+            }
+            if ($isStarter) {
+                $starterAssigned = true;
+            }
+
+            return [
+                'id_arme' => (int) $arme['id_arme'],
+                'rang' => (int) ($arme['rang'] ?? 1),
+                'is_starter' => $isStarter,
+                'origine' => (($arme['origine'] ?? null) === 'pull') ? 'tirage' : ($arme['origine'] ?? null),
+            ];
+        })->values();
+
+        SnapshotService::withoutRecording(function () use ($personnage, $armes, $nomBuild): void {
+            PersonnageArmeRecommandee::query()
+                ->where('fid_perso', $personnage->id_perso)
+                ->where('nom_build', $nomBuild)
+                ->delete();
+
+            foreach ($armes as $index => $arme) {
+                PersonnageArmeRecommandee::query()->create([
+                    'fid_perso' => $personnage->id_perso,
+                    'nom_build' => $nomBuild,
+                    'fid_arme' => $arme['id_arme'],
+                    'position' => $index + 1,
+                    'origine' => $arme['origine'],
+                    'starter' => $arme['is_starter'] ? 1 : 0,
+                ]);
+            }
+        });
+
+        $newSnapshotState = ['armes_recommandees' => $this->snapshotService->captureRecommendedWeaponsState($personnage->fresh('armesRecommandees'))];
+        $this->snapshotService->createManualUpdate(
+            $personnage,
+            $oldSnapshotState,
+            $newSnapshotState,
+            $this->resolveAdminId(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'armes' => $armes,
+        ]);
+    }
+
+
+    public function deleteArmeRecommandee(Request $request, Personnage $personnage, int $id_arme): JsonResponse
+    {
+        $nomBuild = trim((string) $request->query('nom_build', ''));
+
+        PersonnageArmeRecommandee::query()
+            ->where('fid_perso', $personnage->id_perso)
+            ->where('nom_build', $nomBuild)
+            ->where('fid_arme', $id_arme)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'id_arme' => $id_arme,
         ]);
     }
 

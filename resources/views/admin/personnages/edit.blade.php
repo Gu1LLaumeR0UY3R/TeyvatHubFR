@@ -1081,6 +1081,7 @@ foreach ($nations as $nation) {
                 'is_starter' => (bool) $w->starter,
                 'origine' => $w->origine ?? 'tirage',
                 'position' => $w->position,
+                'nom_build' => $w->nom_build ?? '',
             ];
         });
 
@@ -1121,8 +1122,16 @@ foreach ($nations as $nation) {
                     ? array_map('trim', explode(',', $build->sub_stats))
                     : [],
                 'position' => (int) $build->position,
+                'nom_build' => $build->nom_build ?? '',
             ];
         })->values();
+
+        $personnageRolesJson = $personnage->roles
+            ->map(fn ($role) => [
+                'id_role' => (int) $role->id_role,
+                'nom' => $role->libelle_role,
+            ])
+            ->values();
 
         $constellationImageFor = function (string $slug, int $index): string {
             $base = 'photos/personnages/constellations/' . $slug . '-c' . $index;
@@ -1378,6 +1387,7 @@ foreach ($nations as $nation) {
          data-available-artefacts="{{ e(json_encode($availableArtefactsJson)) }}"
          data-existing-armes="{{ e(json_encode($existingArmesJson)) }}"
          data-existing-artefacts="{{ e(json_encode($existingArtefactsJson)) }}"
+         data-personnage-roles="{{ e(json_encode($personnageRolesJson)) }}"
          data-constellations="{{ e(json_encode($constellationsJson)) }}"
          data-const-map-positions="{{ e(json_encode($constellationMapPositionsJson)) }}"
          data-const-map-lines="{{ e(json_encode($constellationMapLinesJson)) }}"
@@ -1651,6 +1661,26 @@ foreach ($nations as $nation) {
                                 class="w-full rounded border border-blue-600 bg-blue-600 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-colors">
                             Enregistrer les histoires
                         </button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-300" />
+
+                <div class="mb-1">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">Build</label>
+                        <button type="button" @click="promptNewBuild()"
+                                class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100">
+                            + Nouveau build
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <template x-for="build in buildSlots" :key="`build-tab-${build}`">
+                            <button type="button" @click="switchBuild(build)"
+                                    class="rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+                                    :class="activeBuild === build ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'"
+                                    x-text="build || 'Build principal'"></button>
+                        </template>
                     </div>
                 </div>
 
@@ -3614,8 +3644,9 @@ foreach ($nations as $nation) {
             const isFreshCreate = String(data.freshCreate || '0') === '1';
             const availableArmes = safeJsonParse(data.availableArmes, []);
             const availableArtefacts = safeJsonParse(data.availableArtefacts, []);
-            const existingArmes  = safeJsonParse(data.existingArmes, []).slice(0, 6);
-            const existingArtefacts = safeJsonParse(data.existingArtefacts, []).slice(0, 4);
+            const existingArmes  = safeJsonParse(data.existingArmes, []);
+            const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
+            const personnageRoles = safeJsonParse(data.personnageRoles, []);
             const existingConstellations = safeJsonParse(data.constellations, []);
             const existingAptitudes = safeJsonParse(data.aptitudes, []);
             const existingHistoires = safeJsonParse(data.histoires, []);
@@ -3679,8 +3710,13 @@ foreach ($nations as $nation) {
                 fullPreview:     data.fullPreview     || defaultPortrait,
                 iconePreview:    data.iconePreview    || defaultIcone,
                 weaponToAdd: '',
-                armes:           existingArmes,
-                artefactBuilds:  existingArtefacts,
+                allArmes:        existingArmes,
+                allArtefactBuilds: existingArtefacts,
+                personnageRoles:  personnageRoles,
+                activeBuild:     '',
+                buildSlotDrafts: [],
+                armes:           existingArmes.filter(a => (a.nom_build || '') === ''),
+                artefactBuilds:  existingArtefacts.filter(b => (b.nom_build || '') === ''),
                 constellations:  existingConstellations,
                 constellationSlots: (() => {
                     const slots = [];
@@ -3795,6 +3831,13 @@ foreach ($nations as $nation) {
                 dragArmeIndex: null,
                 dropArmeIndex: null,
 
+                get buildSlots() {
+                    const fromRoles = this.personnageRoles.map(role => role.nom || '');
+                    const fromArmes = this.allArmes.map(a => a.nom_build || '');
+                    const fromArtefacts = this.allArtefactBuilds.map(b => b.nom_build || '');
+                    const merged = ['', ...fromRoles, ...fromArmes, ...fromArtefacts, ...this.buildSlotDrafts];
+                    return merged.filter((v, i, arr) => arr.findIndex(x => x.toLowerCase() === v.toLowerCase()) === i);
+                },
                 get draggedArme() {
                     return this.dragArmeIndex === null ? null : (this.armes[this.dragArmeIndex] || null);
                 },
@@ -4154,7 +4197,36 @@ foreach ($nations as $nation) {
                         icon: arme.icon,
                         is_starter: false,
                         origine: null,
+                        nom_build: this.activeBuild,
                     });
+                },
+                switchBuild(name) {
+                    this.activeBuild = name;
+                    this.armes = this.allArmes.filter(a => (a.nom_build || '') === name).map(a => ({ ...a }));
+                    this.artefactBuilds = this.allArtefactBuilds.filter(b => (b.nom_build || '') === name).map(b => ({ ...b }));
+                    this.armesError = '';
+                    this.artefactsError = '';
+                },
+                promptNewBuild() {
+                    const roleNames = this.personnageRoles.map(role => role.nom).filter(Boolean);
+                    if (!roleNames.length) {
+                        this.showToast('Ajoute d’abord un rôle au personnage.', 'error');
+                        return;
+                    }
+                    const name = window.prompt(`Rôle du nouveau build : ${roleNames.join(', ')}`);
+                    const trimmed = (name || '').trim();
+                    if (!trimmed) return;
+                    const roleName = roleNames.find(role => role.toLowerCase() === trimmed.toLowerCase());
+                    if (!roleName) {
+                        this.showToast('Le build doit correspondre à un rôle du personnage.', 'error');
+                        return;
+                    }
+                    if (this.buildSlots.some(b => b.toLowerCase() === roleName.toLowerCase())) {
+                        this.switchBuild(roleName);
+                        return;
+                    }
+                    this.buildSlotDrafts.push(roleName);
+                    this.switchBuild(roleName);
                 },
                 removeArme(index) {
                     this.armes.splice(index, 1);
@@ -4331,7 +4403,7 @@ foreach ($nations as $nation) {
                     const resp = await fetch(data.saveArtefactsUrl, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': data.csrf },
-                        body: JSON.stringify({ builds: payload }),
+                        body: JSON.stringify({ nom_build: this.activeBuild, builds: payload }),
                     });
 
                     if (!resp.ok) {
@@ -4352,6 +4424,10 @@ foreach ($nations as $nation) {
 
                     this.normalizeArtefactBuilds();
                     this.artefactsError = '';
+                    this.allArtefactBuilds = [
+                        ...this.allArtefactBuilds.filter(b => (b.nom_build || '') !== this.activeBuild),
+                        ...this.artefactBuilds.map(b => ({ ...b, nom_build: this.activeBuild })),
+                    ];
                     this.showArtefactManager = false;
                     this.showToast('Artefacts sauvegardés', 'success');
                 },
@@ -4673,7 +4749,7 @@ foreach ($nations as $nation) {
                     const resp = await fetch(data.saveArmesUrl, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': data.csrf },
-                        body: JSON.stringify({ armes: payload }),
+                        body: JSON.stringify({ nom_build: this.activeBuild, armes: payload }),
                     });
 
                     if (!resp.ok) {
@@ -4693,6 +4769,10 @@ foreach ($nations as $nation) {
                     }
 
                     this.armesError = '';
+                    this.allArmes = [
+                        ...this.allArmes.filter(a => (a.nom_build || '') !== this.activeBuild),
+                        ...this.armes.map(a => ({ ...a, nom_build: this.activeBuild })),
+                    ];
                     return { saved: true, reason: null };
                 },
                 async saveMainZone() {
