@@ -12,10 +12,11 @@ class Constellation extends Model
     protected $table = 'constellation';
     protected $primaryKey = 'id_const';
 
-    protected $fillable = ['titre_const', 'descri_const', 'fid_perso', 'positions_const'];
+    protected $fillable = ['titre_const', 'descri_const', 'fid_perso', 'positions_const', 'recommandee'];
 
     protected $casts = [
         'positions_const' => 'array',
+        'recommandee' => 'boolean',
     ];
 
     public function personnage(): BelongsTo

@@ -122,6 +122,7 @@
                 'titre_const' => $constellation->titre_const,
                 'descri_const' => $constellation->descri_const,
                 'image_url' => $constellationImageFor($constellation, $personnage->slug, $idx + 1),
+                'recommandee' => (bool) $constellation->recommandee,
             ];
         })
         ->values();
@@ -328,18 +329,28 @@
     .csh-constellation-map-line { position:absolute; height:2px; transform-origin:0 50%; transition: background .2s ease, box-shadow .2s ease, opacity .2s ease; }
     .csh-constellation-map-line.is-off { background: rgba(148,163,184,.42); box-shadow: 0 0 0 1px rgba(148,163,184,.18); opacity: .55; }
     .csh-constellation-map-line.is-on { background: linear-gradient(90deg, #7dd3fc, #38bdf8); box-shadow: 0 0 0 1px rgba(56,189,248,.25), 0 0 14px rgba(56,189,248,.45); opacity: 1; }
-    .csh-constellation-map-point { position:absolute; transform: translate(-50%, -50%); width:24px; height:24px; border-radius:999px; border:2px solid #fff; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; transition: background .2s ease, box-shadow .2s ease, transform .2s ease; }
-    .csh-constellation-map-point.is-off { background:#334155; color:#cbd5e1; box-shadow: 0 2px 8px rgba(2,6,23,.35); }
-    .csh-constellation-map-point.is-on { background:#0ea5e9; color:#e0f2fe; box-shadow: 0 0 0 2px rgba(14,165,233,.28), 0 0 16px rgba(14,165,233,.42); }
-    .csh-constellation-map-point.is-current { background:#7dd3fc; color:#082f49; transform: translate(-50%, -50%) scale(1.07); box-shadow: 0 0 0 2px rgba(125,211,252,.35), 0 0 18px rgba(125,211,252,.55); }
+    .csh-constellation-map-point { position:absolute; transform: translate(-50%, -50%); width:36px; height:36px; border-radius:999px; border:2px solid #fff; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; font-family:inherit; padding:0; margin:0; overflow:visible; cursor:pointer; pointer-events:auto; background:#334155; transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+    .csh-constellation-map-point:hover { transform: translate(-50%, -50%) scale(1.08); }
+    .csh-constellation-map-point:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+    .csh-constellation-map-point-img { width:100%; height:100%; border-radius:999px; object-fit:cover; display:block; pointer-events:none; }
+    .csh-constellation-map-point-fallback { color:#cbd5e1; pointer-events:none; }
+    .csh-constellation-map-point.is-off { box-shadow: 0 2px 8px rgba(2,6,23,.35); filter: grayscale(.55) brightness(.8); }
+    .csh-constellation-map-point.is-on { box-shadow: 0 0 0 2px rgba(14,165,233,.28), 0 0 16px rgba(14,165,233,.42); }
+    .csh-constellation-map-point.is-current { transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 0 0 2px rgba(125,211,252,.35), 0 0 18px rgba(125,211,252,.55); }
+    .csh-constellation-map-point.is-recommended { border-color:#4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.35), 0 0 18px rgba(74,222,128,.55); }
+    .csh-constellation-map-point.is-recommended.is-current { box-shadow: 0 0 0 3px rgba(74,222,128,.45), 0 0 22px rgba(74,222,128,.65); }
+    .csh-constellation-map-point-star { position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:999px; background:#22c55e; color:#052e16; display:flex; align-items:center; justify-content:center; font-size:9px; line-height:1; border:1.5px solid rgba(5,46,22,.6); box-shadow: 0 0 6px rgba(74,222,128,.7); pointer-events:none; }
     .csh-constellation-empty-media { color:#93a7cb; font-size:.82rem; text-align:center; padding:0 1rem; }
-    .csh-constellation-content { padding: 1rem 1.15rem 1.15rem; display:flex; flex-direction:column; gap:.9rem; }
-    .csh-constellation-tabs { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.5rem; }
-    .csh-constellation-tab { border:1px solid rgba(148,163,184,0.4); border-radius:10px; padding:.45rem .55rem; color:#cbd5e1; background: rgba(15,23,42,0.55); text-align:left; font-size:.76rem; }
-    .csh-constellation-tab.is-active { border-color:#7dd3fc; box-shadow: 0 0 0 1px rgba(125,211,252,0.35) inset; background: rgba(14,116,144,0.22); color:#e0f2fe; }
-    .csh-constellation-detail { border:1px solid rgba(148,163,184,0.35); border-radius:12px; padding:.8rem .9rem; background: rgba(15,23,42,0.5); }
+    .csh-constellation-content { padding: 1rem 1.15rem 1.15rem; display:flex; flex-direction:column; gap:.9rem; justify-content:center; }
+    .csh-constellation-hint { color:#93a7cb; font-size:.82rem; line-height:1.5; }
+    .csh-constellation-legend { display:flex; align-items:center; gap:.45rem; margin-top:.6rem; color:#bbf7d0; font-size:.76rem; }
+    .csh-constellation-legend-dot { width:12px; height:12px; border-radius:999px; border:2px solid #4ade80; box-shadow: 0 0 8px rgba(74,222,128,.55); flex-shrink:0; }
     .csh-constellation-title { color:#f1f5f9; font-size:1rem; font-weight:700; }
     .csh-constellation-desc { color:#cbd5e1; font-size:.84rem; line-height:1.45; margin-top:.45rem; white-space:pre-wrap; }
+    .csh-constellation-modal-bg { position: fixed; inset: 0; z-index: 70; background: rgba(2,6,23,.72); backdrop-filter: blur(2px); display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .csh-constellation-modal { width: min(480px, 94vw); border: 1px solid rgba(148,163,184,.32); border-radius: 16px; background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(8,14,30,.98)); box-shadow: 0 28px 60px rgba(2,6,23,.55); padding: 1.1rem; }
+    .csh-constellation-modal-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; border-bottom:1px solid rgba(148,163,184,.24); padding-bottom:.7rem; margin-bottom:.8rem; }
+    .csh-constellation-modal-badge { display:inline-flex; align-items:center; gap:.3rem; margin-top:.3rem; font-size:.72rem; font-weight:700; color:#4ade80; }
 
     @keyframes csh-constellation-flash {
         0% { filter: saturate(1) brightness(1); }
@@ -356,6 +367,7 @@
         .csh-constellation-grid { grid-template-columns: 1fr; }
         .csh-constellation-media { border-right:0; border-bottom:1px solid rgba(255,255,255,0.08); }
     }
+
 
     .csh-video-nav {
         position: absolute; top: 50%; transform: translateY(-50%);
@@ -437,6 +449,7 @@ document.addEventListener('alpine:init', () => {
         constellations: @json($constellations->values()),
         selectedConstellationIndex: 0,
         constellationGlow: false,
+        constellationPopupOpen: false,
         constellationMapImage: @json($constellationMapImage),
         constellationMapPositions: @json($constellationMapPositions),
         constellationMapLines: @json($constellationMapLines),
@@ -566,8 +579,27 @@ document.addEventListener('alpine:init', () => {
         },
         constellationPointClass(index) {
             const idx = Number(index);
-            if (idx === this.activeConstellationLevel) return 'is-current';
-            return idx <= this.activeConstellationLevel ? 'is-on' : 'is-off';
+            let classes = idx === this.activeConstellationLevel ? 'is-current' : (idx <= this.activeConstellationLevel ? 'is-on' : 'is-off');
+            if (this.constellationPointRecommended(idx)) {
+                classes += ' is-recommended';
+            }
+            return classes;
+        },
+        constellationPointImage(index) {
+            const data = this.constellations[Number(index) - 1];
+            return data?.image_url || '';
+        },
+        constellationPointRecommended(index) {
+            const data = this.constellations[Number(index) - 1];
+            return !!(data && data.recommandee);
+        },
+        openConstellationPopup(index) {
+            if (!this.constellations[Number(index) - 1]) return;
+            this.selectConstellation(Number(index) - 1);
+            this.constellationPopupOpen = true;
+        },
+        closeConstellationPopup() {
+            this.constellationPopupOpen = false;
         },
         constellationLineClass(line) {
             const from = Number(line?.from || 0);
@@ -912,11 +944,22 @@ document.addEventListener('alpine:init', () => {
 
                                 <template x-for="index in [1,2,3,4,5,6]" :key="`public-map-point-${index}`">
                                     <template x-if="constellationMapPositions[String(index)]">
-                                        <div class="csh-constellation-map-point"
+                                        <button type="button"
+                                             class="csh-constellation-map-point"
                                              :class="constellationPointClass(index)"
-                                             :style="mapPointStyle(index)">
-                                            <span x-text="index"></span>
-                                        </div>
+                                             :style="mapPointStyle(index)"
+                                             :aria-label="`Voir la constellation C${index}`"
+                                             @click="openConstellationPopup(index)">
+                                            <template x-if="constellationPointImage(index)">
+                                                <img class="csh-constellation-map-point-img" :src="constellationPointImage(index)" :alt="`Constellation C${index}`">
+                                            </template>
+                                            <template x-if="!constellationPointImage(index)">
+                                                <span class="csh-constellation-map-point-fallback" x-text="index"></span>
+                                            </template>
+                                            <template x-if="constellationPointRecommended(index)">
+                                                <span class="csh-constellation-map-point-star" title="Constellation recommandée">★</span>
+                                            </template>
+                                        </button>
                                     </template>
                                 </template>
                             </div>
@@ -931,30 +974,38 @@ document.addEventListener('alpine:init', () => {
                 </div>
 
                 <div class="csh-constellation-content">
-                    <div class="csh-constellation-tabs">
-                        <template x-for="(constellation, index) in constellations" :key="`public-c-${index}`">
-                            <button type="button"
-                                    class="csh-constellation-tab"
-                                    :class="selectedConstellationIndex === index ? 'is-active' : ''"
-                                    @click="selectConstellation(index)">
-                                <div x-text="constellation.label"></div>
-                                <div class="truncate text-[11px] opacity-80" x-text="constellation.titre_const || 'Sans titre'"></div>
-                            </button>
+                    <div class="csh-constellation-hint">
+                        Cliquez sur une constellation sur la carte pour afficher son descriptif.
+                        <template x-if="constellations.some(c => c.recommandee)">
+                            <div class="csh-constellation-legend">
+                                <span class="csh-constellation-legend-dot"></span>
+                                <span>Halo vert + ★ = constellation recommandée</span>
+                            </div>
                         </template>
                     </div>
-
-                    <template x-if="activeConstellation">
-                        <div class="csh-constellation-detail">
-                            <div class="csh-constellation-title" x-text="activeConstellation.titre_const || 'Constellation sans nom'"></div>
-                            <div class="csh-constellation-desc" x-html="renderDescriConst(activeConstellation.descri_const) || 'Aucune description.'"></div>
-                        </div>
-                    </template>
                 </div>
             </div>
         @else
             <div class="csh-artefact-empty">Aucune constellation disponible pour ce personnage.</div>
         @endif
     </section>
+
+    <template x-if="constellationPopupOpen && activeConstellation">
+        <div class="csh-constellation-modal-bg" @click.self="closeConstellationPopup()" @keydown.window.escape="closeConstellationPopup()">
+            <div class="csh-constellation-modal">
+                <div class="csh-constellation-modal-head">
+                    <div>
+                        <div class="csh-constellation-title" x-text="(activeConstellation.label || '') + ' — ' + (activeConstellation.titre_const || 'Constellation sans nom')"></div>
+                        <template x-if="activeConstellation.recommandee">
+                            <div class="csh-constellation-modal-badge">★ Recommandée</div>
+                        </template>
+                    </div>
+                    <button type="button" class="csh-rotation-close" @click="closeConstellationPopup()">Fermer</button>
+                </div>
+                <div class="csh-constellation-desc" x-html="renderDescriConst(activeConstellation.descri_const) || 'Aucune description.'"></div>
+            </div>
+        </div>
+    </template>
 
     @if($personnage->bio)
         <div class="bg-hub-surface border border-hub-border rounded-2xl p-6 mb-6">
