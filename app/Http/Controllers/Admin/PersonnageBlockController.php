@@ -646,6 +646,7 @@ class PersonnageBlockController extends Controller
             'constellations.*.index' => ['nullable', 'integer', 'min:1', 'max:6'],
             'constellations.*.titre_const' => ['nullable', 'string', 'max:200'],
             'constellations.*.descri_const' => ['nullable', 'string'],
+            'constellations.*.recommandee' => ['nullable', 'boolean'],
         ]);
 
         // Si aucune constellation n'est envoyée, retourner succès directement
@@ -659,6 +660,7 @@ class PersonnageBlockController extends Controller
                 $desc = trim((string) ($payload['descri_const'] ?? ''));
                 $idConst = isset($payload['id_const']) ? (int) $payload['id_const'] : null;
                 $index = isset($payload['index']) ? (int) $payload['index'] : ((int) $rowIndex + 1);
+                $recommandee = array_key_exists('recommandee', $payload) ? (bool) $payload['recommandee'] : false;
 
                 if ($idConst) {
                     Constellation::query()
@@ -667,6 +669,7 @@ class PersonnageBlockController extends Controller
                         ->update([
                             'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
                             'descri_const' => $desc !== '' ? $desc : null,
+                            'recommandee' => $recommandee,
                         ]);
                     continue;
                 }
@@ -679,6 +682,7 @@ class PersonnageBlockController extends Controller
                     'fid_perso' => $personnage->id_perso,
                     'titre_const' => $title !== '' ? $title : ('Constellation C' . $index),
                     'descri_const' => $desc !== '' ? $desc : null,
+                    'recommandee' => $recommandee,
                 ]);
             }
         });
@@ -715,6 +719,7 @@ class PersonnageBlockController extends Controller
                     'titre_const' => $constellation->titre_const,
                     'descri_const' => $constellation->descri_const,
                     'image_url' => $constellationImageFor($personnage->slug, $index),
+                    'recommandee' => (bool) $constellation->recommandee,
                 ];
             })
             ->values();
