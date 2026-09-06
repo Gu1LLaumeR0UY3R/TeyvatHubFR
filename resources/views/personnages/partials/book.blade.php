@@ -1885,7 +1885,7 @@ document.addEventListener('alpine:init', () => {
             this.prepareTransitionPages(direction, targetTab);
 
             const spread = this.$refs.bookSpread;
-            spread.classList.remove('turn-forward', 'turn-backward');
+            spread.classList.remove('tb-turn-forward', 'tb-turn-backward');
             void spread.offsetWidth;
 
             window.setTimeout(() => {
@@ -1902,15 +1902,15 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
                 central.removeEventListener('animationend', handleAnimationEnd);
-                spread.classList.remove('turn-forward', 'turn-backward');
+                spread.classList.remove('tb-turn-forward', 'tb-turn-backward');
                 this.isTurning = false;
             };
             central.addEventListener('animationend', handleAnimationEnd, { once: true });
 
-            spread.classList.add(direction === 'forward' ? 'turn-forward' : 'turn-backward');
+            spread.classList.add(direction === 'forward' ? 'tb-turn-forward' : 'tb-turn-backward');
 
             window.setTimeout(() => {
-                spread.classList.remove('turn-forward', 'turn-backward');
+                spread.classList.remove('tb-turn-forward', 'tb-turn-backward');
                 this.isTurning = false;
             }, this.PAGE_TURN_DURATION + 180);
         },
