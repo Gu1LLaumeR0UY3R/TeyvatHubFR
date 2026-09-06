@@ -10,7 +10,7 @@ class PersonnageArmeRecommandee extends Model
     public $timestamps = false;
     protected $table = 'personnage_arme_recommandee';
 
-    protected $fillable = ['fid_perso', 'nom_build', 'fid_arme', 'position', 'origine', 'starter'];
+    protected $fillable = ['fid_perso', 'nom_build', 'fid_arme', 'position', 'origine', 'starter', 'commentaire'];
     protected $casts = ['starter' => 'boolean'];
 
     public function personnage(): BelongsTo

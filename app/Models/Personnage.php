@@ -36,6 +36,7 @@ class Personnage extends Model
 
     protected $fillable = [
     'nom_perso', 'slug', 'affinite_perso',
+    'voix_va', 'voix_vj', 'voix_vc',
     'fid_TP', 'fid_etoile', 'fid_element', 'fid_TArmes',
     'versatilite',
     'arme_icon',
@@ -125,6 +126,11 @@ class Personnage extends Model
     public function artefactsRecommandees(): HasMany
     {
         return $this->hasMany(PersonnageArtefactRecommandee::class, 'fid_perso', 'id_perso')->orderBy('position');
+    }
+
+    public function statsRecommandees(): HasMany
+    {
+        return $this->hasMany(PersonnageStatsRecommandee::class, 'fid_perso', 'id_perso')->orderBy('position');
     }
 
     public function nations(): BelongsToMany

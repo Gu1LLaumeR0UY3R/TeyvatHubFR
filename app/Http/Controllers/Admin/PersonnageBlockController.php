@@ -8,6 +8,7 @@ use App\Models\Arme;
 use App\Models\Constellation;
 use App\Models\PersonnageArtefactRecommandee;
 use App\Models\PersonnageArmeRecommandee;
+use App\Models\PersonnageStatsRecommandee;
 use App\Models\PersonnageHistoire;
 use App\Models\PersonnageVideo;
 use App\Models\Nation;
@@ -95,6 +96,9 @@ class PersonnageBlockController extends Controller
 
         $data = $request->validate([
         'nom_perso' => ['sometimes', 'string', 'max:100'],
+        'voix_va' => ['sometimes', 'nullable', 'string', 'max:150'],
+        'voix_vj' => ['sometimes', 'nullable', 'string', 'max:150'],
+        'voix_vc' => ['sometimes', 'nullable', 'string', 'max:150'],
         'fid_element' => ['sometimes', 'integer', 'exists:elements,id_element'],
         'fid_etoile' => ['sometimes', 'integer', 'exists:etoile,id_etoile'],
         'fid_TArmes' => ['nullable', 'integer', 'exists:type_armes,id_TArmes'],
@@ -148,6 +152,11 @@ class PersonnageBlockController extends Controller
         // Ne mettre à jour que les champs qui ont été envoyés
         if (array_key_exists('nom_perso', $data)) {
             $updatePayload['nom_perso'] = $data['nom_perso'];
+        }
+        foreach (['voix_va', 'voix_vj', 'voix_vc'] as $voiceField) {
+            if (array_key_exists($voiceField, $data)) {
+                $updatePayload[$voiceField] = trim((string) ($data[$voiceField] ?? '')) ?: null;
+            }
         }
 
         if (array_key_exists('fid_element', $data)) {
@@ -406,6 +415,7 @@ class PersonnageBlockController extends Controller
             'builds.*.main_stat_couronne' => ['nullable', Rule::in(self::ARTEFACT_MAIN_STATS_COURONNE)],
             'builds.*.sub_stats' => ['nullable', 'array', 'max:4'],
             'builds.*.sub_stats.*' => ['string', Rule::in(self::ARTEFACT_SUB_STATS)],
+            'builds.*.commentaire' => ['nullable', 'string', 'max:500'],
         ]);
 
         $nomBuild = trim((string) ($data['nom_build'] ?? ''));
@@ -488,6 +498,7 @@ class PersonnageBlockController extends Controller
                     'main_stat_gobelet' => $build['main_stat_gobelet'] ?? null,
                     'main_stat_couronne' => $build['main_stat_couronne'] ?? null,
                     'sub_stats' => $subStats->isNotEmpty() ? $subStats->implode(', ') : null,
+                    'commentaire' => isset($build['commentaire']) ? trim((string) $build['commentaire']) ?: null : null,
                     'position' => $index + 1,
                 ]);
             }
@@ -526,6 +537,7 @@ class PersonnageBlockController extends Controller
             'armes.*.rang' => ['nullable', 'integer', 'min:1', 'max:5'],
             'armes.*.is_starter' => ['nullable', 'boolean'],
             'armes.*.origine' => ['nullable', Rule::in(['tirage', 'pull', 'evenement', 'craft', 'achat'])],
+            'armes.*.commentaire' => ['nullable', 'string', 'max:500'],
         ]);
 
         $nomBuild = trim((string) ($data['nom_build'] ?? ''));
@@ -584,6 +596,7 @@ class PersonnageBlockController extends Controller
                 'rang' => (int) ($arme['rang'] ?? 1),
                 'is_starter' => $isStarter,
                 'origine' => (($arme['origine'] ?? null) === 'pull') ? 'tirage' : ($arme['origine'] ?? null),
+                'commentaire' => isset($arme['commentaire']) ? trim((string) $arme['commentaire']) ?: null : null,
             ];
         })->values();
 
@@ -601,6 +614,7 @@ class PersonnageBlockController extends Controller
                     'position' => $index + 1,
                     'origine' => $arme['origine'],
                     'starter' => $arme['is_starter'] ? 1 : 0,
+                    'commentaire' => $arme['commentaire'] ?? null,
                 ]);
             }
         });
@@ -633,6 +647,51 @@ class PersonnageBlockController extends Controller
         return response()->json([
             'success' => true,
             'id_arme' => $id_arme,
+        ]);
+    }
+
+    public function updateStatsRecommandees(Request $request, Personnage $personnage): JsonResponse
+    {
+        $data = $request->validate([
+            'builds' => ['sometimes', 'array', 'max:4'],
+            'builds.*.nom_build' => ['nullable', 'string', 'max:100'],
+            'builds.*.pv' => ['nullable', 'string', 'max:20'],
+            'builds.*.atq' => ['nullable', 'string', 'max:20'],
+            'builds.*.def' => ['nullable', 'string', 'max:20'],
+            'builds.*.taux_crit' => ['nullable', 'string', 'max:20'],
+            'builds.*.degats_crit' => ['nullable', 'string', 'max:20'],
+            'builds.*.maitrise_elementaire' => ['nullable', 'string', 'max:20'],
+            'builds.*.recharge_energetique' => ['nullable', 'string', 'max:20'],
+            'builds.*.commentaire' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $builds = collect($data['builds'] ?? [])->values();
+
+        DB::transaction(function () use ($personnage, $builds): void {
+            PersonnageStatsRecommandee::query()
+                ->where('fid_perso', $personnage->id_perso)
+                ->delete();
+
+            foreach ($builds as $index => $build) {
+                PersonnageStatsRecommandee::query()->create([
+                    'fid_perso' => $personnage->id_perso,
+                    'nom_build' => trim((string) ($build['nom_build'] ?? '')) ?: null,
+                    'pv' => $build['pv'] ?? null,
+                    'atq' => $build['atq'] ?? null,
+                    'def' => $build['def'] ?? null,
+                    'taux_crit' => $build['taux_crit'] ?? null,
+                    'degats_crit' => $build['degats_crit'] ?? null,
+                    'maitrise_elementaire' => $build['maitrise_elementaire'] ?? null,
+                    'recharge_energetique' => $build['recharge_energetique'] ?? null,
+                    'commentaire' => isset($build['commentaire']) ? trim((string) $build['commentaire']) ?: null : null,
+                    'position' => $index + 1,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'stats' => $personnage->statsRecommandees()->get(),
         ]);
     }
 

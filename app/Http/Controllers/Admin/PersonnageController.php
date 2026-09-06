@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\PreparesPersonnageBookData;
 use App\Models\Elements;
 use App\Models\Etoile;
 use App\Models\Constellation;
@@ -23,6 +24,8 @@ use Illuminate\View\View;
 
 class PersonnageController extends Controller
 {
+    use PreparesPersonnageBookData;
+
     public function index(Request $request): View
     {
         $sort = $request->input('sort', 'nom_asc');
@@ -129,8 +132,9 @@ class PersonnageController extends Controller
 
     public function show(Personnage $personnage): View
     {
-        $personnage->load(['element', 'etoile', 'photos', 'bio', 'aptitudes', 'constellations']);
-        return view('admin.personnages.show', compact('personnage'));
+        $personnage->load(self::eagerLoadRelations());
+
+        return view('admin.personnages.show', $this->preparePersonnageBookData($personnage) + compact('personnage'));
     }
 
     public function edit(Personnage $personnage): View

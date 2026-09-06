@@ -157,6 +157,7 @@ Route::prefix('admin')->group(function () {
                 Route::delete('armes-recommandees/{id_arme}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArmeRecommandee'])->name('admin.personnage.block.armes.delete');
                 Route::put('artefacts-recommandes', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateArtefactsRecommandees'])->name('admin.personnage.block.artefacts.update');
                 Route::delete('artefacts-recommandes/{id_build}', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'deleteArtefactRecommande'])->name('admin.personnage.block.artefacts.delete');
+                Route::put('stats-recommandees', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateStatsRecommandees'])->name('admin.personnage.block.stats.update');
                 Route::put('constellations', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellations'])->name('admin.personnage.block.constellations.update');
                 Route::post('constellations/upload-image', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'uploadConstellationImage'])->name('admin.personnage.block.constellations.upload');
                 Route::post('constellation-map', [\App\Http\Controllers\Admin\PersonnageBlockController::class, 'updateConstellationMap'])->name('admin.personnage.block.constellation-map.update');

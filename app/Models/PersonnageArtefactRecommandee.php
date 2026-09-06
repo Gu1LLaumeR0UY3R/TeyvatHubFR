@@ -22,6 +22,7 @@ class PersonnageArtefactRecommandee extends Model
         'main_stat_gobelet',
         'main_stat_couronne',
         'sub_stats',
+        'commentaire',
         'position',
     ];
 

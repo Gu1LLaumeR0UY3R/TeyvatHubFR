@@ -217,6 +217,9 @@
         .csh-weapon-item:hover .csh-weapon-tooltip { opacity:1; transform:translateY(-50%) translateX(0); }
         .csh-weapon-tooltip-title { color:#f8fafc; font-size:.78rem; font-weight:700; margin-bottom:.4rem; }
         .csh-weapon-tooltip-copy { color:#cbd5e1; font-size:.72rem; line-height:1.4; white-space:pre-line; }
+        .csh-weapon-comment { grid-column:1 / -1; margin-top:.4rem; padding:.4rem .55rem; border:1px dashed rgba(148,163,184,0.28); border-radius:8px; }
+        .csh-weapon-comment-label { font-size:.6rem; text-transform:uppercase; letter-spacing:.05em; color:#8aa0ca; margin-bottom:.15rem; }
+        .csh-weapon-comment-text { font-size:.72rem; color:#cbd5e1; line-height:1.4; }
         .csh-artefact-item {
             border:1px solid rgba(148,163,184,0.3);
             border-radius:14px;
@@ -276,6 +279,9 @@
         .csh-substats-priority-rank { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:999px; background:rgba(250,204,21,0.16); color:#fde68a; border:1px solid rgba(250,204,21,0.3); font-size:.65rem; font-weight:700; }
         .csh-substats-priority-name { font-size:.76rem; color:#e2e8f0; font-weight:600; }
         .csh-substats-priority-arrow { color:#64748b; font-size:.8rem; line-height:1; }
+        .csh-artefact-comment { grid-column:1 / -1; margin-top:.5rem; padding:.55rem .7rem; border:1px dashed rgba(148,163,184,0.28); border-radius:10px; }
+        .csh-artefact-comment-label { font-size:.62rem; text-transform:uppercase; letter-spacing:.05em; color:#8aa0ca; margin-bottom:.25rem; }
+        .csh-artefact-comment-text { font-size:.76rem; color:#cbd5e1; line-height:1.4; }
         .csh-weapon-empty { padding:1rem 1.15rem 1.15rem; color:#8fa1c5; font-size:.85rem; font-style:italic; }
         .csh-constellation-shell {
             margin: 0 1.5rem 1.5rem;
@@ -983,6 +989,9 @@ foreach ($nations as $nation) {
 
         $mainZoneJson = json_encode([
         'nom_perso' => $personnage->nom_perso,
+        'voix_va' => $personnage->voix_va,
+        'voix_vj' => $personnage->voix_vj,
+        'voix_vc' => $personnage->voix_vc,
         'fid_element'=> (string)$personnage->fid_element,
         'fid_etoile' => (string)$personnage->fid_etoile,
         'fid_TArmes' => $personnage->fid_TArmes ? (string)$personnage->fid_TArmes : '',
@@ -1087,6 +1096,7 @@ foreach ($nations as $nation) {
                 'origine' => $w->origine ?? 'tirage',
                 'position' => $w->position,
                 'nom_build' => $w->nom_build ?? '',
+                'commentaire' => $w->commentaire ?? '',
             ];
         });
 
@@ -1128,8 +1138,21 @@ foreach ($nations as $nation) {
                     : [],
                 'position' => (int) $build->position,
                 'nom_build' => $build->nom_build ?? '',
+                'commentaire' => $build->commentaire ?? '',
             ];
         })->values();
+
+        $existingStatsJson = $personnage->statsRecommandees->map(fn ($stats) => [
+            'nom_build' => $stats->nom_build ?? '',
+            'pv' => $stats->pv ?? '',
+            'atq' => $stats->atq ?? '',
+            'def' => $stats->def ?? '',
+            'taux_crit' => $stats->taux_crit ?? '',
+            'degats_crit' => $stats->degats_crit ?? '',
+            'maitrise_elementaire' => $stats->maitrise_elementaire ?? '',
+            'recharge_energetique' => $stats->recharge_energetique ?? '',
+            'commentaire' => $stats->commentaire ?? '',
+        ])->values();
 
         $personnageRolesJson = $personnage->roles
             ->map(fn ($role) => [
@@ -1393,6 +1416,7 @@ foreach ($nations as $nation) {
          data-available-artefacts="{{ e(json_encode($availableArtefactsJson)) }}"
          data-existing-armes="{{ e(json_encode($existingArmesJson)) }}"
          data-existing-artefacts="{{ e(json_encode($existingArtefactsJson)) }}"
+         data-existing-stats="{{ e(json_encode($existingStatsJson)) }}"
          data-personnage-roles="{{ e(json_encode($personnageRolesJson)) }}"
          data-constellations="{{ e(json_encode($constellationsJson)) }}"
          data-const-map-positions="{{ e(json_encode($constellationMapPositionsJson)) }}"
@@ -1415,6 +1439,7 @@ foreach ($nations as $nation) {
          data-upload-main-zone-image-url="{{ route('admin.personnage.block.main-zone.upload', $personnage) }}"
          data-save-armes-url="{{ route('admin.personnage.block.armes.update', $personnage) }}"
          data-save-artefacts-url="{{ route('admin.personnage.block.artefacts.update', $personnage) }}"
+         data-save-stats-url="{{ route('admin.personnage.block.stats.update', $personnage) }}"
          data-save-constellations-url="{{ route('admin.personnage.block.constellations.update', $personnage) }}"
          data-upload-constellation-url="{{ route('admin.personnage.block.constellations.upload', $personnage) }}"
          data-save-constellation-map-url="{{ route('admin.personnage.block.constellation-map.update', $personnage) }}"
@@ -1483,6 +1508,27 @@ foreach ($nations as $nation) {
                     <input x-model="mainZone.nom_perso" type="text"
                               class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-black placeholder-slate-400 focus:outline-none focus:border-blue-500"
                            placeholder="Nom..." />
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">
+                        VA
+                        <input x-model="mainZone.voix_va" type="text" maxlength="150"
+                               class="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-black placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                               placeholder="Voix anglaise" />
+                    </label>
+                    <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">
+                        VJ
+                        <input x-model="mainZone.voix_vj" type="text" maxlength="150"
+                               class="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-black placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                               placeholder="Voix japonaise" />
+                    </label>
+                    <label class="block text-slate-700 text-xs font-semibold uppercase tracking-wide">
+                        VC
+                        <input x-model="mainZone.voix_vc" type="text" maxlength="150"
+                               class="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-black placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                               placeholder="Voix chinoise" />
+                    </label>
                 </div>
 
                 <div>
@@ -1773,6 +1819,15 @@ foreach ($nations as $nation) {
                                             <button type="button" class="w-6 h-6 rounded border border-red-300 text-red-600" @click="removeArme(index)">×</button>
                                         </div>
                                     </div>
+
+                                    <div class="px-2 pb-2 pt-1.5 bg-white border-t border-slate-100">
+                                        <label class="block text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1">Recommandation externe</label>
+                                        <textarea x-model="arme.commentaire"
+                                                  @mousedown.stop @dragstart.stop
+                                                  rows="2" maxlength="500"
+                                                  placeholder="Note si la reco communautaire diverge de ce choix..."
+                                                  class="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 resize-none"></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -1824,10 +1879,16 @@ foreach ($nations as $nation) {
                 <div class="rounded border border-slate-300 bg-slate-50 p-3">
                     <div class="flex items-center justify-between mb-2">
                         <div class="text-xs font-semibold uppercase tracking-wide text-slate-700">Artefacts</div>
-                        <button type="button" @click="showArtefactManager = true"
-                                class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
-                            Gérer
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="showArtefactManager = true"
+                                    class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
+                                Gérer
+                            </button>
+                            <button type="button" @click="showStatsManager = true"
+                                    class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100">
+                                Stats
+                            </button>
+                        </div>
                     </div>
                     <template x-if="artefactsError">
                         <div class="mb-2 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700" x-text="artefactsError"></div>
@@ -3520,6 +3581,15 @@ foreach ($nations as $nation) {
                                                 </div>
                                             </label>
                                     </div>
+
+                                    <div class="mt-2 pt-2 border-t border-slate-100">
+                                        <label class="block text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1">Recommandation externe</label>
+                                        <textarea x-model="build.commentaire"
+                                                  @mousedown.stop @dragstart.stop
+                                                  rows="2" maxlength="500"
+                                                  placeholder="Note si la reco communautaire diverge de ce choix..."
+                                                  class="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 resize-none"></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -3530,6 +3600,60 @@ foreach ($nations as $nation) {
                                 class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Annuler</button>
                         <button type="button" @click="saveArtefacts()"
                                 class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="showStatsManager">
+            <div class="th-const-edit-overlay" @click.self="showStatsManager = false">
+                <div class="th-apt-single-modal" style="width:min(920px,98vw)">
+                    <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                        <div>
+                            <div class="text-base font-bold text-slate-900">Stats recommandées</div>
+                            <div class="text-[11px] text-slate-400">Valeurs indicatives libres, jusqu'à quatre builds.</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="addStatsBuild()" :disabled="statsBuilds.length >= 4"
+                                    class="rounded-lg border border-indigo-500 bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50">+ Ajouter</button>
+                            <button type="button" @click="showStatsManager = false"
+                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Fermer</button>
+                        </div>
+                    </div>
+
+                    <template x-if="statsError">
+                        <div class="mt-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700" x-text="statsError"></div>
+                    </template>
+
+                    <div class="mt-4 space-y-3">
+                        <template x-for="(build, index) in statsBuilds" :key="`stats-build-${index}`">
+                            <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                                <div class="mb-2 flex items-center justify-between gap-2">
+                                    <div class="text-sm font-bold text-slate-900" x-text="`Build ${index + 1}`"></div>
+                                    <button type="button" @click="statsBuilds.splice(index, 1)" class="rounded px-1 text-slate-300 hover:text-red-500">×</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                    <input x-model="build.nom_build" placeholder="Nom du build" class="col-span-2 rounded border-slate-200 text-xs sm:col-span-4">
+                                    <input x-model="build.pv" placeholder="PV" class="rounded border-slate-200 text-xs">
+                                    <input x-model="build.atq" placeholder="ATQ" class="rounded border-slate-200 text-xs">
+                                    <input x-model="build.def" placeholder="DEF" class="rounded border-slate-200 text-xs">
+                                    <input x-model="build.taux_crit" placeholder="Taux CRIT" class="rounded border-slate-200 text-xs">
+                                    <input x-model="build.degats_crit" placeholder="Dégâts CRIT" class="rounded border-slate-200 text-xs">
+                                    <input x-model="build.maitrise_elementaire" placeholder="Maîtrise" class="rounded border-slate-200 text-xs">
+                                    <input x-model="build.recharge_energetique" placeholder="Recharge" class="rounded border-slate-200 text-xs">
+                                    <textarea x-model="build.commentaire" rows="2" maxlength="500" placeholder="Commentaire" class="col-span-2 rounded border-slate-200 text-xs sm:col-span-4"></textarea>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <template x-if="!statsBuilds.length">
+                        <div class="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-xs text-slate-500">Aucun build de stats.</div>
+                    </template>
+
+                    <div class="mt-4 flex justify-end gap-2 border-t border-slate-200 pt-4">
+                        <button type="button" @click="showStatsManager = false" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Annuler</button>
+                        <button type="button" @click="saveStats()" class="rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500">Enregistrer</button>
                     </div>
                 </div>
             </div>
@@ -3680,6 +3804,7 @@ foreach ($nations as $nation) {
             const availableArtefacts = safeJsonParse(data.availableArtefacts, []);
             const existingArmes  = safeJsonParse(data.existingArmes, []);
             const existingArtefacts = safeJsonParse(data.existingArtefacts, []);
+            const existingStats = safeJsonParse(data.existingStats, []);
             const personnageRoles = safeJsonParse(data.personnageRoles, []);
             const existingConstellations = safeJsonParse(data.constellations, []);
             const existingAptitudes = safeJsonParse(data.aptitudes, []);
@@ -3708,6 +3833,9 @@ foreach ($nations as $nation) {
             return {
                 mainZone: {
                     nom_perso:  isFreshCreate ? '' : (parsedMain.nom_perso || data.nomPerso || ''),
+                    voix_va: isFreshCreate ? '' : (parsedMain.voix_va || ''),
+                    voix_vj: isFreshCreate ? '' : (parsedMain.voix_vj || ''),
+                    voix_vc: isFreshCreate ? '' : (parsedMain.voix_vc || ''),
                     fid_element:isFreshCreate ? '' : (parsedMain.fid_element || data.fidElement || ''),
                     fid_etoile: isFreshCreate ? '' : (parsedMain.fid_etoile || data.fidEtoile || ''),
                     fid_TArmes: isFreshCreate ? '' : (parsedMain.fid_TArmes || data.fidTarmes || ''),
@@ -3746,6 +3874,7 @@ foreach ($nations as $nation) {
                 weaponToAdd: '',
                 allArmes:        existingArmes,
                 allArtefactBuilds: existingArtefacts,
+                statsBuilds: existingStats,
                 personnageRoles:  personnageRoles,
                 activeBuild:     '',
                 buildSlotDrafts: [],
@@ -3840,11 +3969,13 @@ foreach ($nations as $nation) {
                 availableArtefacts: availableArtefacts,
                 showArmesPicker: false,
                 showArtefactManager: false,
+                showStatsManager: false,
                 artefactPicker: { open: false, buildIndex: null, slot: 1 },
                 artefactRarityFilter: '',
                 weaponRarityFilter: '',
                 armesError: '',
                 artefactsError: '',
+                statsError: '',
                 constellationsError: '',
                 histoiresError: '',
                 elementIcons,
@@ -4317,6 +4448,7 @@ foreach ($nations as $nation) {
                         main_stat_gobelet: '',
                         main_stat_couronne: '',
                         sub_stats: [],
+                        commentaire: '',
                         position: this.artefactBuilds.length + 1,
                     });
                     this.artefactsError = '';
@@ -4432,6 +4564,7 @@ foreach ($nations as $nation) {
                             main_stat_gobelet: String(build.main_stat_gobelet || '').trim() || null,
                             main_stat_couronne: String(build.main_stat_couronne || '').trim() || null,
                             sub_stats: build.sub_stats.length ? build.sub_stats : null,
+                            commentaire: String(build.commentaire || '').trim() || null,
                         });
                     }
 
@@ -4782,6 +4915,47 @@ foreach ($nations as $nation) {
                     this.dragArmeIndex = null;
                     this.dropArmeIndex = null;
                 },
+                addStatsBuild() {
+                    if (this.statsBuilds.length >= 4) return;
+                    this.statsBuilds.push({
+                        nom_build: '', pv: '', atq: '', def: '', taux_crit: '',
+                        degats_crit: '', maitrise_elementaire: '', recharge_energetique: '', commentaire: '',
+                    });
+                },
+                async saveStats() {
+                    if (this.statsBuilds.length > 4) {
+                        this.statsError = 'Maximum 4 builds de stats.';
+                        return;
+                    }
+
+                    const builds = this.statsBuilds.slice(0, 4).map((build) => ({
+                        nom_build: String(build.nom_build || '').trim() || null,
+                        pv: String(build.pv || '').trim() || null,
+                        atq: String(build.atq || '').trim() || null,
+                        def: String(build.def || '').trim() || null,
+                        taux_crit: String(build.taux_crit || '').trim() || null,
+                        degats_crit: String(build.degats_crit || '').trim() || null,
+                        maitrise_elementaire: String(build.maitrise_elementaire || '').trim() || null,
+                        recharge_energetique: String(build.recharge_energetique || '').trim() || null,
+                        commentaire: String(build.commentaire || '').trim() || null,
+                    }));
+
+                    const resp = await fetch(data.saveStatsUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': data.csrf },
+                        body: JSON.stringify({ builds }),
+                    });
+
+                    if (!resp.ok) {
+                        this.statsError = 'Erreur sauvegarde stats recommandées';
+                        this.showToast(this.statsError, 'error');
+                        return;
+                    }
+
+                    this.statsError = '';
+                    this.showStatsManager = false;
+                    this.showToast('Stats recommandées enregistrées', 'success');
+                },
                 async saveArmes({ strict = true } = {}) {
                     if (this.armes.length > 6) {
                         const msg = 'Maximum 6 armes recommandées.';
@@ -4798,6 +4972,7 @@ foreach ($nations as $nation) {
                         is_starter: Boolean(a.is_starter),
                         origine: a.origine || null,
                         position: index + 1,
+                        commentaire: String(a.commentaire || '').trim() || null,
                     }));
 
                     const resp = await fetch(data.saveArmesUrl, {
@@ -4842,6 +5017,9 @@ foreach ($nations as $nation) {
                             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': data.csrf },
                             body: JSON.stringify({
                                 nom_perso:   this.mainZone.nom_perso,
+                                voix_va:      this.mainZone.voix_va,
+                                voix_vj:      this.mainZone.voix_vj,
+                                voix_vc:      this.mainZone.voix_vc,
                                 fid_element: this.mainZone.fid_element,
                                 fid_etoile:  this.mainZone.fid_etoile,
                                 fid_TArmes:  this.mainZone.fid_TArmes,
