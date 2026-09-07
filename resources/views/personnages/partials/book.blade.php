@@ -123,13 +123,22 @@
             display: flex;
             justify-content: center;
             perspective: 2200px;
+            max-width: 100%;
         }
 
         .tb-book {
             position: relative;
             perspective: 2000px;
-            width: min(1240px, calc(100vw - 90px));
-            height: 780px;
+            /* Largeur relative au conteneur réel (pas à 100vw, qui ignore le
+               padding/max-width du layout du site et provoquait un
+               débordement horizontal sur les écrans plus étroits). */
+            width: min(1320px, calc(100% - 148px));
+            /* Décale le centrage flex pour compenser les marque-pages qui
+               dépassent de 148px à droite (position:absolute, donc ignorés
+               par le calcul de centrage) : ainsi c'est bien l'ensemble
+               livre+onglets qui est centré, pas juste le livre seul. */
+            margin-right: 148px;
+            height: 860px;
             padding: 20px;
             border: 1px solid rgba(193, 142, 60, 0.58);
             border-radius: 14px 22px 22px 14px;
@@ -176,7 +185,7 @@
             grid-template-columns: 1fr 1fr;
             width: 100%;
             height: auto;
-            min-height: 738px;
+            min-height: 818px;
             overflow: hidden;
             border: 1px solid rgba(111, 76, 36, 0.45);
             border-radius: 10px;
@@ -196,10 +205,10 @@
         }
 
         .tb-book-spread {
-            min-height: 738px;
+            min-height: 818px;
             border: 0;
             border-radius: 0;
-            background: url("{{ asset('images/book-background.png') }}") center / 118% 118% no-repeat;
+            background: var(--paper) url("{{ asset('images/book-background.png') }}") center / contain no-repeat;
             box-shadow: none;
         }
 
@@ -229,9 +238,9 @@
             position: relative;
             min-width: 0;
             height: auto;
-            min-height: 738px;
+            min-height: 818px;
             overflow: visible;
-            padding: 28px;
+            padding: 44px 40px;
             background:
                 radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.47), transparent 22%),
                 radial-gradient(circle at 10% 90%, rgba(187, 139, 76, 0.13), transparent 35%),
@@ -519,7 +528,7 @@
 
         .tb-profile-gallery .tb-profile-polaroid {
             position: absolute;
-            inset: 12px 8px auto;
+            inset: 34px 30px auto;
             margin: 0 auto;
             width: auto;
             z-index: 2;
@@ -528,7 +537,7 @@
         .tb-splash-polaroid {
             position: absolute;
             z-index: 1;
-            inset: 28px 8px auto;
+            inset: 50px 30px auto;
             width: auto;
             padding: 14px 14px 58px;
             background: #eadcc2;
@@ -552,7 +561,7 @@
         .tb-profile-polaroid.is-photo-front {
             position: absolute;
             z-index: 2;
-            inset: 12px 8px auto;
+            inset: 34px 30px auto;
             margin: 0;
             width: auto;
             transition: z-index 0ms linear 180ms, transform 180ms ease, opacity 180ms ease;
@@ -1365,33 +1374,6 @@
             font-size: 14px;
         }
 
-        .tb-book-navigation {
-            display: flex;
-            justify-content: center;
-            gap: 11px;
-            margin-top: 18px;
-        }
-
-        .tb-nav-button {
-            min-width: 128px;
-            padding: 10px 15px;
-            color: #f3dfb2;
-            cursor: pointer;
-            border: 1px solid rgba(225, 178, 89, 0.45);
-            border-radius: 7px;
-            background: rgba(19, 35, 57, 0.75);
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.24);
-        }
-
-        .tb-nav-button:hover:not(:disabled) {
-            background: #2c496c;
-        }
-
-        .tb-nav-button:disabled {
-            cursor: not-allowed;
-            opacity: 0.45;
-        }
-
         .tb-footer-note {
             margin-top: 22px;
             color: #c7d7ed;
@@ -1403,7 +1385,8 @@
 
         @media (max-width: 1120px) {
             .tb-book {
-                width: min(950px, calc(100vw - 45px));
+                width: min(950px, 100%);
+                margin-right: 0;
             }
 
             .tb-book-tabs {
@@ -1550,14 +1533,14 @@
            plutôt que d'être clippé à une hauteur fixe comme dans la maquette statique. */
         .tb-book {
             height: auto;
-            min-height: 780px;
+            min-height: 860px;
         }
         .tb-book-spread {
-            min-height: 738px;
+            min-height: 818px;
             height: auto;
             border: 0;
             border-radius: 0;
-            background: url("{{ asset('images/book-background.png') }}") center / 118% 118% no-repeat;
+            background: var(--paper) url("{{ asset('images/book-background.png') }}") center / contain no-repeat;
             box-shadow: none;
         }
         .tb-book-page {
@@ -1626,7 +1609,6 @@
         .tb-tag.is-current { background: var(--gold); color: #241a08; border-color: var(--gold); }
         .tb-story-ref { display: inline-flex; align-items: center; gap: 4px; color: var(--gold, #b8863d); text-decoration: underline; }
         .tb-story-ref img { width: 16px; height: 16px; border-radius: 4px; object-fit: cover; }
-        .tb-nav-button:disabled { opacity: 0.35; cursor: not-allowed; }
 
     /* --- Styles réutilisés des widgets existants (armes/artefacts/rotations/constellations) --- */
     .character-show-hero { --csh-panel: rgba(13, 18, 42, 0.72); --csh-border: rgba(255,255,255,0.12); --csh-text: #eef2ff; --csh-muted: #bdc8ec; --csh-accent: #6fd0be; max-width: min(2100px, 98vw); margin:0 auto 2.5rem; padding:2.35rem; position:relative; border-radius: 22px; border:1px solid var(--csh-border); background: linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.015)), linear-gradient(180deg, rgba(10,15,35,0.9), rgba(10,15,35,0.74)); box-shadow: 0 24px 56px rgba(5,9,28,0.52), inset 0 1px 0 rgba(255,255,255,0.07); display:grid; grid-template-columns: clamp(260px,22vw,400px) minmax(0,1fr); grid-template-areas: "portrait hero" "portrait video" "portrait meta"; column-gap: 1.8rem; row-gap:1.15rem; align-items:start; color: var(--csh-text); font-family:'Space Grotesk', 'Trebuchet MS', sans-serif; }
@@ -2349,8 +2331,8 @@ document.addEventListener('alpine:init', () => {
                                         <text class="tb-radar-label" x="50" y="9">PV</text>
                                         <text class="tb-radar-label" x="82" y="25">ATQ</text>
                                         <text class="tb-radar-label" x="86" y="68">DEF</text>
-                                        <text class="tb-radar-label" x="66" y="96">Taux CRIT</text>
-                                        <text class="tb-radar-label" x="34" y="96">Dégâts CRIT</text>
+                                        <text class="tb-radar-label" text-anchor="start" x="70" y="97">Taux CRIT</text>
+                                        <text class="tb-radar-label" text-anchor="end" x="30" y="97">Dégâts CRIT</text>
                                         <text class="tb-radar-label" x="14" y="68">Recharge</text>
                                         <text class="tb-radar-label" x="18" y="25">Maîtrise</text>
                                     </svg>
@@ -2555,11 +2537,6 @@ document.addEventListener('alpine:init', () => {
                 <button type="button" class="tb-book-tab tb-teams-tab" :class="activeTab === 'teams' ? 'tb-active' : ''" @click="changeSection('teams')"><span>05</span>Équipes / Réactions</button>
             </nav>
         </section>
-    </div>
-
-    <div class="tb-book-navigation">
-        <button type="button" class="tb-nav-button" :disabled="activeTabIndex === 0" @click="prevSection()">← Précédent</button>
-        <button type="button" class="tb-nav-button" :disabled="activeTabIndex === tabsOrder.length - 1" @click="nextSection()">Suivant →</button>
     </div>
 
     {{-- Modales (hors des pages, restent accessibles quel que soit l'onglet actif) --}}
