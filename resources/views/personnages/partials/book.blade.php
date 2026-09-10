@@ -93,6 +93,11 @@
             --page-turn-duration: 720ms;
             --font-title: Georgia, "Times New Roman", serif;
             --font-ui: Inter, "Segoe UI", Arial, sans-serif;
+
+            /* Unité responsive : 1% de la largeur du livre (~1100px max).
+               --bk ≈ 11px à pleine taille, diminue proportionnellement.
+               Tous les éléments internes l'utilisent pour s'adapter. */
+            --bk: min(11px, 0.9vw);
         }
 
         * {
@@ -132,23 +137,10 @@
             /* Largeur relative au conteneur réel (pas à 100vw, qui ignore le
                padding/max-width du layout du site et provoquait un
                débordement horizontal sur les écrans plus étroits). */
-            width: min(1320px, calc(100% - 148px));
-            /* Décale le centrage flex pour compenser les marque-pages qui
-               dépassent de 148px à droite (position:absolute, donc ignorés
-               par le calcul de centrage) : ainsi c'est bien l'ensemble
-               livre+onglets qui est centré, pas juste le livre seul. */
-            margin-right: 148px;
-            height: 860px;
-            padding: 20px;
-            border: 1px solid rgba(193, 142, 60, 0.58);
-            border-radius: 14px 22px 22px 14px;
-            background:
-                linear-gradient(100deg, rgba(68, 38, 18, 0.8), rgba(137, 89, 37, 0.58) 7%, rgba(44, 27, 17, 0.85) 12%, rgba(51, 31, 18, 0.86) 88%, rgba(157, 107, 50, 0.5)),
-                #332014;
-            box-shadow:
-                0 30px 65px var(--shadow),
-                0 0 0 7px rgba(14, 18, 27, 0.58),
-                inset 0 0 20px rgba(255, 205, 119, 0.16);
+            width: min(1100px, 90vw);
+            margin-right: 0;
+            aspect-ratio: 1536 / 1024;
+            height: auto;
         }
 
         .tb-book::before,
@@ -184,9 +176,9 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             width: 100%;
+            min-height: 100%;
             height: auto;
-            min-height: 818px;
-            overflow: hidden;
+            overflow: visible;
             border: 1px solid rgba(111, 76, 36, 0.45);
             border-radius: 10px;
             background: var(--paper);
@@ -196,19 +188,20 @@
             transform-style: preserve-3d;
         }
 
-        /* The supplied artwork already contains the cover, paper texture and spine. */
         .tb-book {
             padding: 0;
             border: 0;
             background: transparent;
             box-shadow: none;
+            overflow: visible;
         }
 
         .tb-book-spread {
-            min-height: 818px;
+            min-height: 0;
+            height: 100%;
             border: 0;
             border-radius: 0;
-            background: var(--paper) url("{{ asset('images/book-background.png') }}") center / contain no-repeat;
+            background: url("{{ asset('images/book-background.png') }}") center / 100% 100% no-repeat;
             box-shadow: none;
         }
 
@@ -238,9 +231,9 @@
             position: relative;
             min-width: 0;
             height: auto;
-            min-height: 818px;
+            min-height: 0;
             overflow: visible;
-            padding: 44px 40px;
+            padding: calc(var(--bk) * 4) calc(var(--bk) * 3.6);
             background:
                 radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.47), transparent 22%),
                 radial-gradient(circle at 10% 90%, rgba(187, 139, 76, 0.13), transparent 35%),
@@ -390,7 +383,7 @@
             position: absolute;
             z-index: 30;
             top: 20px;
-            right: -148px;
+            right: -128px;
 
             display: flex;
             flex-direction: column;
@@ -480,7 +473,7 @@
             gap: 10px;
             margin: 0 0 18px;
             font-family: var(--font-title);
-            font-size: clamp(23px, 2vw, 31px);
+            font-size: clamp(14px, calc(var(--bk) * 2.4), 31px);
         }
 
         .tb-section-title small {
@@ -548,7 +541,7 @@
         }
 
         .tb-splash-polaroid .tb-portrait-frame {
-            height: clamp(300px, 35vw, 420px);
+            height: clamp(260px, 28vw, 340px);
             border-width: 4px;
         }
 
@@ -636,25 +629,10 @@
             z-index: 5;
             top: -25px;
             left: 52%;
-            width: 24px;
-            height: 76px;
-            border: 3px solid #9a9da3;
-            border-bottom: 0;
-            border-radius: 14px 14px 0 0;
+            width: 28px;
+            height: 90px;
             transform: rotate(12deg);
-            filter: drop-shadow(1px 2px 1px rgba(55, 43, 28, 0.28));
-        }
-
-        .tb-paperclip::after {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            width: 10px;
-            height: 59px;
-            content: "";
-            border: 2px solid #c8cbd0;
-            border-bottom: 0;
-            border-radius: 9px 9px 0 0;
+            filter: drop-shadow(1px 2px 2px rgba(55, 43, 28, 0.38));
         }
 
         .tb-portrait-frame {
@@ -673,20 +651,21 @@
 
         .tb-profile-polaroid .tb-portrait-frame {
             width: 100%;
-            height: clamp(300px, 35vw, 420px);
+            height: clamp(260px, 28vw, 340px);
         }
 
         .tb-profile-polaroid .tb-portrait-frame img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
+            object-position: top center;
         }
 
         .tb-splash-polaroid .tb-portrait-frame img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            background: #edf5f8;
+            object-fit: cover;
+            object-position: top center;
         }
 
         .tb-portrait-frame::after {
@@ -762,7 +741,7 @@
         .tb-character-head h1 {
             margin: 0;
             font-family: var(--font-title);
-            font-size: clamp(33px, 3vw, 48px);
+            font-size: clamp(30px, 2.4vw, 40px);
         }
 
         .tb-character-head p {
@@ -836,9 +815,9 @@
         .tb-radar-card {
             min-width: 0;
             padding: 12px;
-            border: 1px solid var(--paper-line);
+            border: none;
             border-radius: 12px;
-            background: rgba(255, 248, 229, 0.42);
+            background: transparent;
         }
 
         .tb-radar-layout {
@@ -872,7 +851,7 @@
         .tb-radar {
             display: block;
             width: 100%;
-            max-width: 270px;
+            max-width: 220px;
             margin: 0 auto;
             overflow: visible;
         }
@@ -1383,6 +1362,110 @@
             font-style: italic;
         }
 
+        /* =========================================================
+           PROFIL — finition finale de la maquette
+           ========================================================= */
+
+        /* 1 — Polaroids : légèrement plus petits et rapprochés du centre
+           de la page gauche. */
+        #tb-page-profile-left .tb-profile-gallery {
+            position: relative;
+            overflow: visible;
+        }
+
+        #tb-page-profile-left .tb-profile-polaroid,
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-front {
+            left: 9%;
+            right: auto;
+            inset-inline-end: auto;
+            width: 82%;
+            max-width: 500px;
+        }
+
+        #tb-page-profile-left .tb-splash-polaroid {
+            left: 12%;
+            right: auto;
+            inset-inline-end: auto;
+            width: 82%;
+            max-width: 500px;
+        }
+
+        #tb-page-profile-left .tb-profile-polaroid .tb-portrait-frame,
+        #tb-page-profile-left .tb-splash-polaroid .tb-portrait-frame {
+            height: clamp(275px, 27vw, 385px);
+            max-height: calc(100vh - 470px);
+        }
+
+        /* Le trombone appartient à la galerie, pas à une photo précise :
+           il reste donc visible quelle que soit la photo placée devant. */
+        #tb-page-profile-left .tb-paperclip {
+            position: absolute;
+            z-index: 20;
+            top: 2px;
+            left: 54%;
+            width: 24px;
+            height: 76px;
+            pointer-events: none;
+        }
+
+        /* 2 — Voix : une entrée par ligne, uniquement le type + nom du doubleur. */
+        #tb-page-profile-left .tb-profile-voices {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            left: 11%;
+            right: 11%;
+            top: 76%;
+            margin: 0;
+            transform: translateY(-50%);
+        }
+
+        #tb-page-profile-left .tb-profile-voice {
+            min-height: 0;
+            height: 54px;
+            padding: 8px 16px;
+            display: grid;
+            grid-template-columns: 58px 1fr;
+            align-items: center;
+        }
+
+        #tb-page-profile-left .tb-profile-voice strong {
+            margin-top: 0;
+            font-size: 14px;
+        }
+
+        /* 3 — Informations générales : lignes plus courtes et plus fines,
+           entièrement contenues dans la page droite. */
+        #tb-page-profile-right .tb-profile-facts {
+            width: 91%;
+            max-width: 620px;
+        }
+
+        #tb-page-profile-right .tb-info-list {
+            width: 100%;
+            margin: 0;
+        }
+
+        #tb-page-profile-right .tb-info-list li {
+            grid-template-columns: 46% 1fr;
+            padding: 7px 0;
+            font-size: 13px;
+        }
+
+        /* 5 — Marque-pages : plus à droite et plus bas, alignés avec la
+           zone extérieure des pages comme sur la maquette finale. */
+        .tb-book-tabs {
+            top: 44px;
+            right: -124px;
+        }
+
+        /* Le hover/actif ne doit pas les faire rentrer sur le livre. */
+        .tb-book-tab.tb-active,
+        .tb-book-tab:hover,
+        .tb-book-tab:focus-visible {
+            transform: translateX(-4px);
+        }
+
         @media (max-width: 1120px) {
             .tb-book {
                 width: min(950px, 100%);
@@ -1529,20 +1612,6 @@
             margin-bottom: 2.5rem;
         }
 
-        /* Le livre grandit avec le contenu réel (portraits, tableaux, cartes SVG)
-           plutôt que d'être clippé à une hauteur fixe comme dans la maquette statique. */
-        .tb-book {
-            height: auto;
-            min-height: 860px;
-        }
-        .tb-book-spread {
-            min-height: 818px;
-            height: auto;
-            border: 0;
-            border-radius: 0;
-            background: var(--paper) url("{{ asset('images/book-background.png') }}") center / contain no-repeat;
-            box-shadow: none;
-        }
         .tb-book-page {
             background: transparent;
         }
@@ -1814,6 +1883,893 @@
         transform: translateX(-50%) scale(1);
     }
 
+
+        /* =========================================================
+           PROFIL — disposition correspondant à la maquette fournie
+           1 = polaroids      | 2 = VA/VJ/VC
+           3 = infos générales| 4 = aperçu des statistiques
+           5 = marque-pages
+           ========================================================= */
+
+        /* Les deux pages du profil occupent réellement toute la hauteur
+           disponible du livre : on évite que le polaroid pousse la page. */
+        /* Le livre garde son ratio visuel : les pages du profil doivent
+           suivre la hauteur réelle du livre et non la min-height historique
+           de 998px, qui faisait sortir les voix et le radar du fond du livre. */
+        .tb-book-page:has(#tb-page-profile-left),
+        .tb-book-page:has(#tb-page-profile-right) {
+            height: 100%;
+            min-height: 0;
+        }
+
+        #tb-page-profile-left,
+        #tb-page-profile-right {
+            height: 100%;
+            min-height: 0;
+            box-sizing: border-box;
+        }
+
+        /* 1 + 2 : page gauche */
+        #tb-page-profile-left {
+            display: grid;
+            grid-template-rows: minmax(0, 1fr) auto;
+            gap: 10px;
+            padding-bottom: 18px;
+        }
+
+        #tb-page-profile-left .tb-profile-gallery {
+            min-height: 0;
+            height: 100%;
+            padding: 2px 8px 0;
+        }
+
+        /* Le polaroid reste à l'intérieur de la page gauche, sans passer
+           sur la reliure centrale. */
+        #tb-page-profile-left .tb-profile-polaroid,
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-front {
+            inset: 10px 16px auto;
+            width: calc(100% - 32px);
+            max-width: 560px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #tb-page-profile-left .tb-splash-polaroid {
+            inset: 26px 16px auto;
+            width: calc(100% - 32px);
+            max-width: 560px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #tb-page-profile-left .tb-profile-polaroid .tb-portrait-frame,
+        #tb-page-profile-left .tb-splash-polaroid .tb-portrait-frame {
+            height: clamp(300px, 31vw, 470px);
+            max-height: calc(100vh - 420px);
+        }
+
+        #tb-page-profile-left .tb-profile-polaroid {
+            transform: rotate(-2.5deg);
+        }
+
+        #tb-page-profile-left .tb-splash-polaroid {
+            transform: rotate(2.5deg);
+        }
+
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-back {
+            transform: rotate(-1deg) translate(13px, 8px) scale(.975);
+        }
+
+        #tb-page-profile-left .tb-splash-polaroid.is-photo-back {
+            transform: rotate(1deg) translate(-8px, 12px) scale(.975);
+        }
+
+        #tb-page-profile-left .tb-photo-toggle {
+            bottom: 0;
+        }
+
+        /* 2 : bloc voix, séparé visuellement de la liste d'informations
+           générales de la page droite. */
+        #tb-page-profile-left .tb-profile-voices {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin: 0 4px 0;
+            transform: translateY(-8px);
+        }
+
+        #tb-page-profile-left .tb-profile-voice {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 64px;
+            padding: 9px 12px;
+            border: 1px solid var(--paper-line);
+            border-radius: 9px;
+            background: rgba(255, 248, 229, .38);
+        }
+
+        #tb-page-profile-left .tb-profile-voice span {
+            color: #756b61;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+        }
+
+        #tb-page-profile-left .tb-profile-voice strong {
+            margin-top: 3px;
+            color: var(--ink);
+            font-size: 13px;
+            line-height: 1.25;
+        }
+
+        /* 3 + 4 : page droite */
+        #tb-page-profile-right {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 8px;
+            padding-bottom: 18px;
+        }
+
+        #tb-page-profile-right .tb-character-head {
+            margin-bottom: 0;
+        }
+
+        #tb-page-profile-right .tb-profile-facts {
+            min-height: 0;
+        }
+
+        #tb-page-profile-right .tb-info-list {
+            margin-bottom: 0;
+        }
+
+        #tb-page-profile-right .tb-profile-stats {
+            min-height: 0;
+            height: 100%;
+            margin-top: 0;
+            display: block;
+            overflow: hidden;
+            transform: translateY(-6px);
+        }
+
+        #tb-page-profile-right .tb-radar-card {
+            height: 100%;
+            padding: 8px 8px 0;
+        }
+
+        #tb-page-profile-right .tb-radar-layout {
+            min-height: 0;
+            height: calc(100% - 30px);
+            grid-template-columns: minmax(150px, .9fr) minmax(190px, 1.1fr);
+            gap: 12px;
+        }
+
+        #tb-page-profile-right .tb-radar-numbers {
+            align-content: center;
+        }
+
+        #tb-page-profile-right .tb-radar {
+            width: min(100%, 300px);
+            max-width: 300px;
+        }
+
+        /* 5 : les marque-pages restent attachés au bord droit du livre,
+           mais plus près de la tranche comme sur la maquette. */
+        .tb-book-tabs {
+            top: 20px;
+            right: -108px;
+        }
+
+        /* =========================================================
+           PROFIL — placement final
+           Les blocs sont positionnés par rapport à la vraie hauteur
+           de la page du livre, sans être repoussés tout en bas.
+           ========================================================= */
+        .tb-book-spread {
+            height: 100%;
+            min-height: 0;
+        }
+
+        #tb-page-profile-left,
+        #tb-page-profile-right {
+            position: relative;
+            height: 100%;
+            min-height: 0;
+            box-sizing: border-box;
+        }
+
+        /* 1 — Polaroids : on conserve leur position actuelle. */
+        #tb-page-profile-left .tb-profile-gallery {
+            height: 100%;
+            min-height: 0;
+        }
+
+        /* 2 — Voix : remontées dans la page, sous la zone du Polaroid. */
+        #tb-page-profile-left .tb-profile-voices {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            top: 75%;
+            bottom: auto;
+            margin: 0;
+            transform: translateY(-50%);
+            z-index: 5;
+        }
+
+        #tb-page-profile-left .tb-profile-voice {
+            min-height: 72px;
+            padding: 9px 12px;
+        }
+
+        /* 3 — Infos générales : restent en haut à droite. */
+        #tb-page-profile-right {
+            display: block;
+            padding-bottom: 0;
+        }
+
+        #tb-page-profile-right .tb-character-head {
+            margin-bottom: 0;
+        }
+
+        #tb-page-profile-right .tb-profile-facts {
+            margin-top: 0;
+        }
+
+        /* 4 — Stats : remontées et limitées à une zone qui tient
+           entièrement dans la page. */
+        #tb-page-profile-right .tb-profile-stats {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 66%;
+            height: 31%;
+            min-height: 0;
+            margin: 0;
+            overflow: hidden;
+            transform: translateY(-50%);
+        }
+
+        #tb-page-profile-right .tb-radar-card {
+            height: 100%;
+            min-height: 0;
+            padding: 0 8px;
+        }
+
+        #tb-page-profile-right .tb-radar-card .tb-small-heading {
+            margin: 0 0 8px;
+        }
+
+        #tb-page-profile-right .tb-radar-layout {
+            height: calc(100% - 28px);
+            min-height: 0;
+            grid-template-columns: minmax(0, .95fr) minmax(180px, 1.05fr);
+            gap: 8px;
+            align-items: center;
+        }
+
+        #tb-page-profile-right .tb-radar-numbers {
+            gap: 4px;
+        }
+
+        #tb-page-profile-right .tb-radar-number {
+            padding-bottom: 4px;
+            font-size: 11px;
+        }
+
+        #tb-page-profile-right .tb-radar {
+            width: min(100%, 235px);
+            max-width: 235px;
+            justify-self: center;
+        }
+
+        /* 5 — Marque-pages : ils doivent rentrer vers la gauche,
+           donc on augmente la valeur de right (moins de débordement). */
+        .tb-book-tabs {
+            right: -82px;
+        }
+
+        @media (max-width: 1120px) {
+            .tb-book-page:has(#tb-page-profile-left),
+            .tb-book-page:has(#tb-page-profile-right),
+            #tb-page-profile-left,
+            #tb-page-profile-right {
+                height: auto;
+                min-height: 0;
+            }
+
+            #tb-page-profile-left {
+                display: block;
+            }
+
+            #tb-page-profile-left .tb-profile-gallery {
+                min-height: 540px;
+                height: 540px;
+            }
+
+            #tb-page-profile-left .tb-profile-voices {
+                position: static;
+                transform: none;
+                margin-top: 12px;
+            }
+
+            #tb-page-profile-right {
+                display: block;
+            }
+
+            #tb-page-profile-right .tb-profile-stats {
+                height: auto;
+                margin-top: 18px;
+                overflow: visible;
+            }
+
+            #tb-page-profile-right .tb-radar-layout {
+                height: auto;
+            }
+        }
+
+        @media (max-width: 500px) {
+            #tb-page-profile-left .tb-profile-voices {
+                display: flex;
+                flex-direction: column;
+                left: auto;
+                right: auto;
+                width: 100%;
+            }
+
+            #tb-page-profile-left .tb-profile-gallery {
+                height: 500px;
+            }
+
+            #tb-page-profile-left .tb-profile-polaroid,
+            #tb-page-profile-left .tb-splash-polaroid {
+                width: 94%;
+            }
+
+            #tb-page-profile-left .tb-profile-polaroid .tb-portrait-frame,
+            #tb-page-profile-left .tb-splash-polaroid .tb-portrait-frame {
+                height: 280px;
+                max-height: none;
+            }
+        }
+
+
+        /* =========================================================
+           PROFIL — CORRECTION FINALE (prioritaire)
+           Ces règles viennent après les anciennes règles de profil afin
+           d'éviter qu'un bloc CSS précédent écrase la mise en page.
+           ========================================================= */
+
+        /* Voix : réellement verticales, une entrée par ligne. */
+        #tb-page-profile-left .tb-profile-voices {
+            position: absolute;
+            display: flex !important;
+            flex-direction: column !important;
+            flex-wrap: nowrap;
+            left: 14%;
+            right: 14%;
+            top: 72%;
+            width: auto;
+            margin: 0;
+            gap: 7px;
+            transform: translateY(-50%);
+            z-index: 8;
+        }
+
+        #tb-page-profile-left .tb-profile-voice {
+            display: grid !important;
+            grid-template-columns: 44px minmax(0, 1fr);
+            align-items: center;
+            width: 100%;
+            min-height: 0;
+            height: 43px;
+            box-sizing: border-box;
+            padding: 6px 12px;
+        }
+
+        #tb-page-profile-left .tb-profile-voice span {
+            display: block;
+            font-size: 10px;
+        }
+
+        #tb-page-profile-left .tb-profile-voice strong {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.15;
+        }
+
+        /* Trombone : toujours au-dessus des deux photos, jamais attaché
+           à la photo active. */
+        #tb-page-profile-left .tb-profile-gallery .tb-paperclip {
+            position: absolute !important;
+            top: -62px !important;
+            left: 54% !important;
+            z-index: 50 !important;
+            transform: translateX(-50%) !important;
+            pointer-events: none !important;
+        }
+
+        /* Marque-pages : déplacement vers la droite, donc plus près du
+           bord extérieur de l'écran / moins au-dessus de la page. */
+        .tb-book-tabs {
+            top: 44px !important;
+            right: -170px !important;
+        }
+
+        .tb-book-tab.tb-active,
+        .tb-book-tab:hover,
+        .tb-book-tab:focus-visible {
+            transform: translateX(-4px);
+        }
+
+
+        /* =========================================================
+           PROFIL — MAQUETTE FINALE
+           ========================================================= */
+        #tb-page-profile-left,
+        #tb-page-profile-right {
+            position: relative !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            box-sizing: border-box;
+        }
+
+        /* LEFT: photo gallery */
+        #tb-page-profile-left {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: calc(var(--bk) * 4) calc(var(--bk) * 3.6) !important;
+        }
+
+        #tb-page-profile-left .tb-profile-gallery {
+            position: relative !important;
+            width: 100% !important;
+            flex: 0 0 clamp(380px, 55%, 520px) !important;
+            min-height: 380px !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+
+        /* =========================================================
+           PHOTO SWITCH — ANIMATION REFAITE DE ZÉRO
+           Les deux Polaroids restent toujours montés dans le DOM.
+           Seules l'opacité, la profondeur et la transformation changent.
+           Cela évite tout délai lié à un setTimeout ou à des classes
+           d'animation qui se chevauchent.
+           ========================================================= */
+
+        #tb-page-profile-left .tb-profile-polaroid,
+        #tb-page-profile-left .tb-splash-polaroid {
+            transition:
+                opacity 260ms cubic-bezier(.22,.61,.36,1),
+                transform 320ms cubic-bezier(.22,.61,.36,1),
+                filter 260ms cubic-bezier(.22,.61,.36,1) !important;
+            will-change: transform, opacity, filter;
+        }
+
+        /* Photo actuellement affichée */
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-front,
+        #tb-page-profile-left .tb-splash-polaroid.is-photo-front {
+            opacity: 1 !important;
+            z-index: 3 !important;
+            filter: none !important;
+        }
+
+        /* Photo placée derrière — cadre visible, image cachée */
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-back {
+            opacity: 1 !important;
+            z-index: 1 !important;
+            transform: rotate(2deg) translate(18px, 10px) !important;
+            pointer-events: none !important;
+        }
+        #tb-page-profile-left .tb-splash-polaroid.is-photo-back {
+            opacity: 1 !important;
+            z-index: 1 !important;
+            transform: rotate(12deg) translate(10px, 6px) !important;
+            pointer-events: none !important;
+        }
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-back .tb-portrait-frame img,
+        #tb-page-profile-left .tb-splash-polaroid.is-photo-back .tb-portrait-frame img {
+            opacity: 0 !important;
+        }
+
+        /* Position/rotation de repos des photos lorsqu'elles sont devant. */
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-front {
+            transform: rotate(-2.5deg) !important;
+        }
+
+        #tb-page-profile-left .tb-splash-polaroid.is-photo-front {
+            transform: rotate(3deg) !important;
+            transition:
+                opacity 260ms cubic-bezier(.22,.61,.36,1),
+                transform 420ms cubic-bezier(.22,.61,.36,1),
+                filter 260ms cubic-bezier(.22,.61,.36,1) !important;
+        }
+
+        /* Le contenu image suit exactement le fondu du Polaroid. */
+        #tb-page-profile-left .tb-profile-polaroid,
+        #tb-page-profile-left .tb-profile-polaroid.is-photo-front {
+            position: absolute !important;
+            inset: -30px auto auto 30% !important;
+            width: 68% !important;
+            margin: 0 !important;
+        }
+        #tb-page-profile-left .tb-splash-polaroid {
+            position: absolute !important;
+            inset: -45px auto auto 32% !important;
+            width: 65% !important;
+            margin: 0 !important;
+        }
+
+        /* Important : aucun ancien état tb-anim-* ne doit reprendre la main. */
+        #tb-page-profile-left .tb-profile-polaroid.tb-anim-to-back,
+        #tb-page-profile-left .tb-profile-polaroid.tb-anim-to-front,
+        #tb-page-profile-left .tb-splash-polaroid.tb-anim-to-back,
+        #tb-page-profile-left .tb-splash-polaroid.tb-anim-to-front {
+            animation: none !important;
+        }
+
+        #tb-page-profile-left .tb-profile-polaroid .tb-portrait-frame {
+            height: auto !important;
+            aspect-ratio: 1 / 1 !important;
+            display: block !important;
+        }
+
+        #tb-page-profile-left .tb-splash-polaroid .tb-portrait-frame {
+            height: auto !important;
+            aspect-ratio: 3.5 / 4 !important;
+            display: block !important;
+        }
+
+        #tb-page-profile-left .tb-profile-polaroid .tb-portrait-frame img,
+        #tb-page-profile-left .tb-splash-polaroid .tb-portrait-frame img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            object-position: top center !important;
+        }
+
+        #tb-page-profile-left .tb-polaroid-name {
+            bottom: 9px !important;
+            left: 16px !important;
+            font-size: 22px !important;
+        }
+
+        /* Clip belongs to gallery, not to either card. */
+        #tb-page-profile-left .tb-profile-gallery .tb-paperclip {
+            position: absolute !important;
+            top: -62px !important;
+            left: 64% !important;
+            z-index: 60 !important;
+            pointer-events: none !important;
+            transform: translateX(-50%) rotate(10deg) !important;
+        }
+
+
+
+        /* LEFT: voices */
+        #tb-page-profile-left .tb-profile-voices {
+            position: absolute;
+            inset: auto !important;
+            left: 10% !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: 16% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 48px 0 0 !important;
+            padding: 0 10px 0 40px !important;
+            display: block !important;
+            transform: none !important;
+            z-index: 8 !important;
+            flex-shrink: 0 !important;
+            box-sizing: border-box !important;
+        }
+        #tb-page-profile-left .tb-profile-voice-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            width: 90% !important;
+        }
+        #tb-page-profile-left .tb-profile-voice {
+            position: relative;
+            display: grid !important;
+            grid-template-columns: 76px 1fr !important;
+            align-items: center;
+            width: 125% !important;
+            height: 53px !important;
+            min-height: 53px !important;
+            padding: 8px 18px !important;
+            border: 1px solid rgba(126,88,44,.34) !important;
+            border-radius: 9px !important;
+            background: rgba(255,248,229,.36) !important;
+            box-shadow: inset 0 0 12px rgba(132,85,38,.045);
+        }
+
+        .tb-profile-section-heading {
+            display: flex !important;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 11px;
+            padding: 0 0 8px;
+            color: var(--ink);
+            font-family: var(--font-title);
+            font-size: clamp(13px, calc(var(--bk) * 1.9), 27px);
+            font-weight: 700;
+            line-height: 1;
+            border-bottom: 1px solid rgba(126, 88, 44, .40);
+        }
+        .tb-profile-section-heading::after {
+            flex: 1;
+            height: 1px;
+            content: "";
+            background: linear-gradient(90deg, rgba(126,88,44,.36), transparent);
+        }
+        .tb-profile-heading-icon {
+            display: inline-grid;
+            width: 27px;
+            height: 27px;
+            place-items: center;
+            color: var(--ink);
+            font-family: Georgia, serif;
+            font-size: 21px;
+        }
+
+        #tb-page-profile-left .tb-profile-voice-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+        }
+        #tb-page-profile-left .tb-profile-voice {
+            position: relative;
+            display: grid !important;
+            grid-template-columns: 76px 1fr !important;
+            align-items: center;
+            width: 100% !important;
+            height: 53px !important;
+            min-height: 53px !important;
+            padding: 8px 18px !important;
+            border: 1px solid rgba(126,88,44,.34) !important;
+            border-radius: 9px !important;
+            background: var(--paper) !important;
+            box-shadow: inset 0 0 12px rgba(132,85,38,.045);
+        }
+        #tb-page-profile-left .tb-profile-voice::after {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            content: "";
+            border: 1px solid rgba(126,88,44,.45);
+            transform: rotate(45deg);
+            background: var(--paper-light);
+        }
+        #tb-page-profile-left .tb-profile-voice::before { left: 7px; }
+        #tb-page-profile-left .tb-profile-voice::after { right: 7px; }
+        #tb-page-profile-left .tb-profile-voice .tb-profile-voice-label {
+            color: var(--ink);
+            font-family: var(--font-title);
+            font-size: 15px;
+            font-weight: 700;
+        }
+        #tb-page-profile-left .tb-profile-voice strong {
+            margin: 0 !important;
+            color: var(--ink);
+            font-family: var(--font-title);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        /* RIGHT: title + general information */
+        #tb-page-profile-right {
+            display: block !important;
+            padding: calc(var(--bk) * 2) calc(var(--bk) * 2) calc(var(--bk) * 4) 0 !important;
+        }
+        #tb-page-profile-right .tb-character-head {
+            display: block !important;
+            margin: 0 0 25px !important;
+        }
+        #tb-page-profile-right .tb-character-head h1 {
+            margin: 0 !important;
+            font-size: clamp(18px, calc(var(--bk) * 3.2), 43px) !important;
+            line-height: 1 !important;
+        }
+        #tb-page-profile-right .tb-profile-facts { margin: 0 !important; }
+        #tb-page-profile-right .tb-profile-facts .tb-profile-section-heading { margin-bottom: 8px; }
+        #tb-page-profile-right .tb-info-list {
+            width: 100% !important;
+            margin: 0 !important;
+            border-top: 0 !important;
+        }
+        #tb-page-profile-right .tb-info-list li {
+            grid-template-columns: 47% 1fr !important;
+            gap: 10px !important;
+            min-height: clamp(26px, calc(var(--bk) * 3.5), 39px) !important;
+            padding: 6px 3px 6px 0 !important;
+            border-bottom: 1px solid rgba(126,88,44,.26) !important;
+            font-size: clamp(10px, calc(var(--bk) * 1.2), 13px) !important;
+        }
+        #tb-page-profile-right .tb-info-list li:first-child {
+            border-top: 1px solid rgba(126,88,44,.26) !important;
+        }
+        #tb-page-profile-right .tb-info-list strong img {
+            width: 24px !important;
+            height: 24px !important;
+        }
+
+        /* RIGHT: stats */
+        #tb-page-profile-right .tb-profile-stats {
+            position: absolute !important;
+            left: 0 !important;
+            right: 10px !important;
+            top: 44% !important;
+            height: 43% !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            transform: none !important;
+        }
+        #tb-page-profile-right .tb-radar-card {
+            height: 100% !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        #tb-page-profile-right .tb-radar-card .tb-profile-section-heading { margin-bottom: 9px; }
+        #tb-page-profile-right .tb-radar-layout {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(205px, .88fr) !important;
+            align-items: center !important;
+            gap: 16px !important;
+            height: calc(100% - 40px) !important;
+            min-height: 0 !important;
+        }
+        #tb-page-profile-right .tb-radar-numbers {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            gap: 0 !important;
+        }
+        #tb-page-profile-right .tb-radar-number {
+            display: grid !important;
+            grid-template-columns: 1fr 34px !important;
+            align-items: center !important;
+            min-height: clamp(22px, calc(var(--bk) * 3), 34px) !important;
+            padding: 4px 0 !important;
+            border-bottom: 1px solid rgba(126,88,44,.26) !important;
+            font-size: clamp(9px, calc(var(--bk) * 1.1), 12px) !important;
+        }
+        #tb-page-profile-right .tb-radar-number strong { text-align: right; }
+        #tb-page-profile-right .tb-radar {
+            width: min(100%, 245px) !important;
+            max-width: 245px !important;
+            justify-self: center !important;
+        }
+
+        /* ── TABS : icônes compactes, label tooltip vers le haut ── */
+        .tb-book-tabs {
+            top: -44px !important;
+            right: 0 !important;
+            left: 0 !important;
+            transform: none !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            justify-content: flex-end !important;
+            gap: 4px !important;
+            align-items: flex-end !important;
+        }
+        .tb-book-tab {
+            position: relative !important;
+            width: 38px !important;
+            min-height: 38px !important;
+            height: 38px !important;
+            padding: 0 !important;
+            border-bottom: 0 !important;
+            border-left: 1px solid rgba(255,231,175,0.33) !important;
+            border-radius: 8px 8px 0 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: visible !important;
+            transition: width 200ms ease, height 200ms ease, transform 200ms ease, filter 200ms ease !important;
+        }
+        /* Icône */
+        .tb-book-tab .tb-tab-icon {
+            display: flex !important;
+            font-size: 17px;
+            line-height: 1;
+            pointer-events: none;
+        }
+        /* Tooltip label vers le haut */
+        .tb-book-tab .tb-tab-label {
+            display: block !important;
+            position: absolute !important;
+            bottom: calc(100% + 6px) !important;
+            left: 50% !important;
+            transform: translateX(-50%) translateY(4px) !important;
+            white-space: nowrap;
+            background: rgba(20,14,8,0.92);
+            color: #fff1ce;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 9px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,231,175,0.28);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 160ms ease, transform 160ms ease;
+            z-index: 9999;
+        }
+        .tb-book-tab:hover .tb-tab-label,
+        .tb-book-tab:focus-visible .tb-tab-label {
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(0) !important;
+        }
+        /* Hover / actif */
+        .tb-book-tab:hover,
+        .tb-book-tab:focus-visible {
+            width: 46px !important;
+            height: 44px !important;
+            filter: brightness(1.18) !important;
+            transform: none !important;
+            z-index: 40;
+        }
+        .tb-book-tab.tb-active {
+            width: 46px !important;
+            height: 44px !important;
+            filter: brightness(1.12) !important;
+            transform: none !important;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.28), inset 0 1px rgba(255,255,255,0.2) !important;
+            z-index: 50;
+        }
+        /* Tab côté gauche (onglet déjà passé) */
+        .tb-book-tabs-left {
+            position: absolute;
+            z-index: 30;
+            top: -44px;
+            left: 0;
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+        .tb-book-tabs-left .tb-book-tab {
+            pointer-events: auto;
+            opacity: 0.72;
+            filter: brightness(0.82) saturate(0.7);
+        }
+        .tb-book-tabs-left .tb-book-tab:hover {
+            opacity: 1;
+            filter: brightness(1.05) saturate(1);
+        }
+
+        @media (max-width: 1120px) {
+            #tb-page-profile-left,
+            #tb-page-profile-right { height: auto !important; min-height: 760px !important; }
+            #tb-page-profile-left .tb-profile-gallery { height: 430px !important; }
+            #tb-page-profile-left .tb-profile-voices,
+            #tb-page-profile-right .tb-profile-stats {
+                position: relative !important;
+                left: auto !important;
+                right: auto !important;
+                top: auto !important;
+                width: auto !important;
+                height: auto !important;
+            }
+            #tb-page-profile-left .tb-profile-voices { margin-top: 10px !important; }
+            #tb-page-profile-right .tb-profile-stats { margin-top: 28px !important; }
+        }
+
+        @media (max-width: 650px) {
+            #tb-page-profile-left,
+            #tb-page-profile-right { padding: 22px 24px !important; }
+            #tb-page-profile-left .tb-profile-gallery { height: 370px !important; }
+            #tb-page-profile-left .tb-profile-polaroid,
+            #tb-page-profile-left .tb-splash-polaroid { width: 82% !important; }
+            #tb-page-profile-left .tb-profile-polaroid .tb-portrait-frame,
+            #tb-page-profile-left .tb-splash-polaroid .tb-portrait-frame { height: 250px !important; }
+            #tb-page-profile-right .tb-radar-layout { grid-template-columns: 1fr !important; }
+        }
+
 </style>
 
 <script>
@@ -1821,6 +2777,20 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('personnageBookData', () => ({
         // --- Livre / navigation par onglets --------------------------------
         tabsOrder: ['profile', 'builds', 'skills', 'constellations', 'teams'],
+        tabIcons: {
+            profile: '👤',
+            builds: '⚔️',
+            skills: '✨',
+            constellations: '🌟',
+            teams: '🛡️',
+        },
+        tabLabels: {
+            profile: 'Profil',
+            builds: 'Builds',
+            skills: 'Compétences',
+            constellations: 'Constellations',
+            teams: 'Équipes',
+        },
         activeTab: 'profile',
         isTurning: false,
         PAGE_TURN_DURATION: 720,
@@ -1933,6 +2903,12 @@ document.addEventListener('alpine:init', () => {
         aptitudes: @json($aptitudesJson->values()),
         radarValues: @json($radarValues),
         currentPhoto: 'portrait',
+        photoAnimating: false,
+        photoAnim: { portrait: '', splash: '' },
+
+        switchPhoto() {
+            this.currentPhoto = this.currentPhoto === 'portrait' ? 'splash' : 'portrait';
+        },
 
         radarPolygon(values, scale = 1) {
             const center = 50;
@@ -2131,25 +3107,30 @@ document.addEventListener('alpine:init', () => {
                 <section class="tb-book-page tb-left-page">
                     <div class="tb-page-content" id="tb-page-profile-left" x-show="activeTab === 'profile'">
                         <div class="tb-profile-gallery">
-                            <div class="tb-profile-polaroid is-photo-front" :class="currentPhoto === 'portrait' ? 'is-photo-front' : 'is-photo-back'">
+                            <svg class="tb-paperclip" aria-hidden="true" viewBox="0 0 28 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 90 L20 18 Q20 4 10 4 Q0 4 0 18 L0 72 Q0 82 8 82 Q16 82 16 72 L16 22 Q16 14 10 14 Q4 14 4 22 L4 72" stroke="#8a8f96" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M20 90 L20 18 Q20 4 10 4 Q0 4 0 18 L0 72 Q0 82 8 82 Q16 82 16 72 L16 22 Q16 14 10 14 Q4 14 4 22 L4 72" stroke="#c4c8ce" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+                            </svg>
+                            <div class="tb-profile-polaroid is-photo-front" :class="[currentPhoto === 'portrait' ? 'is-photo-front' : 'is-photo-back', photoAnim.portrait]" @click="switchPhoto()" style="cursor:pointer;">
                                 <div class="tb-photo-frame tb-portrait-frame">
                                     <img src="{{ $portraitUrl }}" alt="{{ $personnage->nom_perso }}" loading="lazy">
                                 </div>
                                 <div class="tb-polaroid-name">{{ $personnage->nom_perso }}</div>
                             </div>
-                            <div class="tb-splash-polaroid" :class="currentPhoto === 'splash' ? 'is-photo-front' : 'is-photo-back'">
-                                <span class="tb-paperclip" aria-hidden="true"></span>
+                            <div class="tb-splash-polaroid" :class="[currentPhoto === 'splash' ? 'is-photo-front' : 'is-photo-back', photoAnim.splash]" @click="switchPhoto()" style="cursor:pointer;">
                                 <div class="tb-photo-frame tb-portrait-frame">
                                     <img src="{{ $splashUrl }}" alt="{{ $personnage->nom_perso }} — Splash Art" loading="lazy">
                                 </div>
                                 <div class="tb-polaroid-name">Splash Art</div>
                             </div>
-                            <button type="button" class="tb-photo-toggle" @click="currentPhoto = currentPhoto === 'portrait' ? 'splash' : 'portrait'" aria-label="Changer de photo">&#8249;&nbsp;&nbsp;&#8250;</button>
                         </div>
-                        <div class="tb-info-list">
-                            <div><span>VA</span><strong>{{ $personnage->voix_va ?: '?' }}</strong></div>
-                            <div><span>VJ</span><strong>{{ $personnage->voix_vj ?: '?' }}</strong></div>
-                            <div><span>VC</span><strong>{{ $personnage->voix_vc ?: '?' }}</strong></div>
+                        <div class="tb-profile-voices" aria-label="Voix du personnage">
+                            <div class="tb-profile-section-heading"><span class="tb-profile-heading-icon">♟</span><span>Voix</span></div>
+                            <div class="tb-profile-voice-list">
+                                <div class="tb-profile-voice"><span class="tb-profile-voice-label">VA</span><strong>{{ $personnage->voix_va ?: '?' }}</strong></div>
+                                <div class="tb-profile-voice"><span class="tb-profile-voice-label">VJ</span><strong>{{ $personnage->voix_vj ?: '?' }}</strong></div>
+                                <div class="tb-profile-voice"><span class="tb-profile-voice-label">VC</span><strong>{{ $personnage->voix_vc ?: '?' }}</strong></div>
+                            </div>
                         </div>
                     </div>
 
@@ -2304,6 +3285,7 @@ document.addEventListener('alpine:init', () => {
                             <h1>{{ $personnage->nom_perso }}</h1>
                         </div>
                         <div class="tb-profile-facts">
+                            <div class="tb-profile-section-heading"><span class="tb-profile-heading-icon">♟</span><span>Informations générales</span></div>
                             <ul class="tb-info-list">
                                 <li><span>Élément</span><strong><img src="{{ $elementIcon }}" alt="{{ $personnage->element?->libelle_element ?? 'Élément' }}" style="width:24px;height:24px;object-fit:contain;"></strong></li>
                                 <li><span>Région</span><strong>{{ $nation?->nom_region ?? 'Inconnue' }}</strong></li>
@@ -2313,7 +3295,7 @@ document.addEventListener('alpine:init', () => {
                         </div>
                         <div class="tb-profile-stats">
                             <div class="tb-radar-card">
-                                <h2 class="tb-small-heading">Aperçu des statistiques</h2>
+                                <div class="tb-profile-section-heading"><span class="tb-profile-heading-icon">▥</span><span>Aperçu des statistiques</span></div>
                                 <div class="tb-radar-layout">
                                     <div class="tb-radar-numbers">
                                         @foreach($statDisplayValues as $label => $value)
@@ -2529,12 +3511,29 @@ document.addEventListener('alpine:init', () => {
                 </div>
             </div>
 
+            {{-- Tabs passés (à gauche) --}}
+            <nav class="tb-book-tabs-left" aria-label="Sections précédentes" x-show="activeTabIndex > 0">
+                <template x-for="tab in tabsOrder.slice(0, activeTabIndex)" :key="'left-' + tab">
+                    <button type="button"
+                        class="tb-book-tab"
+                        :class="'tb-' + tab + '-tab'" 
+                        @click="changeSection(tab)">
+                        <span class="tb-tab-icon" x-text="tabIcons[tab]"></span>
+                        <span class="tb-tab-label" x-text="tabLabels[tab]"></span>
+                    </button>
+                </template>
+            </nav>
+            {{-- Tabs actif + suivants (à droite) --}}
             <nav class="tb-book-tabs" aria-label="Sections du dossier">
-                <button type="button" class="tb-book-tab tb-profile-tab" :class="activeTab === 'profile' ? 'tb-active' : ''" @click="changeSection('profile')"><span>01</span>Profil</button>
-                <button type="button" class="tb-book-tab tb-builds-tab" :class="activeTab === 'builds' ? 'tb-active' : ''" @click="changeSection('builds')"><span>02</span>Builds</button>
-                <button type="button" class="tb-book-tab tb-skills-tab" :class="activeTab === 'skills' ? 'tb-active' : ''" @click="changeSection('skills')"><span>03</span>Compétences</button>
-                <button type="button" class="tb-book-tab tb-constellations-tab" :class="activeTab === 'constellations' ? 'tb-active' : ''" @click="changeSection('constellations')"><span>04</span>Constellations</button>
-                <button type="button" class="tb-book-tab tb-teams-tab" :class="activeTab === 'teams' ? 'tb-active' : ''" @click="changeSection('teams')"><span>05</span>Équipes / Réactions</button>
+                <template x-for="tab in tabsOrder.slice(activeTabIndex)" :key="'right-' + tab">
+                    <button type="button"
+                        class="tb-book-tab"
+                        :class="['tb-' + tab + '-tab', tab === activeTab ? 'tb-active' : '']"
+                        @click="changeSection(tab)">
+                        <span class="tb-tab-icon" x-text="tabIcons[tab]"></span>
+                        <span class="tb-tab-label" x-text="tabLabels[tab]"></span>
+                    </button>
+                </template>
             </nav>
         </section>
     </div>
